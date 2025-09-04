@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { RouteTransition } from "@/components/RouteTransition";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { usePreloadRoute } from "@/hooks/usePreloadRoute";
 import { lazy } from "react";
 import NotFound from "./pages/NotFound";
@@ -67,7 +68,10 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AppRouter />
+          <div className="pb-20">
+            <AppRouter />
+          </div>
+          <BottomNavigation />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
