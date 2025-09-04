@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { HowardMap } from "@/components/HowardMap";
+import { GoogleMap } from "@/components/GoogleMapComponent";
 import { useState } from "react";
 import { Search, Navigation, Phone, MapIcon, Shield, AlertTriangle, ZoomIn, ZoomOut } from "lucide-react";
 import { HapticFeedback } from "@/utils/haptics";
@@ -14,6 +14,17 @@ export default function Map() {
     { id: 1, type: "Safe Route", location: "Main Quad to Library", status: "active" },
     { id: 2, type: "Well-lit Area", location: "Georgia Ave Corridor", status: "verified" },
     { id: 3, type: "Incident Report", location: "Near Cramton Auditorium", time: "2 hours ago" },
+  ];
+
+  // Howard University coordinates
+  const howardUniversityCenter = { lat: 38.9227, lng: -77.0204 };
+  
+  // Sample markers for campus locations
+  const mapMarkers = [
+    { position: { lat: 38.9227, lng: -77.0204 }, title: "Main Campus", type: "safe" as const },
+    { position: { lat: 38.9240, lng: -77.0190 }, title: "Library Safe Route", type: "safe" as const },
+    { position: { lat: 38.9210, lng: -77.0220 }, title: "Well-lit Area", type: "welllit" as const },
+    { position: { lat: 38.9250, lng: -77.0180 }, title: "Recent Incident", type: "incident" as const },
   ];
 
   return (
@@ -36,37 +47,12 @@ export default function Map() {
 
       {/* Main Content */}
       <main className="relative flex-1">
-        {/* Map Area - Placeholder */}
-        <div className="h-96 bg-muted/30 border-b border-border relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <MapIcon size={48} className="text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">Interactive Campus Map</p>
-              <p className="text-xs text-muted-foreground mt-1">Howard University Layout</p>
-            </div>
-          </div>
-          
-          {/* Map Controls */}
-          <div className="absolute top-4 right-4 flex flex-col gap-2">
-            <Button size="sm" variant="secondary" className="w-10 h-10 p-0 shadow-soft">
-              <ZoomIn size={16} />
-            </Button>
-            <Button size="sm" variant="secondary" className="w-10 h-10 p-0 shadow-soft">
-              <ZoomOut size={16} />
-            </Button>
-            <Button size="sm" variant="secondary" className="w-10 h-10 p-0 shadow-soft">
-              <Navigation size={16} />
-            </Button>
-          </div>
-
-          {/* Current Location Indicator */}
-          <div className="absolute bottom-4 left-4">
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-              <div className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse"></div>
-              Current Location
-            </Badge>
-          </div>
-        </div>
+        {/* Google Maps */}
+        <GoogleMap 
+          center={howardUniversityCenter}
+          zoom={16}
+          markers={mapMarkers}
+        />
 
         {/* Map Legend & Information */}
         <div className="px-mobile-padding py-4 pb-24">
