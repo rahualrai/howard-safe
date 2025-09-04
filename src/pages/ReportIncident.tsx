@@ -223,7 +223,7 @@ export default function ReportIncident() {
                     id="location"
                     placeholder="Enter location or building name"
                     value={location}
-                    onChange={(e) => setLocation(sanitizeInput(e.target.value, { maxLength: 200 }))}
+                    onChange={(e) => setLocation(e.target.value)}
                     disabled={useCurrentLocation}
                     maxLength={200}
                   />
@@ -254,7 +254,7 @@ export default function ReportIncident() {
                     id="description"
                     placeholder="Please provide as much detail as possible about what happened... (10-2000 characters)"
                     value={description}
-                    onChange={(e) => setDescription(sanitizeInput(e.target.value, { maxLength: 2000, allowLineBreaks: true }))}
+                    onChange={(e) => setDescription(e.target.value)}
                     rows={4}
                     maxLength={2000}
                   />
