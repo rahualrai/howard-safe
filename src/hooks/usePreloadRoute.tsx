@@ -2,22 +2,22 @@ import { useEffect } from 'react';
 
 // Preload strategies based on user behavior patterns
 const PRELOAD_ROUTES = {
-  '/': ['/map', '/safety-tips'], // From home, users often go to map or safety tips
-  '/map': ['/report', '/safety-tips'], // From map, users often report incidents or check safety tips  
-  '/safety-tips': ['/resources', '/map'], // From safety tips, users check resources or map
-  '/report': ['/notifications', '/'], // After reporting, users check notifications or go home
-  '/resources': ['/safety-tips', '/'], // From resources, users go to safety tips or home
-  '/notifications': ['/map', '/'], // From notifications, users check map or go home
+  '/': ['/map', '/tips'], // From home, users often go to map or tips
+  '/map': ['/report', '/tips'], // From map, users often report incidents or check tips  
+  '/tips': ['/map', '/profile'], // From tips, users check map or profile
+  '/report': ['/profile', '/'], // After reporting, users check profile or go home
+  '/auth': ['/'], // After auth, users go home
+  '/profile': ['/map', '/'], // From profile, users check map or go home
 } as const;
 
 // Dynamic imports for all routes
 const routeImports = {
   '/': () => import('../pages/Home'),
   '/map': () => import('../pages/Map'),
-  '/safety-tips': () => import('../pages/SafetyTips'),
+  '/tips': () => import('../pages/Tips'),
   '/report': () => import('../pages/ReportIncident'),
-  '/resources': () => import('../pages/Resources'),
-  '/notifications': () => import('../pages/Notifications'),
+  '/auth': () => import('../pages/Auth'),
+  '/profile': () => import('../pages/Profile'),
 };
 
 export function usePreloadRoute(currentPath: string) {

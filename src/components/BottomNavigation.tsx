@@ -7,10 +7,9 @@ import { motion } from "framer-motion";
 const navItems = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/map", icon: MapIcon, label: "Map" },
-  { path: "/safety-tips", icon: Shield, label: "Safety Tips" },
+  { path: "/tips", icon: Shield, label: "Tips" },
   { path: "/report", icon: AlertTriangle, label: "Report" },
-  { path: "/resources", icon: BookOpen, label: "Resources" },
-  { path: "/notifications", icon: Bell, label: "Notifications" },
+  { path: "/profile", icon: Bell, label: "Profile" },
 ];
 
 export function BottomNavigation() {

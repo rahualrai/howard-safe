@@ -13,10 +13,10 @@ import NotFound from "./pages/NotFound";
 // Lazy load all pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
 const Map = lazy(() => import("./pages/Map"));
-const SafetyTips = lazy(() => import("./pages/SafetyTips"));
+const Tips = lazy(() => import("./pages/Tips"));
 const ReportIncident = lazy(() => import("./pages/ReportIncident"));
-const Resources = lazy(() => import("./pages/Resources"));
-const Notifications = lazy(() => import("./pages/Notifications"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Profile = lazy(() => import("./pages/Profile"));
 
 // Optimized React Query client for better performance
 const queryClient = new QueryClient({
@@ -45,10 +45,10 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/map" element={<Map />} />
-        <Route path="/safety-tips" element={<SafetyTips />} />
+        <Route path="/tips" element={<Tips />} />
         <Route path="/report" element={<ReportIncident />} />
-        <Route path="/resources" element={<Resources />} />
-        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/profile" element={<Profile />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
