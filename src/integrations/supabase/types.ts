@@ -78,7 +78,7 @@ export type Database = {
     Functions: {
       validate_password_strength: {
         Args: { password: string }
-        Returns: boolean
+        Returns: Json
       }
     }
     Enums: {

@@ -15,6 +15,7 @@ import { ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
+import { sanitizeInput, validateTextField, rateLimiter, getClientInfo, generateSecureId } from "@/utils/security";
 
 export default function ReportIncident() {
   const [category, setCategory] = useState("");
@@ -24,6 +25,7 @@ export default function ReportIncident() {
   const [useCurrentLocation, setUseCurrentLocation] = useState(false);
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   
   // Use security validation to ensure user is authenticated for reporting
@@ -32,19 +34,36 @@ export default function ReportIncident() {
     redirectTo: '/auth'
   });
 
-  // Input sanitization function
-  const sanitizeInput = (input: string): string => {
-    return input
-      .trim()
-      .replace(/[<>]/g, '') // Remove potential HTML tags
-      .substring(0, 1000); // Limit input length
+  // Enhanced real-time validation
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!category) {
+      errors.category = "Please select an incident category";
+    }
+    
+    const descValidation = validateTextField(description, "Description", 10, 2000);
+    if (!descValidation.isValid) {
+      errors.description = descValidation.error || "Description is invalid";
+    }
+    
+    if (location) {
+      const locValidation = validateTextField(location, "Location", 2, 200);
+      if (!locValidation.isValid) {
+        errors.location = locValidation.error || "Location is invalid";
+      }
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  // Enhanced validation
-  const validateInput = (value: string, minLength: number = 3, maxLength: number = 1000): boolean => {
-    const cleaned = value.trim();
-    return cleaned.length >= minLength && cleaned.length <= maxLength;
-  };
+  // Real-time validation on input changes
+  useEffect(() => {
+    if (category || description || location) {
+      validateForm();
+    }
+  }, [category, description, location]);
 
   const handleLocationToggle = async () => {
     await HapticFeedback.impact(ImpactStyle.Light);
@@ -57,29 +76,23 @@ export default function ReportIncident() {
   };
 
   const handleSubmit = async () => {
+    // Rate limiting check
+    const rateLimitKey = `incident_report_${user?.id || 'anonymous'}`;
+    if (!rateLimiter.canAttempt(rateLimitKey, 3, 300000)) { // 3 attempts per 5 minutes
+      const remainingTime = Math.ceil(rateLimiter.getRemainingTime(rateLimitKey) / 60000);
+      toast({
+        title: "Too many submissions",
+        description: `Please wait ${remainingTime} minutes before submitting another report.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Enhanced validation
-    if (!category || !validateInput(category, 1, 50)) {
+    if (!validateForm()) {
       toast({
-        title: "Invalid category",
-        description: "Please select a valid incident category.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!description || !validateInput(description, 10, 2000)) {
-      toast({
-        title: "Invalid description",
-        description: "Description must be between 10 and 2000 characters.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (location && !validateInput(location, 2, 200)) {
-      toast({
-        title: "Invalid location",
-        description: "Location must be between 2 and 200 characters.",
+        title: "Please fix the errors",
+        description: "Check the form for validation errors before submitting.",
         variant: "destructive"
       });
       return;
@@ -89,29 +102,43 @@ export default function ReportIncident() {
     await HapticFeedback.impact(ImpactStyle.Medium);
 
     try {
-      // Sanitize all inputs
+      // Generate unique report ID for tracking
+      const reportId = generateSecureId();
+      const clientInfo = getClientInfo();
+      
+      // Sanitize all inputs with enhanced options
       const sanitizedData = {
-        category: sanitizeInput(category),
-        location: sanitizeInput(location),
-        description: sanitizeInput(description),
+        reportId,
+        category: sanitizeInput(category, { maxLength: 50 }),
+        location: sanitizeInput(location, { maxLength: 200 }),
+        description: sanitizeInput(description, { maxLength: 2000, allowLineBreaks: true }),
         anonymous,
         useCurrentLocation,
         photoCount: photos.length,
         timestamp: new Date().toISOString(),
         userId: user?.id || null,
-        userAgent: navigator.userAgent
+        ...clientInfo
       };
 
       // Log the incident report submission for security monitoring
       await logSecurityEvent('incident_report_submitted', sanitizedData);
 
-      // Simulate report submission (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate report submission with enhanced error handling
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Simulate random failures for testing error handling
+          if (Math.random() > 0.95) {
+            reject(new Error('Network timeout'));
+          } else {
+            resolve(true);
+          }
+        }, 2000);
+      });
       
       await HapticFeedback.notification(NotificationType.Success);
       toast({
         title: "Report submitted successfully",
-        description: "Your incident report has been sent to campus security.",
+        description: `Report ID: ${reportId.substring(0, 8).toUpperCase()}. Your incident report has been sent to campus security.`,
       });
 
       // Clear form
@@ -121,17 +148,19 @@ export default function ReportIncident() {
       setAnonymous(false);
       setUseCurrentLocation(false);
       setPhotos([]);
+      setValidationErrors({});
     } catch (error) {
-      // Log failed submission
+      // Log failed submission with enhanced error details
       await logSecurityEvent('incident_report_failed', {
         error: (error as Error).message,
         timestamp: new Date().toISOString(),
-        userId: user?.id || null
+        userId: user?.id || null,
+        ...getClientInfo()
       });
 
       toast({
         title: "Submission failed",
-        description: "Please try again or contact security directly.",
+        description: "Please try again or contact security directly if the problem persists.",
         variant: "destructive"
       });
     } finally {
@@ -182,6 +211,9 @@ export default function ReportIncident() {
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
+                {validationErrors.category && (
+                  <p className="text-sm text-destructive">{validationErrors.category}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -191,10 +223,13 @@ export default function ReportIncident() {
                     id="location"
                     placeholder="Enter location or building name"
                     value={location}
-                    onChange={(e) => setLocation(sanitizeInput(e.target.value))}
+                    onChange={(e) => setLocation(sanitizeInput(e.target.value, { maxLength: 200 }))}
                     disabled={useCurrentLocation}
                     maxLength={200}
                   />
+                  {validationErrors.location && (
+                    <p className="text-sm text-destructive">{validationErrors.location}</p>
+                  )}
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="current-location"
@@ -219,12 +254,13 @@ export default function ReportIncident() {
                     id="description"
                     placeholder="Please provide as much detail as possible about what happened... (10-2000 characters)"
                     value={description}
-                    onChange={(e) => setDescription(sanitizeInput(e.target.value))}
+                    onChange={(e) => setDescription(sanitizeInput(e.target.value, { maxLength: 2000, allowLineBreaks: true }))}
                     rows={4}
                     maxLength={2000}
                   />
-                  <div className="text-xs text-muted-foreground text-right">
-                    {description.length}/2000 characters
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{validationErrors.description && <span className="text-destructive">{validationErrors.description}</span>}</span>
+                    <span>{description.length}/2000 characters</span>
                   </div>
               </div>
 

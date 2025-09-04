@@ -22,6 +22,9 @@ export default function Auth() {
     hasMinLength: false,
     hasNumber: false,
     hasLetter: false,
+    hasSpecial: false,
+    hasUpper: false,
+    hasLower: false,
     score: 0
   });
   const { toast } = useToast();
@@ -51,28 +54,48 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Password strength validation
-  const validatePasswordStrength = (password: string) => {
-    const hasMinLength = password.length >= 8;
-    const hasNumber = /[0-9]/.test(password);
-    const hasLetter = /[a-zA-Z]/.test(password);
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
-    
-    let score = 0;
-    if (hasMinLength) score += 1;
-    if (hasNumber) score += 1;
-    if (hasLetter) score += 1;
-    if (hasSpecialChar) score += 1;
-    
-    const isValid = hasMinLength && hasNumber && hasLetter;
-    
-    setPasswordStrength({
-      isValid,
-      hasMinLength,
-      hasNumber,
-      hasLetter,
-      score
-    });
+  // Enhanced password strength validation using the new database function
+  const validatePasswordStrength = async (password: string) => {
+    try {
+      const { data } = await supabase.rpc('validate_password_strength', { password });
+      if (data && typeof data === 'object' && data !== null) {
+        const result = data as any; // Type assertion for the JSONB response
+        setPasswordStrength({
+          isValid: result.is_valid || false,
+          hasMinLength: result.requirements?.min_length || false,
+          hasNumber: result.requirements?.has_number || false,
+          hasLetter: result.requirements?.has_letter || false,
+          hasSpecial: result.requirements?.has_special || false,
+          hasUpper: result.requirements?.has_upper || false,
+          hasLower: result.requirements?.has_lower || false,
+          score: result.score || 0
+        });
+      }
+    } catch (error) {
+      console.warn('Password validation failed, using fallback:', error);
+      // Fallback to client-side validation
+      const hasMinLength = password.length >= 8;
+      const hasNumber = /[0-9]/.test(password);
+      const hasLetter = /[a-zA-Z]/.test(password);
+      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+      
+      let score = 0;
+      if (hasMinLength) score += 1;
+      if (hasNumber) score += 1;
+      if (hasLetter) score += 1;
+      if (hasSpecial) score += 1;
+      
+      setPasswordStrength({
+        isValid: hasMinLength && hasNumber && hasLetter,
+        hasMinLength,
+        hasNumber,
+        hasLetter,
+        hasSpecial,
+        hasUpper: /[A-Z]/.test(password),
+        hasLower: /[a-z]/.test(password),
+        score
+      });
+    }
   };
 
   // Enhanced input sanitization
@@ -355,6 +378,9 @@ export default function Auth() {
                         { met: passwordStrength.hasMinLength, text: "At least 8 characters" },
                         { met: passwordStrength.hasLetter, text: "Contains letters" },
                         { met: passwordStrength.hasNumber, text: "Contains numbers" },
+                        { met: passwordStrength.hasSpecial, text: "Contains special characters" },
+                        { met: passwordStrength.hasUpper, text: "Contains uppercase letters" },
+                        { met: passwordStrength.hasLower, text: "Contains lowercase letters" },
                       ].map((requirement, index) => (
                         <div key={index} className="flex items-center gap-2 text-xs">
                           {requirement.met ? (

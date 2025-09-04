@@ -18,14 +18,10 @@ export function BottomNavigation() {
 
   return (
     <motion.nav 
-      className="fixed bottom-0 left-0 right-0 bg-card/95 border-t border-border/50 shadow-soft z-[100] backdrop-blur-xl"
+      className="fixed bottom-0 left-0 right-0 bg-card/95 border-t border-border/50 shadow-soft z-[1000] backdrop-blur-xl"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      style={{
-        // Ensure it stays above page transitions
-        zIndex: 1000,
-      }}
     >
       <div className="flex justify-around items-center px-2 py-3 max-w-md mx-auto">
         {navItems.map(({ path, icon: Icon, label }) => {
