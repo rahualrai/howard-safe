@@ -14,7 +14,6 @@ import { ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   
   const emergencyAlerts = [
@@ -60,18 +59,6 @@ export default function Home() {
     });
   };
 
-  useEffect(() => {
-    // Simulate initial loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <HomeLoadingScreen />;
-  }
 
   return (
     <div className="min-h-screen bg-background" {...pullToRefreshProps}>
