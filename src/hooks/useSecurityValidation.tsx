@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -16,6 +16,7 @@ export const useSecurityValidation = (options: SecurityValidationOptions = {}) =
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isValidSession, setIsValidSession] = useState(false);
+  const hasHadSessionRef = useRef(false); // Track if user ever had a session
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -67,8 +68,13 @@ export const useSecurityValidation = (options: SecurityValidationOptions = {}) =
         setSession(session);
         setUser(session?.user ?? null);
         setIsValidSession(isValid);
+        
+        // Track if user ever had a valid session
+        if (isValid) {
+          hasHadSessionRef.current = true;
+        }
 
-        if (requireAuth && !isValid) {
+        if (requireAuth && !isValid && !window.location.pathname.includes('/auth')) {
           await logSecurityEvent('unauthorized_access_attempt', { 
             path: window.location.pathname,
             timestamp: new Date().toISOString()
@@ -92,10 +98,16 @@ export const useSecurityValidation = (options: SecurityValidationOptions = {}) =
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setIsValidSession(isValid);
+        
+        // Track if user ever had a valid session
+        if (isValid) {
+          hasHadSessionRef.current = true;
+        }
 
         // Handle different auth events
         switch (event) {
           case 'SIGNED_IN':
+            hasHadSessionRef.current = true;
             await logSecurityEvent('user_signed_in', {
               userId: currentSession?.user?.id,
               timestamp: new Date().toISOString()
@@ -106,7 +118,7 @@ export const useSecurityValidation = (options: SecurityValidationOptions = {}) =
             await logSecurityEvent('user_signed_out', {
               timestamp: new Date().toISOString()
             });
-            if (requireAuth) {
+            if (requireAuth && !window.location.pathname.includes('/auth')) {
               navigate(redirectTo);
             }
             break;
@@ -126,11 +138,11 @@ export const useSecurityValidation = (options: SecurityValidationOptions = {}) =
             break;
         }
 
-        // Handle session expiration
-        if (event === 'SIGNED_OUT' || !isValid) {
+        // Handle session expiration - only show toast if user previously had a session
+        if (!isValid && hasHadSessionRef.current && event !== 'SIGNED_OUT') {
           if (onSessionExpired) {
             onSessionExpired();
-          } else if (requireAuth && event !== 'SIGNED_OUT') {
+          } else if (requireAuth) {
             toast({
               title: 'Session expired',
               description: 'Please sign in again for security.',
