@@ -70,14 +70,14 @@ export default function Home() {
       >
         {/* Header */}
         <motion.header 
-          className="bg-card shadow-soft border-b border-border"
+          className="bg-gradient-to-r from-card via-card to-card/95 shadow-primary/5 shadow-lg border-b border-border/30 backdrop-blur-sm"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="px-mobile-padding py-4">
-            <h1 className="text-2xl font-bold text-primary text-center">Better Safe</h1>
-            <p className="text-sm text-muted-foreground text-center mt-1">Howard University Campus Safety</p>
+          <div className="px-mobile-padding py-6">
+            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent text-center">Better Safe</h1>
+            <p className="text-sm text-muted-foreground text-center mt-2">Howard University Campus Safety</p>
           </div>
         </motion.header>
 
@@ -125,7 +125,7 @@ export default function Home() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
                 >
-                  <Card className="shadow-soft border-border hover:shadow-primary transition-shadow cursor-pointer">
+                  <Card className="shadow-primary/10 shadow-lg border-border/50 hover:shadow-primary/20 hover:shadow-xl transition-all duration-300 cursor-pointer backdrop-blur-sm bg-card/80">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
@@ -174,7 +174,7 @@ export default function Home() {
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="shadow-soft border-border hover:shadow-primary transition-shadow cursor-pointer">
+                <Card className="shadow-primary/10 shadow-lg border-border/50 hover:shadow-primary/20 hover:shadow-xl transition-all duration-300 cursor-pointer backdrop-blur-sm bg-card/80">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-center">Safety Tips</CardTitle>
                   </CardHeader>
@@ -196,7 +196,7 @@ export default function Home() {
                 whileTap={{ scale: 0.95 }}
                 transition={{ duration: 0.2 }}
               >
-                <Card className="shadow-soft border-border hover:shadow-primary transition-shadow cursor-pointer">
+                <Card className="shadow-primary/10 shadow-lg border-border/50 hover:shadow-primary/20 hover:shadow-xl transition-all duration-300 cursor-pointer backdrop-blur-sm bg-card/80">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm text-center">Campus Map</CardTitle>
                   </CardHeader>

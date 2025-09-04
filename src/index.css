@@ -92,33 +92,46 @@ All colors MUST be HSL for consistency and theming.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Core Background & Foreground - Deep Dark with Better Contrast */
+    --background: 222 47% 3%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    /* Card & Surface Colors - Elevated Dark Surfaces */
+    --card: 222 47% 5%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 5%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary - Bright Safety Blue for Dark Mode */
+    --primary: 214 84% 65%;
+    --primary-foreground: 222 47% 3%;
+    --primary-glow: 214 84% 75%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    /* Secondary - Dark Surface with Good Contrast */
+    --secondary: 217 32% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Muted Elements - Better Contrast */
+    --muted: 217 32% 12%;
+    --muted-foreground: 215 20% 70%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent - Vibrant Emergency Orange */
+    --accent: 25 95% 60%;
+    --accent-foreground: 222 47% 3%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Success - Bright Safety Green */
+    --success: 142 71% 55%;
+    --success-foreground: 222 47% 3%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Alert/Destructive - Bright Emergency Red */
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 222 47% 3%;
+
+    /* Borders and Inputs - Subtle but Visible */
+    --border: 217 32% 18%;
+    --input: 217 32% 15%;
+    --ring: 214 84% 65%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
