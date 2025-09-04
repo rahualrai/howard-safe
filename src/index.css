@@ -137,5 +137,11 @@ All colors MUST be HSL for consistency and theming.
 
   body {
     @apply bg-background text-foreground;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  html {
+    height: 100%;
   }
 }
