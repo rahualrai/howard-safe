@@ -3,7 +3,7 @@ import { Wrapper, Status } from '@googlemaps/react-wrapper';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ZoomIn, ZoomOut, Navigation, MapIcon } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 declare global {
   interface Window {
@@ -172,15 +172,6 @@ export const GoogleMap: React.FC<Omit<GoogleMapProps, 'apiKey'>> = (props) => {
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
-        // Check if Supabase environment variables are available
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        
-        if (!supabaseUrl || !supabaseAnonKey) {
-          throw new Error('Supabase configuration missing. Please ensure Supabase is properly connected.');
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
         const { data, error } = await supabase.functions.invoke('get-google-maps-key');
         
         if (error) throw error;
