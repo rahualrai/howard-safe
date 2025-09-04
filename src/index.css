@@ -20,7 +20,7 @@ All colors MUST be HSL for consistency and theming.
     --popover-foreground: 215 25% 15%;
 
     /* Primary - Trustworthy Safety Blue */
-    --primary: 214 84% 46%;
+    --primary: 214 84% 42%;
     --primary-foreground: 0 0% 100%;
     --primary-glow: 214 84% 65%;
 
@@ -30,7 +30,7 @@ All colors MUST be HSL for consistency and theming.
 
     /* Muted Elements */
     --muted: 215 15% 95%;
-    --muted-foreground: 215 13% 50%;
+    --muted-foreground: 215 16% 40%;
 
     /* Accent - Emergency Action Orange */
     --accent: 25 95% 53%;
@@ -47,7 +47,7 @@ All colors MUST be HSL for consistency and theming.
     /* Borders and Inputs */
     --border: 215 15% 88%;
     --input: 215 15% 92%;
-    --ring: 214 84% 46%;
+    --ring: 214 84% 42%;
 
     --radius: 0.5rem;
 
