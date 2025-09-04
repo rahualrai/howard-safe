@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { Shield, Moon, AlertTriangle, Users, Phone, MapIcon, ChevronRight } from "lucide-react";
 
 export default function SafetyTips() {
@@ -156,7 +155,6 @@ export default function SafetyTips() {
         </div>
       </main>
 
-      <BottomNavigation />
     </div>
   );
 }

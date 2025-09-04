@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { Phone, MapIcon, Shield, Users, BookOpen, ExternalLink, Clock } from "lucide-react";
 
 export default function Resources() {
@@ -219,7 +218,6 @@ export default function Resources() {
         </div>
       </main>
 
-      <BottomNavigation />
     </div>
   );
 }

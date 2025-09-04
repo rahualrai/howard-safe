@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Phone, AlertCircle, ChevronRight, Clock, Shield, MapIcon } from "lucide-react";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -214,7 +213,6 @@ export default function Home() {
           </motion.div>
         </main>
 
-        <BottomNavigation />
       </PullToRefresh>
     </div>
   );

@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { AlertTriangle, MapPin, Send, Camera } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -212,7 +211,6 @@ export default function ReportIncident() {
         </motion.div>
       </main>
 
-      <BottomNavigation />
     </div>
   );
 }

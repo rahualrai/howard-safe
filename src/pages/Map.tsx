@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { motion } from "framer-motion";
 import { HowardMap } from "@/components/HowardMap";
 import { useState } from "react";
@@ -122,7 +121,6 @@ export default function Map() {
         </div>
       </main>
 
-      <BottomNavigation />
     </div>
   );
 }

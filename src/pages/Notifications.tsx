@@ -1,7 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BottomNavigation } from "@/components/BottomNavigation";
 import { Bell, AlertTriangle, Info, Shield, Clock, Settings, X } from "lucide-react";
 
 export default function Notifications() {
@@ -210,7 +209,6 @@ export default function Notifications() {
         </Card>
       </main>
 
-      <BottomNavigation />
     </div>
   );
 }
