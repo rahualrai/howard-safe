@@ -192,6 +192,41 @@ export default function Profile() {
           </CardContent>
         </Card>
 
+        {/* Profile Customization */}
+        <Card>
+          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+            <div className="flex items-center space-x-2">
+              <UserIcon className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Profile Settings</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">Display Name</p>
+                <p className="text-xs text-muted-foreground">How your name appears in reports</p>
+              </div>
+              <Button variant="outline" size="sm">Edit</Button>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">Emergency Contacts</p>
+                <p className="text-xs text-muted-foreground">People to notify in emergencies</p>
+              </div>
+              <Button variant="outline" size="sm">Manage</Button>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">Preferred Language</p>
+                <p className="text-xs text-muted-foreground">English (US)</p>
+              </div>
+              <Button variant="outline" size="sm">Change</Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Notifications */}
         <Card>
           <CardHeader className="flex flex-row items-center space-y-0 pb-2">
@@ -223,6 +258,41 @@ export default function Profile() {
                 <p className="text-xs text-muted-foreground">Updates on your submitted reports</p>
               </div>
               <Badge variant="outline">Disabled</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Privacy & Security */}
+        <Card>
+          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+            <div className="flex items-center space-x-2">
+              <Shield className="h-5 w-5 text-success" />
+              <CardTitle className="text-lg">Privacy & Security</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">Two-Factor Authentication</p>
+                <p className="text-xs text-muted-foreground">Add extra security to your account</p>
+              </div>
+              <Button variant="outline" size="sm">Setup</Button>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">Privacy Settings</p>
+                <p className="text-xs text-muted-foreground">Control who can see your information</p>
+              </div>
+              <Button variant="outline" size="sm">Manage</Button>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">Data Export</p>
+                <p className="text-xs text-muted-foreground">Download your account data</p>
+              </div>
+              <Button variant="outline" size="sm">Export</Button>
             </div>
           </CardContent>
         </Card>
