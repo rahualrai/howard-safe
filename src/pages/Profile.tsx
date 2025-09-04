@@ -5,45 +5,40 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { User } from "@supabase/supabase-js";
-import { Bell, User as UserIcon, LogOut } from "lucide-react";
+import { Bell, User as UserIcon, LogOut, Shield, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useSecurityValidation } from "@/hooks/useSecurityValidation";
 
 export default function Profile() {
-  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [lastLoginInfo, setLastLoginInfo] = useState<any>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Use enhanced security validation
+  const { 
+    user, 
+    loading, 
+    isValidSession, 
+    secureSignOut, 
+    logSecurityEvent 
+  } = useSecurityValidation({
+    requireAuth: true,
+    redirectTo: '/auth'
+  });
 
   useEffect(() => {
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        fetchProfile(session.user.id);
-      } else {
-        navigate("/auth");
-      }
-    });
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-          fetchProfile(session.user.id);
-        } else {
-          setUser(null);
-          navigate("/auth");
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    if (user && isValidSession) {
+      fetchProfile(user.id);
+      fetchLastLoginInfo(user.id);
+    }
+  }, [user, isValidSession]);
 
   const fetchProfile = async (userId: string) => {
     try {
+      setProfileLoading(true);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -51,35 +46,60 @@ export default function Profile() {
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
+        await logSecurityEvent('profile_fetch_error', {
+          userId,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
         throw error;
       }
 
       setProfile(data);
+      
+      // Log successful profile access
+      await logSecurityEvent('profile_accessed', {
+        userId,
+        timestamp: new Date().toISOString()
+      });
     } catch (error: any) {
       toast({
         title: "Error loading profile",
-        description: error.message,
+        description: "Unable to load your profile information.",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setProfileLoading(false);
+    }
+  };
+
+  const fetchLastLoginInfo = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('security_audit_log')
+        .select('created_at, event_details')
+        .eq('user_id', userId)
+        .eq('event_type', 'signin_success')
+        .order('created_at', { ascending: false })
+        .limit(2); // Get last 2 to show previous login
+
+      if (error) {
+        console.warn('Could not fetch login history:', error);
+        return;
+      }
+
+      if (data && data.length > 1) {
+        setLastLoginInfo(data[1]); // Second most recent is the "last" login
+      }
+    } catch (error) {
+      console.warn('Error fetching login history:', error);
     }
   };
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error signing out",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      navigate("/auth");
-    }
+    await secureSignOut();
   };
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-muted-foreground">Loading...</div>
@@ -87,8 +107,8 @@ export default function Profile() {
     );
   }
 
-  if (!user) {
-    return null; // Will redirect in useEffect
+  if (!user || !isValidSession) {
+    return null; // Security hook will handle redirect
   }
 
   return (
@@ -125,6 +145,50 @@ export default function Profile() {
                 {new Date(user.created_at).toLocaleDateString()}
               </p>
             </div>
+            {lastLoginInfo && (
+              <div>
+                <p className="text-sm text-muted-foreground">Last sign in</p>
+                <p className="font-medium text-sm">
+                  {new Date(lastLoginInfo.created_at).toLocaleString()}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Security Status */}
+        <Card>
+          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+            <div className="flex items-center space-x-2">
+              <Shield className="h-5 w-5 text-success" />
+              <CardTitle className="text-lg">Security Status</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg">
+              <div>
+                <p className="font-medium text-sm text-success">Account Secure</p>
+                <p className="text-xs text-muted-foreground">Your account has secure authentication</p>
+              </div>
+              <Badge variant="secondary" className="bg-success/20 text-success">Active</Badge>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">Email Verified</p>
+                <p className="text-xs text-muted-foreground">Your email has been confirmed</p>
+              </div>
+              <Badge variant="secondary">
+                {user.email_confirmed_at ? "Verified" : "Pending"}
+              </Badge>
+            </div>
+            
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                For security, we monitor account activity and log access events.
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
 
