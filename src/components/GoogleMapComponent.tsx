@@ -11,11 +11,6 @@ declare global {
   }
 }
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
-
 interface GoogleMapProps {
   center: google.maps.LatLngLiteral;
   zoom: number;
@@ -177,6 +172,15 @@ export const GoogleMap: React.FC<Omit<GoogleMapProps, 'apiKey'>> = (props) => {
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
+        // Check if Supabase environment variables are available
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        
+        if (!supabaseUrl || !supabaseAnonKey) {
+          throw new Error('Supabase configuration missing. Please ensure Supabase is properly connected.');
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
         const { data, error } = await supabase.functions.invoke('get-google-maps-key');
         
         if (error) throw error;
