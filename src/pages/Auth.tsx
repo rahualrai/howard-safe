@@ -383,14 +383,6 @@ export default function Auth() {
             >
               {loading ? "Loading..." : isSignUp ? "Create Account" : "Sign In"}
             </Button>
-            
-            {/* Security Notice */}
-            <Alert className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                This app follows security best practices. Your data is protected with encryption and secure access controls.
-              </AlertDescription>
-            </Alert>
           </form>
           
           <div className="mt-4 text-center">
