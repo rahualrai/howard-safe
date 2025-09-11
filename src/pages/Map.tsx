@@ -4,17 +4,29 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { GoogleMap } from "@/components/GoogleMapComponent";
-import { useState } from "react";
-import { Search, Navigation, Phone, MapIcon, Shield, AlertTriangle, ZoomIn, ZoomOut } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Navigation, Phone, MapIcon, Shield, AlertTriangle, ZoomIn, ZoomOut, MapPin } from "lucide-react";
 import { HapticFeedback } from "@/utils/haptics";
 import { ImpactStyle } from "@capacitor/haptics";
+import { useLocationPermission } from "@/hooks/useLocationPermission";
+import { LocationPermissionPrompt } from "@/components/LocationPermissionPrompt";
 
 export default function Map() {
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const { permission, getCurrentLocation, location } = useLocationPermission();
+  
   const mapIncidents = [
     { id: 1, type: "Safe Route", location: "Main Quad to Library", status: "active" },
     { id: 2, type: "Well-lit Area", location: "Georgia Ave Corridor", status: "verified" },
     { id: 3, type: "Incident Report", location: "Near Cramton Auditorium", time: "2 hours ago" },
   ];
+
+  // Check location permission on mount
+  useEffect(() => {
+    if (permission === 'unknown' || permission === 'prompt') {
+      setShowLocationPrompt(true);
+    }
+  }, [permission]);
 
   // Howard University coordinates
   const howardUniversityCenter = { lat: 38.9227, lng: -77.0204 };
@@ -27,21 +39,60 @@ export default function Map() {
     { position: { lat: 38.9250, lng: -77.0180 }, title: "Recent Incident", type: "incident" as const },
   ];
 
+  const handleLocationGranted = (position: GeolocationPosition) => {
+    setShowLocationPrompt(false);
+    // You can use the position here to update map center
+    console.log('Location granted:', position);
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Location Permission Prompt */}
+      {showLocationPrompt && (
+        <LocationPermissionPrompt
+          variant="overlay"
+          showCloseButton={true}
+          onClose={() => setShowLocationPrompt(false)}
+          onPermissionGranted={handleLocationGranted}
+        />
+      )}
       {/* Header */}
       <header className="bg-card shadow-soft border-b border-border sticky top-0 z-40">
         <div className="px-mobile-padding py-4">
-          <h1 className="text-xl font-semibold text-foreground text-center">Campus Map</h1>
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-xl font-semibold text-foreground">Campus Map</h1>
+            
+            {/* Location Status Badge */}
+            <Badge 
+              variant={permission === 'granted' ? 'default' : 'secondary'}
+              className="flex items-center gap-1"
+            >
+              <MapPin className="w-3 h-3" />
+              {permission === 'granted' ? 'Location On' : 'Location Off'}
+            </Badge>
+          </div>
           
           {/* Search Bar */}
-          <div className="mt-3 relative">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
             <Input 
               placeholder="Search locations..."
               className="pl-10 bg-muted/50 border-border"
             />
           </div>
+
+          {/* Location Prompt Button */}
+          {(permission === 'unknown' || permission === 'prompt' || permission === 'denied') && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-3"
+              onClick={() => setShowLocationPrompt(true)}
+            >
+              <MapPin className="w-4 h-4 mr-2" />
+              Enable Location for Better Safety
+            </Button>
+          )}
         </div>
       </header>
 
