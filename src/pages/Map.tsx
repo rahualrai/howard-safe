@@ -13,6 +13,7 @@ import { LocationPermissionPrompt } from "@/components/LocationPermissionPrompt"
 
 export default function Map() {
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [mapCenter, setMapCenter] = useState({ lat: 38.9227, lng: -77.0204 });
   const { permission, getCurrentLocation, location } = useLocationPermission();
   
   const mapIncidents = [
@@ -21,28 +22,42 @@ export default function Map() {
     { id: 3, type: "Incident Report", location: "Near Cramton Auditorium", time: "2 hours ago" },
   ];
 
-  // Check location permission on mount
+  // Check location permission on mount and hide prompt when granted
   useEffect(() => {
     if (permission === 'unknown' || permission === 'prompt') {
       setShowLocationPrompt(true);
+    } else if (permission === 'granted') {
+      setShowLocationPrompt(false);
+      // Get current location and center map
+      getCurrentLocation().then((position) => {
+        if (position) {
+          setMapCenter({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        }
+      });
     }
-  }, [permission]);
+  }, [permission, getCurrentLocation]);
 
-  // Howard University coordinates
-  const howardUniversityCenter = { lat: 38.9227, lng: -77.0204 };
+  // Howard University coordinates (fallback - not used but kept for reference)
   
-  // Sample markers for campus locations
+  // Enhanced markers with better pins
   const mapMarkers = [
-    { position: { lat: 38.9227, lng: -77.0204 }, title: "Main Campus", type: "safe" as const },
-    { position: { lat: 38.9240, lng: -77.0190 }, title: "Library Safe Route", type: "safe" as const },
-    { position: { lat: 38.9210, lng: -77.0220 }, title: "Well-lit Area", type: "welllit" as const },
-    { position: { lat: 38.9250, lng: -77.0180 }, title: "Recent Incident", type: "incident" as const },
+    { position: { lat: 38.9227, lng: -77.0204 }, title: "Howard University Main Campus", type: "safe" as const },
+    { position: { lat: 38.9240, lng: -77.0190 }, title: "Founders Library - Safe Route", type: "safe" as const },
+    { position: { lat: 38.9210, lng: -77.0220 }, title: "Well-lit Walkway - Georgia Ave", type: "welllit" as const },
+    { position: { lat: 38.9250, lng: -77.0180 }, title: "Recent Security Incident", type: "incident" as const },
+    { position: { lat: 38.9235, lng: -77.0195 }, title: "Blue Light Emergency Station", type: "safe" as const },
+    { position: { lat: 38.9220, lng: -77.0210 }, title: "Campus Security Office", type: "safe" as const },
   ];
 
   const handleLocationGranted = (position: GeolocationPosition) => {
     setShowLocationPrompt(false);
-    // You can use the position here to update map center
-    console.log('Location granted:', position);
+    setMapCenter({
+      lat: position.coords.latitude,
+      lng: position.coords.longitude
+    });
   };
 
   return (
@@ -98,10 +113,13 @@ export default function Map() {
 
       {/* Main Content */}
       <main className="relative flex-1">
-        {/* Google Maps */}
+        {/* Google Maps with current location */}
         <GoogleMap 
-          center={howardUniversityCenter}
-          zoom={16}
+          center={permission === 'granted' && location ? 
+            { lat: location.coords.latitude, lng: location.coords.longitude } : 
+            mapCenter
+          }
+          zoom={permission === 'granted' ? 17 : 16}
           markers={mapMarkers}
         />
 

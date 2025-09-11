@@ -12,74 +12,131 @@ declare global {
 }
 
 interface GoogleMapProps {
-  center: google.maps.LatLngLiteral;
+  center: { lat: number; lng: number };
   zoom: number;
-  markers?: Array<{
-    position: google.maps.LatLngLiteral;
+  markers: Array<{
+    position: { lat: number; lng: number };
     title: string;
     type: 'safe' | 'incident' | 'welllit';
   }>;
 }
 
-const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers = [] }) => {
+const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers }) => {
+  const [map, setMap] = useState<google.maps.Map>();
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [mapMarkers, setMapMarkers] = useState<google.maps.Marker[]>([]);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const userLocationMarkerRef = useRef<google.maps.Marker | null>(null);
 
   useEffect(() => {
-    if (!mapRef.current || !window.google) return;
-
-    const mapInstance = new google.maps.Map(mapRef.current, {
-      center,
-      zoom,
-      styles: [
-        {
-          "featureType": "poi",
-          "elementType": "labels",
-          "stylers": [{"visibility": "off"}]
-        }
-      ],
-    });
-
-    setMap(mapInstance);
-
-    // Add markers
-    const newMarkers = markers.map(marker => {
-      const mapMarker = new google.maps.Marker({
-        position: marker.position,
-        map: mapInstance,
-        title: marker.title,
-        icon: {
-          url: marker.type === 'safe' ? 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSIjMjJjNTVlIi8+Cjwvc3ZnPgo=' :
-                  marker.type === 'incident' ? 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSIjZWY0NDQ0Ii8+Cjwvc3ZnPgo=' :
-                  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSIjMzY4M2Y2Ii8+Cjwvc3ZnPgo=',
-          scaledSize: new google.maps.Size(24, 24),
-        },
+    if (mapRef.current && !map) {
+      const googleMap = new google.maps.Map(mapRef.current, {
+        center,
+        zoom,
+        styles: [
+          {
+            featureType: 'poi',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }]
+          }
+        ],
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
       });
+      setMap(googleMap);
+    }
+  }, [center, zoom, map]);
 
-      return mapMarker;
-    });
+  useEffect(() => {
+    if (map) {
+      // Clear existing markers
+      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current = [];
 
-    setMapMarkers(newMarkers);
+      // Add new markers with improved styling
+      markers.forEach(marker => {
+        const markerIcon = getMarkerIcon(marker.type);
+        
+        const googleMarker = new google.maps.Marker({
+          position: marker.position,
+          map,
+          title: marker.title,
+          icon: markerIcon,
+          animation: marker.type === 'incident' ? google.maps.Animation.BOUNCE : undefined,
+        });
 
-    return () => {
-      newMarkers.forEach(marker => marker.setMap(null));
+        // Add info window
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="padding: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <h3 style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">${marker.title}</h3>
+              <p style="margin: 0; color: #666; font-size: 14px;">${getMarkerDescription(marker.type)}</p>
+              <div style="margin-top: 8px; padding: 4px 8px; background: ${getMarkerColor(marker.type)}; color: white; border-radius: 4px; font-size: 12px; display: inline-block;">
+                ${marker.type.charAt(0).toUpperCase() + marker.type.slice(1)}
+              </div>
+            </div>
+          `
+        });
+
+        googleMarker.addListener('click', () => {
+          infoWindow.open(map, googleMarker);
+        });
+
+        markersRef.current.push(googleMarker);
+      });
+    }
+  }, [map, markers]);
+
+  // Helper functions for marker styling
+  const getMarkerIcon = (type: string) => {
+    const colors = {
+      safe: '#22c55e',      // Green
+      incident: '#ef4444',  // Red
+      welllit: '#3b82f6',   // Blue
     };
-  }, [center, zoom, markers]);
 
-  const handleZoomIn = useCallback(() => {
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 12,
+      fillColor: colors[type as keyof typeof colors] || '#6b7280',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 3,
+      strokeOpacity: 1,
+    };
+  };
+
+  const getMarkerColor = (type: string) => {
+    const colors = {
+      safe: '#22c55e',
+      incident: '#ef4444',
+      welllit: '#3b82f6',
+    };
+    return colors[type as keyof typeof colors] || '#6b7280';
+  };
+
+  const getMarkerDescription = (type: string) => {
+    const descriptions = {
+      safe: 'Safe zone with security presence',
+      incident: 'Recent security incident reported',
+      welllit: 'Well-lit area for safer walking',
+    };
+    return descriptions[type as keyof typeof descriptions] || 'Campus location';
+  };
+
+  const zoomIn = useCallback(() => {
     if (map) {
       map.setZoom((map.getZoom() || 15) + 1);
     }
   }, [map]);
 
-  const handleZoomOut = useCallback(() => {
+  const zoomOut = useCallback(() => {
     if (map) {
       map.setZoom((map.getZoom() || 15) - 1);
     }
   }, [map]);
 
-  const handleRecenter = useCallback(() => {
+  const recenterToUserLocation = useCallback(() => {
     if (map && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -88,52 +145,114 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers = 
             lng: position.coords.longitude,
           };
           map.setCenter(userLocation);
-          map.setZoom(17);
+          map.setZoom(18);
+          
+          // Add or update user location marker
+          if (userLocationMarkerRef.current) {
+            userLocationMarkerRef.current.setPosition(userLocation);
+          } else {
+            userLocationMarkerRef.current = new google.maps.Marker({
+              position: userLocation,
+              map,
+              title: "Your Current Location",
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: '#4285F4',
+                fillOpacity: 1,
+                strokeColor: '#ffffff',
+                strokeWeight: 3,
+              },
+              zIndex: 1000,
+            });
+          }
         },
-        () => {
-          // Fallback to Howard University coordinates
-          map.setCenter({ lat: 38.9227, lng: -77.0204 });
-        }
+        (error) => {
+          console.error('Error getting location:', error);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
     }
   }, [map]);
 
+  // Update map center when props change
+  useEffect(() => {
+    if (map) {
+      map.setCenter(center);
+      map.setZoom(zoom);
+      
+      // Auto-add user location marker if we have location permission
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+            
+            // Only add user marker if it doesn't exist
+            if (!userLocationMarkerRef.current) {
+              userLocationMarkerRef.current = new google.maps.Marker({
+                position: userLocation,
+                map,
+                title: "Your Current Location",
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 10,
+                  fillColor: '#4285F4',
+                  fillOpacity: 1,
+                  strokeColor: '#ffffff',
+                  strokeWeight: 4,
+                },
+                zIndex: 1000,
+              });
+            } else {
+              userLocationMarkerRef.current.setPosition(userLocation);
+            }
+          },
+          () => {}, // Silently fail if no permission
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+        );
+      }
+    }
+  }, [map, center, zoom]);
+
   return (
-    <div className="h-96 bg-muted/30 border-b border-border relative overflow-hidden">
-      <div ref={mapRef} className="absolute inset-0" />
+    <div className="relative w-full h-96">
+      <div ref={mapRef} className="absolute inset-0 rounded-lg" />
       
       {/* Map Controls */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2">
-        <Button 
-          size="sm" 
-          variant="secondary" 
-          className="w-10 h-10 p-0 shadow-soft"
-          onClick={handleZoomIn}
+      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-10 h-10 p-0 bg-card shadow-soft"
+          onClick={zoomIn}
         >
-          <ZoomIn size={16} />
+          <ZoomIn className="w-4 h-4" />
         </Button>
-        <Button 
-          size="sm" 
-          variant="secondary" 
-          className="w-10 h-10 p-0 shadow-soft"
-          onClick={handleZoomOut}
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-10 h-10 p-0 bg-card shadow-soft"
+          onClick={zoomOut}
         >
-          <ZoomOut size={16} />
+          <ZoomOut className="w-4 h-4" />
         </Button>
-        <Button 
-          size="sm" 
-          variant="secondary" 
-          className="w-10 h-10 p-0 shadow-soft"
-          onClick={handleRecenter}
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-10 h-10 p-0 bg-card shadow-soft"
+          onClick={recenterToUserLocation}
         >
-          <Navigation size={16} />
+          <Navigation className="w-4 h-4" />
         </Button>
       </div>
 
       {/* Current Location Indicator */}
-      <div className="absolute bottom-4 left-4">
-        <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-          <div className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse"></div>
+      <div className="absolute bottom-4 left-4 z-10">
+        <Badge variant="secondary" className="bg-card shadow-soft border-border">
+          <div className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
           Current Location
         </Badge>
       </div>
