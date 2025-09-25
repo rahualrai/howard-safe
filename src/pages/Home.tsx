@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Phone, AlertCircle, ChevronRight, Clock, Shield, MapIcon } from "lucide-react";
+import { Phone, AlertCircle, ChevronRight, Clock, Shield, MapIcon, Sun, IdCard, AlertTriangle, CalendarDays, Building2, Link as LinkIcon, MessageSquare, CalendarPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -13,6 +13,15 @@ import { ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { WeatherWidget } from "@/components/WeatherWidget";
+import { DigitalID } from "@/components/DigitalID";
+import { TitleIXHub } from "@/components/TitleIXHub";
+import { EventsCalendar } from "@/components/EventsCalendar";
+import { DiningServices } from "@/components/DiningServices";
+import { QuickLinksDashboard } from "@/components/QuickLinksDashboard";
+import { BisonChat } from "@/components/BisonChat";
+import { CalendarSync } from "@/components/CalendarSync";
+import { AppTile } from "@/components/AppTile";
 
 export default function Home() {
   const { toast } = useToast();
@@ -126,7 +135,6 @@ export default function Home() {
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             <Button 
-              size="lg"
               onClick={handleQuickHelp}
               className="w-full h-20 bg-gradient-emergency text-white text-xl font-semibold shadow-emergency hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 border-0"
             >
@@ -196,29 +204,26 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions (Navigation to dedicated pages) */}
           <motion.div 
-            className="grid grid-cols-2 gap-3"
+            className="grid grid-cols-3 gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
           >
             <Link to="/tips">
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.15 }}
               >
-                <Card className="shadow-primary/10 shadow-lg border-border/50 hover:shadow-primary/20 hover:shadow-xl transition-all duration-300 cursor-pointer backdrop-blur-sm bg-card/80">
+                <Card className="shadow-primary/10 border-border/50 cursor-pointer">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-center">Safety Tips</CardTitle>
+                    <CardTitle className="text-xs text-center">Safety Tips</CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-0 pb-4">
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <Shield className="text-primary" size={24} />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Stay informed</p>
+                  <CardContent className="pt-0 pb-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                      <Shield className="text-primary" size={18} />
                     </div>
                   </CardContent>
                 </Card>
@@ -227,26 +232,70 @@ export default function Home() {
 
             <Link to="/map">
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.15 }}
               >
-                <Card className="shadow-primary/10 shadow-lg border-border/50 hover:shadow-primary/20 hover:shadow-xl transition-all duration-300 cursor-pointer backdrop-blur-sm bg-card/80">
+                <Card className="shadow-primary/10 border-border/50 cursor-pointer">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm text-center">Campus Map</CardTitle>
+                    <CardTitle className="text-xs text-center">Campus Map</CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-0 pb-4">
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <MapIcon className="text-success" size={24} />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Find safe routes</p>
+                  <CardContent className="pt-0 pb-3">
+                    <div className="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center mx-auto">
+                      <MapIcon className="text-success" size={18} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Link>
+
+            <Link to="/report">
+              <motion.div
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Card className="shadow-primary/10 border-border/50 cursor-pointer">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs text-center">Report</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0 pb-3">
+                    <div className="w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
+                      <AlertCircle className="text-destructive" size={18} />
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
             </Link>
           </motion.div>
+
+          {/* Student Hub App Launcher */}
+          <div className="mt-8 grid grid-cols-3 gap-3 sm:grid-cols-4">
+            <AppTile title="Weather" icon={<Sun size={20} />}>
+              <WeatherWidget />
+            </AppTile>
+            <AppTile title="Digital ID" icon={<IdCard size={20} />}>
+              <DigitalID />
+            </AppTile>
+            <AppTile title="Title IX" icon={<AlertTriangle size={20} className="text-amber-600" />}>
+              <TitleIXHub />
+            </AppTile>
+            <AppTile title="Events" icon={<CalendarDays size={20} />}>
+              <EventsCalendar />
+            </AppTile>
+            <AppTile title="Dining & Services" icon={<Building2 size={20} />}>
+              <DiningServices />
+            </AppTile>
+            <AppTile title="Quick Links" icon={<LinkIcon size={20} />}>
+              <QuickLinksDashboard />
+            </AppTile>
+            <AppTile title="BisonChat" icon={<MessageSquare size={20} />}>
+              <BisonChat />
+            </AppTile>
+            <AppTile title="Calendar Sync" icon={<CalendarPlus size={20} />}>
+              <CalendarSync />
+            </AppTile>
+          </div>
         </main>
 
       </PullToRefresh>
