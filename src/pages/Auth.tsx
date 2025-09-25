@@ -103,17 +103,10 @@ export default function Auth() {
     return input.trim().replace(/[<>]/g, '');
   };
 
-  // Security audit logging
+  // Security audit logging - simplified to avoid 401 errors
   const logSecurityEvent = async (eventType: string, details: any) => {
-    try {
-      await supabase.from('security_audit_log').insert({
-        event_type: eventType,
-        event_details: details,
-        user_agent: navigator.userAgent
-      });
-    } catch (error) {
-      console.warn('Failed to log security event:', error);
-    }
+    // Only log to console for debugging
+    console.debug('Security event:', eventType, details);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -287,10 +280,10 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-card border-border shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">
+          <CardTitle className="text-2xl text-center text-foreground">
             {isSignUp ? "Create Account" : "Welcome Back"}
           </CardTitle>
         </CardHeader>

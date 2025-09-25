@@ -50,60 +50,62 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
   useEffect(() => {
     if (map) {
       // Clear existing markers
-      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current.forEach((marker) => {
+        marker.map = null;
+      });
       markersRef.current = [];
 
-      // Add new markers with improved styling
-      markers.forEach(marker => {
-        const markerIcon = getMarkerIcon(marker.type);
-        
-        const googleMarker = new google.maps.Marker({
-          position: marker.position,
+      // Add new markers with improved styling using AdvancedMarkerElement
+      markers.forEach((m) => {
+        const color = getMarkerColor(m.type);
+        const content = createMarkerContent(m.title, m.type, color);
+
+        const advMarker = new google.maps.marker.AdvancedMarkerElement({
+          position: m.position,
           map,
-          title: marker.title,
-          icon: markerIcon,
-          animation: marker.type === 'incident' ? google.maps.Animation.BOUNCE : undefined,
+          title: m.title,
+          content,
+          zIndex: m.type === 'incident' ? 100 : 10,
         });
 
         // Add info window
         const infoWindow = new google.maps.InfoWindow({
           content: `
             <div style="padding: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <h3 style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">${marker.title}</h3>
-              <p style="margin: 0; color: #666; font-size: 14px;">${getMarkerDescription(marker.type)}</p>
-              <div style="margin-top: 8px; padding: 4px 8px; background: ${getMarkerColor(marker.type)}; color: white; border-radius: 4px; font-size: 12px; display: inline-block;">
-                ${marker.type.charAt(0).toUpperCase() + marker.type.slice(1)}
+              <h3 style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">${m.title}</h3>
+              <p style="margin: 0; color: #666; font-size: 14px;">${getMarkerDescription(m.type)}</p>
+              <div style="margin-top: 8px; padding: 4px 8px; background: ${color}; color: white; border-radius: 4px; font-size: 12px; display: inline-block;">
+                ${m.type.charAt(0).toUpperCase() + m.type.slice(1)}
               </div>
             </div>
-          `
+          `,
         });
 
-        googleMarker.addListener('click', () => {
-          infoWindow.open(map, googleMarker);
+        advMarker.addListener('gmp-click', () => {
+          infoWindow.open({ map, anchor: advMarker });
         });
 
-        markersRef.current.push(googleMarker);
+        markersRef.current.push(advMarker);
       });
     }
   }, [map, markers]);
 
-  // Helper functions for marker styling
-  const getMarkerIcon = (type: string) => {
-    const colors = {
-      safe: '#22c55e',      // Green
-      incident: '#ef4444',  // Red
-      welllit: '#3b82f6',   // Blue
-    };
+  // Helper functions for marker styling and content
+  const createMarkerContent = (title: string, type: string, color: string) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.transform = 'translate(-50%, -100%)';
 
-    return {
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 12,
-      fillColor: colors[type as keyof typeof colors] || '#6b7280',
-      fillOpacity: 1,
-      strokeColor: '#ffffff',
-      strokeWeight: 3,
-      strokeOpacity: 1,
-    };
+    const pin = document.createElement('div');
+    pin.style.width = '16px';
+    pin.style.height = '16px';
+    pin.style.borderRadius = '50%';
+    pin.style.background = color;
+    pin.style.border = '3px solid #fff';
+    pin.style.boxShadow = '0 6px 16px rgba(0,0,0,0.25)';
+    wrapper.appendChild(pin);
+
+    return wrapper;
   };
 
   const getMarkerColor = (type: string) => {
@@ -149,20 +151,13 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           
           // Add or update user location marker
           if (userLocationMarkerRef.current) {
-            userLocationMarkerRef.current.setPosition(userLocation);
+            userLocationMarkerRef.current.position = userLocation as any;
           } else {
-            userLocationMarkerRef.current = new google.maps.Marker({
+            userLocationMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
               position: userLocation,
               map,
               title: "Your Current Location",
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: '#4285F4',
-                fillOpacity: 1,
-                strokeColor: '#ffffff',
-                strokeWeight: 3,
-              },
+              content: createUserLocationContent(),
               zIndex: 1000,
             });
           }
@@ -323,6 +318,6 @@ export const GoogleMap: React.FC<Omit<GoogleMapProps, 'apiKey'>> = (props) => {
   };
 
   return (
-    <Wrapper apiKey={apiKey} render={render} />
+    <Wrapper apiKey={apiKey} libraries={['marker']} render={render} />
   );
 };

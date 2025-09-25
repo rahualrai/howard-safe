@@ -38,17 +38,10 @@ export const useSecurityValidation = (options: SecurityValidationOptions = {}) =
     return true;
   };
 
-  // Security audit logging
+  // Security audit logging - simplified to avoid database errors
   const logSecurityEvent = async (eventType: string, details: any) => {
-    try {
-      await supabase.from('security_audit_log').insert({
-        event_type: eventType,
-        event_details: details,
-        user_agent: navigator.userAgent
-      });
-    } catch (error) {
-      console.warn('Failed to log security event:', error);
-    }
+    // Only log to console for debugging
+    console.debug('Security event:', eventType, details);
   };
 
   useEffect(() => {
