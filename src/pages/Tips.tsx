@@ -10,7 +10,7 @@ export default function Tips() {
   const safetyTips = [
     {
       title: "Walk in Well-Lit Areas",
-      category: "Night Safety",
+      category: "Night Safety Tips",
       icon: Eye,
       description: "Always use well-lit pathways when walking on campus at night. Avoid shortcuts through dark or isolated areas."
     },
