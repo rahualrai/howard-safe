@@ -24,8 +24,8 @@ interface GoogleMapProps {
 const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers }) => {
   const [map, setMap] = useState<google.maps.Map>();
   const mapRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
-  const userLocationMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const userLocationMarkerRef = useRef<google.maps.Marker | null>(null);
 
   useEffect(() => {
     if (mapRef.current && !map) {
@@ -51,20 +51,26 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
     if (map) {
       // Clear existing markers
       markersRef.current.forEach((marker) => {
-        marker.map = null;
+        marker.setMap(null);
       });
       markersRef.current = [];
 
-      // Add new markers with improved styling using AdvancedMarkerElement
+      // Add new markers with standard markers
       markers.forEach((m) => {
         const color = getMarkerColor(m.type);
-        const content = createMarkerContent(m.title, m.type, color);
 
-        const advMarker = new google.maps.marker.AdvancedMarkerElement({
+        const marker = new google.maps.Marker({
           position: m.position,
           map,
           title: m.title,
-          content,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: color,
+            fillOpacity: 1,
+            strokeColor: '#fff',
+            strokeWeight: 3,
+          },
           zIndex: m.type === 'incident' ? 100 : 10,
         });
 
@@ -81,11 +87,11 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           `,
         });
 
-        advMarker.addListener('gmp-click', () => {
-          infoWindow.open({ map, anchor: advMarker });
+        marker.addListener('click', () => {
+          infoWindow.open(map, marker);
         });
 
-        markersRef.current.push(advMarker);
+        markersRef.current.push(marker);
       });
     }
   }, [map, markers]);
@@ -169,13 +175,20 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           
           // Add or update user location marker
           if (userLocationMarkerRef.current) {
-            userLocationMarkerRef.current.position = userLocation as any;
+            userLocationMarkerRef.current.setPosition(userLocation);
           } else {
-            userLocationMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
+            userLocationMarkerRef.current = new google.maps.Marker({
               position: userLocation,
               map,
               title: "Your Current Location",
-              content: createUserLocationContent(),
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: '#4285F4',
+                fillOpacity: 1,
+                strokeColor: '#ffffff',
+                strokeWeight: 4,
+              },
               zIndex: 1000,
             });
           }
@@ -205,15 +218,22 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
             
             // Only add user marker if it doesn't exist
             if (!userLocationMarkerRef.current) {
-              userLocationMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
+              userLocationMarkerRef.current = new google.maps.Marker({
                 position: userLocation,
                 map,
                 title: "Your Current Location",
-                content: createUserLocationContent(),
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 10,
+                  fillColor: '#4285F4',
+                  fillOpacity: 1,
+                  strokeColor: '#ffffff',
+                  strokeWeight: 4,
+                },
                 zIndex: 1000,
               });
             } else {
-              userLocationMarkerRef.current.position = userLocation as any;
+              userLocationMarkerRef.current.setPosition(userLocation);
             }
           },
           () => {}, // Silently fail if no permission
@@ -329,6 +349,6 @@ export const GoogleMap: React.FC<Omit<GoogleMapProps, 'apiKey'>> = (props) => {
   };
 
   return (
-    <Wrapper apiKey={apiKey} libraries={['marker']} render={render} />
+    <Wrapper apiKey={apiKey} render={render} />
   );
 };
