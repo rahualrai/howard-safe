@@ -76,18 +76,6 @@ export default function ReportIncident() {
   };
 
   const handleSubmit = async () => {
-    // Rate limiting check
-    const rateLimitKey = `incident_report_${user?.id || 'anonymous'}`;
-    if (!rateLimiter.canAttempt(rateLimitKey, 3, 300000)) { // 3 attempts per 5 minutes
-      const remainingTime = Math.ceil(rateLimiter.getRemainingTime(rateLimitKey) / 60000);
-      toast({
-        title: "Too many submissions",
-        description: `Please wait ${remainingTime} minutes before submitting another report.`,
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Enhanced validation
     if (!validateForm()) {
       toast({
@@ -102,43 +90,32 @@ export default function ReportIncident() {
     await HapticFeedback.impact(ImpactStyle.Medium);
 
     try {
-      // Generate unique report ID for tracking
-      const reportId = generateSecureId();
-      const clientInfo = getClientInfo();
-      
-      // Sanitize all inputs with enhanced options
-      const sanitizedData = {
-        reportId,
+      // Prepare data for server submission
+      const incidentData = {
         category: sanitizeInput(category, { maxLength: 50 }),
-        location: sanitizeInput(location, { maxLength: 200 }),
         description: sanitizeInput(description, { maxLength: 2000, allowLineBreaks: true }),
+        location: location ? sanitizeInput(location, { maxLength: 200 }) : null,
         anonymous,
-        useCurrentLocation,
-        photoCount: photos.length,
-        timestamp: new Date().toISOString(),
-        userId: user?.id || null,
-        ...clientInfo
+        photos: photos.map(photo => photo.dataUrl), // Convert photos to data URLs
       };
 
-      // Log the incident report submission for security monitoring
-      await logSecurityEvent('incident_report_submitted', sanitizedData);
-
-      // Simulate report submission with enhanced error handling
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Simulate random failures for testing error handling
-          if (Math.random() > 0.95) {
-            reject(new Error('Network timeout'));
-          } else {
-            resolve(true);
-          }
-        }, 2000);
+      // Submit to server-side function with rate limiting
+      const { data, error } = await supabase.functions.invoke('submit-incident-report', {
+        body: incidentData,
       });
-      
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to submit report');
+      }
+
       await HapticFeedback.notification(NotificationType.Success);
       toast({
         title: "Report submitted successfully",
-        description: `Report ID: ${reportId.substring(0, 8).toUpperCase()}. Your incident report has been sent to campus security.`,
+        description: `Report ID: ${data.reportId.substring(0, 8).toUpperCase()}. Your incident report has been sent to campus security.`,
       });
 
       // Clear form
@@ -149,19 +126,38 @@ export default function ReportIncident() {
       setUseCurrentLocation(false);
       setPhotos([]);
       setValidationErrors({});
-    } catch (error) {
-      // Log failed submission with enhanced error details
+    } catch (error: any) {
+      console.error('Incident report submission error:', error);
+
+      // Handle specific error types
+      if (error.message && error.message.includes('Rate limit exceeded')) {
+        const resetTime = error.resetTime ? new Date(error.resetTime) : null;
+        const waitTime = resetTime ? Math.ceil((resetTime.getTime() - Date.now()) / 60000) : 15;
+
+        toast({
+          title: "Too many submissions",
+          description: `Please wait ${waitTime} minutes before submitting another report.`,
+          variant: "destructive"
+        });
+      } else if (error.message && error.message.includes('Validation failed')) {
+        toast({
+          title: "Validation Error",
+          description: error.details ? error.details.join(', ') : "Please check your input and try again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Submission failed",
+          description: "Please try again or contact security directly if the problem persists.",
+          variant: "destructive"
+        });
+      }
+
+      // Log failed submission (without exposing sensitive error details)
       await logSecurityEvent('incident_report_failed', {
-        error: (error as Error).message,
+        error_type: error.message?.includes('Rate limit') ? 'rate_limit' : 'submission_error',
         timestamp: new Date().toISOString(),
         userId: user?.id || null,
-        ...getClientInfo()
-      });
-
-      toast({
-        title: "Submission failed",
-        description: "Please try again or contact security directly if the problem persists.",
-        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
