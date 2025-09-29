@@ -24,8 +24,8 @@ interface GoogleMapProps {
 const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers }) => {
   const [map, setMap] = useState<google.maps.Map>();
   const mapRef = useRef<HTMLDivElement>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
-  const userLocationMarkerRef = useRef<google.maps.Marker | null>(null);
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const userLocationMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
 
   useEffect(() => {
     if (mapRef.current && !map) {
@@ -126,6 +126,24 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
     return descriptions[type as keyof typeof descriptions] || 'Campus location';
   };
 
+  const createUserLocationContent = () => {
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.transform = 'translate(-50%, -100%)';
+
+    const pin = document.createElement('div');
+    pin.style.width = '20px';
+    pin.style.height = '20px';
+    pin.style.borderRadius = '50%';
+    pin.style.background = '#4285F4';
+    pin.style.border = '4px solid #fff';
+    pin.style.boxShadow = '0 8px 20px rgba(66, 133, 244, 0.4)';
+    pin.style.animation = 'pulse 2s infinite';
+    wrapper.appendChild(pin);
+
+    return wrapper;
+  };
+
   const zoomIn = useCallback(() => {
     if (map) {
       map.setZoom((map.getZoom() || 15) + 1);
@@ -187,22 +205,15 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
             
             // Only add user marker if it doesn't exist
             if (!userLocationMarkerRef.current) {
-              userLocationMarkerRef.current = new google.maps.Marker({
+              userLocationMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
                 position: userLocation,
                 map,
                 title: "Your Current Location",
-                icon: {
-                  path: google.maps.SymbolPath.CIRCLE,
-                  scale: 10,
-                  fillColor: '#4285F4',
-                  fillOpacity: 1,
-                  strokeColor: '#ffffff',
-                  strokeWeight: 4,
-                },
+                content: createUserLocationContent(),
                 zIndex: 1000,
               });
             } else {
-              userLocationMarkerRef.current.setPosition(userLocation);
+              userLocationMarkerRef.current.position = userLocation as any;
             }
           },
           () => {}, // Silently fail if no permission
