@@ -1,73 +1,112 @@
-# Welcome to your Lovable project
+# Howard Safe
 
-## Project info
+A comprehensive campus safety application designed to enhance security and communication within the Howard University community.
 
-**URL**: https://lovable.dev/projects/f8e4fb57-1b80-4219-9e25-312a2e427cea
+## Overview
 
-## How can I edit this code?
+Howard Safe is a React-based web application that provides students, faculty, and staff with essential safety tools including incident reporting, real-time campus maps, emergency contacts, and safety resources. The platform focuses on creating a secure and connected campus environment.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Incident Reporting**: Secure incident reporting system with photo upload capabilities
+- **Interactive Campus Maps**: Google Maps integration showing safe zones, well-lit areas, and incident locations
+- **User Authentication**: Secure login and profile management
+- **Student Hub**: Access to digital ID, dining services, events calendar, and quick links
+- **Safety Resources**: Emergency contacts, safety tips, and campus security information
+- **Mobile Responsive**: Optimized for both desktop and mobile devices
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f8e4fb57-1b80-4219-9e25-312a2e427cea) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js 16+ and npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Supabase account for database and authentication
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
+1. Clone the repository:
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/rahualrai/howard-safe.git
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Navigate to the project directory:
+```sh
+cd howard-safe
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Install dependencies:
+```sh
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+4. Set up environment variables:
+```sh
+cp .env.example .env
+```
+Edit `.env` with your Supabase credentials and other configuration values.
+
+5. Start the development server:
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Technology Stack
 
-**Use GitHub Codespaces**
+This project is built with modern web technologies:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- **Frontend Framework**: React 18+ with TypeScript
+- **Build Tool**: Vite for fast development and optimized builds
+- **UI Components**: shadcn/ui component library
+- **Styling**: Tailwind CSS for utility-first styling
+- **Backend**: Supabase for authentication, database, and serverless functions
+- **Maps**: Google Maps API for interactive campus mapping
+- **Mobile**: Capacitor for native mobile app capabilities
+- **State Management**: React hooks and context
+- **Form Handling**: React Hook Form with Zod validation
 
-## What technologies are used for this project?
+## Development Scripts
 
-This project is built with:
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint for code quality
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Project Structure
 
-## How can I deploy this project?
+```
+src/
+├── components/          # Reusable UI components
+├── pages/              # Main application pages
+├── hooks/              # Custom React hooks
+├── integrations/       # Third-party service integrations
+├── types/              # TypeScript type definitions
+├── utils/              # Utility functions
+└── assets/             # Static assets
+```
 
-Simply open [Lovable](https://lovable.dev/projects/f8e4fb57-1b80-4219-9e25-312a2e427cea) and click on Share -> Publish.
+## Contributing
 
-## Can I connect a custom domain to my Lovable project?
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-Yes, you can!
+## Security
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+This application implements several security measures:
+- Environment variable protection for sensitive credentials
+- Row Level Security (RLS) policies in Supabase
+- Input sanitization and validation
+- Rate limiting for API endpoints
+- TypeScript strict mode for type safety
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support or questions, please contact the development team or create an issue in the GitHub repository.
