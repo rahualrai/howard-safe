@@ -104,7 +104,7 @@ export default function Auth() {
   };
 
   // Security audit logging - simplified to avoid 401 errors
-  const logSecurityEvent = async (eventType: string, details: any) => {
+  const logSecurityEvent = async (eventType: string, details: Record<string, unknown>) => {
     // Only log to console for debugging
     console.debug('Security event:', eventType, details);
   };
@@ -189,9 +189,10 @@ export default function Auth() {
           description: "Please check your email for a confirmation link.",
         });
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       await logSecurityEvent('signup_error', {
-        error: error?.message || 'Unknown error',
+        error: errorMessage,
         timestamp: new Date().toISOString()
       });
 
@@ -259,9 +260,10 @@ export default function Auth() {
           timestamp: new Date().toISOString()
         });
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       await logSecurityEvent('signin_error', {
-        error: error?.message || 'Unknown error',
+        error: errorMessage,
         timestamp: new Date().toISOString()
       });
 

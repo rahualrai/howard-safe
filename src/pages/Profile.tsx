@@ -9,11 +9,12 @@ import { Bell, User as UserIcon, LogOut, Shield, AlertTriangle } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
+import { UserProfile, LastLoginInfo } from "@/types";
 
 export default function Profile() {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [lastLoginInfo, setLastLoginInfo] = useState<any>(null);
+  const [lastLoginInfo, setLastLoginInfo] = useState<LastLoginInfo | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -61,7 +62,7 @@ export default function Profile() {
         userId,
         timestamp: new Date().toISOString()
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error loading profile",
         description: "Unable to load your profile information.",
