@@ -96,24 +96,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
     }
   }, [map, markers]);
 
-  // Helper functions for marker styling and content
-  const createMarkerContent = (title: string, type: string, color: string) => {
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'relative';
-    wrapper.style.transform = 'translate(-50%, -100%)';
-
-    const pin = document.createElement('div');
-    pin.style.width = '16px';
-    pin.style.height = '16px';
-    pin.style.borderRadius = '50%';
-    pin.style.background = color;
-    pin.style.border = '3px solid #fff';
-    pin.style.boxShadow = '0 6px 16px rgba(0,0,0,0.25)';
-    wrapper.appendChild(pin);
-
-    return wrapper;
-  };
-
+  // Helper functions for marker styling
   const getMarkerColor = (type: string) => {
     const colors = {
       safe: '#22c55e',
@@ -130,24 +113,6 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
       welllit: 'Well-lit area for safer walking',
     };
     return descriptions[type as keyof typeof descriptions] || 'Campus location';
-  };
-
-  const createUserLocationContent = () => {
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'relative';
-    wrapper.style.transform = 'translate(-50%, -100%)';
-
-    const pin = document.createElement('div');
-    pin.style.width = '20px';
-    pin.style.height = '20px';
-    pin.style.borderRadius = '50%';
-    pin.style.background = '#4285F4';
-    pin.style.border = '4px solid #fff';
-    pin.style.boxShadow = '0 8px 20px rgba(66, 133, 244, 0.4)';
-    pin.style.animation = 'pulse 2s infinite';
-    wrapper.appendChild(pin);
-
-    return wrapper;
   };
 
   const zoomIn = useCallback(() => {
