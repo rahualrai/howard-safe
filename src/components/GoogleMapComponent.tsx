@@ -77,7 +77,30 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
         // Add info window
         const infoWindow = new google.maps.InfoWindow({
           content: `
-            <div style="padding: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <style>
+              .gm-ui-hover-effect {
+                background-color: rgba(0, 0, 0, 0.15) !important;
+                border-radius: 50% !important;
+                width: 32px !important;
+                height: 32px !important;
+                position: absolute !important;
+                top: 8px !important;
+                right: 8px !important;
+              }
+              .gm-ui-hover-effect:hover {
+                background-color: rgba(0, 0, 0, 0.3) !important;
+              }
+              .gm-ui-hover-effect > span {
+                background-color: #000 !important;
+                margin: 8px !important;
+                width: 16px !important;
+                height: 16px !important;
+              }
+              .gm-style-iw-chr {
+                position: relative !important;
+              }
+            </style>
+            <div style="padding: 10px 40px 10px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
               <h3 style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">${m.title}</h3>
               <p style="margin: 0; color: #666; font-size: 14px;">${getMarkerDescription(m.type)}</p>
               <div style="margin-top: 8px; padding: 4px 8px; background: ${color}; color: white; border-radius: 4px; font-size: 12px; display: inline-block;">
