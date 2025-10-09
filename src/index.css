@@ -156,5 +156,20 @@ All colors MUST be HSL for consistency and theming.
 
   html {
     height: 100%;
+    overflow-x: hidden; /* Prevent horizontal scrollbar globally */
+  }
+
+  /* Prevent horizontal overflow during animations and transitions */
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Ensure the root app container doesn't overflow */
+  #root {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    position: relative;
   }
 }

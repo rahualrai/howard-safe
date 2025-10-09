@@ -11,7 +11,7 @@ const pageTransitionVariants = {
   initial: {
     opacity: 0,
     y: 20,
-    scale: 0.98,
+    scale: 0.99, // Reduced scale to minimize overflow
   },
   in: {
     opacity: 1,
@@ -21,7 +21,7 @@ const pageTransitionVariants = {
   out: {
     opacity: 0,
     y: -20,
-    scale: 1.02,
+    scale: 1.01, // Reduced scale to minimize overflow
   },
 };
 
@@ -50,11 +50,12 @@ export function RouteTransition({ children }: RouteTransitionProps) {
         exit="out"
         variants={pageTransitionVariants}
         transition={pageTransition}
-        className="w-full"
+        className="w-full overflow-x-hidden"
         style={{ 
           // Ensure the transition doesn't affect the bottom navigation
           position: 'relative',
           zIndex: 1,
+          maxWidth: '100vw', // Prevent overflow beyond viewport
         }}
       >
         <Suspense fallback={<PageSkeleton type={getSkeletonType(location.pathname)} />}>
