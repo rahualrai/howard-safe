@@ -11,14 +11,15 @@ export type ChatMessage = {
 };
 
 const SUGGESTIONS = [
-  "What events are happening today?",
-  "How do I report a Title IX concern?",
-  "When does the library close?",
+  "What programs does Howard University offer?",
+  "How do I apply to Howard Law School?",
+  "What research opportunities are available?",
+  "Tell me about Howard's medical school",
 ];
 
 export function BisonChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "m0", role: "assistant", content: "Hi! I'm BisonChat. Ask me about campus events, services, and resources." },
+    { id: "m0", role: "assistant", content: "Hi! I'm BisonChat, powered by Howard University's knowledge base. Ask me about academic programs, admissions, research, and campus resources." },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,19 +31,42 @@ export function BisonChat() {
     const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content };
     setMessages(prev => [...prev, userMsg]);
 
-    // TODO: Replace with real campus-knowledge chatbot (e.g., OpenAI + HU knowledge base)
     setLoading(true);
     try {
-      // simple mock: pattern match for demo
-      let reply = "I'm not sure yet. Try asking about events, dining, or Title IX.";
-      const lower = content.toLowerCase();
-      if (lower.includes("event")) reply = "Today's highlights: Career Fair at Blackburn Ballroom 2-5pm; Cultural Night at Cramton 7pm.";
-      else if (lower.includes("library") || lower.includes("founders")) reply = "Founders Library is open 8:00 AM – 10:00 PM today.";
-      else if (lower.includes("title ix")) reply = "You can file a confidential Title IX report at https://www2.howard.edu/title-ix/report.";
+      // Call RAG server
+      const response = await fetch('http://localhost:8000/ask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: content }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let reply = data.answer || "I couldn't find information about that. Please try rephrasing your question.";
+      
+      // Always add top 2 sources as clickable links for transparency
+      if (data.sources && data.sources.length > 0) {
+        reply += "\n\nSources:";
+        data.sources.slice(0, 2).forEach((source: any, idx: number) => {
+          reply += `\n• [${new URL(source.url).hostname}](${source.url})`;
+        });
+      }
 
       const assistantMsg: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: reply };
-      await new Promise(r => setTimeout(r, 500));
       setMessages(prev => [...prev, assistantMsg]);
+    } catch (error) {
+      console.error('RAG server error:', error);
+      const errorMsg: ChatMessage = { 
+        id: crypto.randomUUID(), 
+        role: "assistant", 
+        content: "Sorry, I'm having trouble connecting to the knowledge base. Please make sure the RAG server is running on localhost:8000." 
+      };
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
       setLoading(false);
     }
