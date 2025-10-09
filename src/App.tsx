@@ -9,6 +9,8 @@ import { BottomNavigation } from "@/components/BottomNavigation";
 import { usePreloadRoute } from "@/hooks/usePreloadRoute";
 import { lazy } from "react";
 import NotFound from "./pages/NotFound";
+import CalendarPage from "@/pages/Calendar";
+import OAuth2Callback from "@/pages/OAuth2Callback";
 
 // Lazy load all pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -45,6 +47,8 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/map" element={<Map />} />
+  <Route path="/calendar" element={<CalendarPage />} />
+  <Route path="/oauth2callback" element={<OAuth2Callback />} />
         <Route path="/tips" element={<Tips />} />
         <Route path="/report" element={<ReportIncident />} />
         <Route path="/auth" element={<Auth />} />
