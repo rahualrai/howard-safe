@@ -9,9 +9,11 @@ import { Bell, User as UserIcon, LogOut, Shield, AlertTriangle } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
+import { useCallback } from "react";
 
 export default function Profile() {
   const [profile, setProfile] = useState<any>(null);
+  const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [lastLoginInfo, setLastLoginInfo] = useState<any>(null);
   const { toast } = useToast();
@@ -35,6 +37,22 @@ export default function Profile() {
       fetchLastLoginInfo(user.id);
     }
   }, [user, isValidSession]);
+  useEffect(() => {
+    if (profile?.avatar_url) {
+      const getAvatarUrl = async () => {
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .createSignedUrl(profile.avatar_url, 3600); // URL is valid for 1 hour (3600 seconds)
+        
+        if (error) {
+          console.warn("Could not create signed avatar URL:", error);
+        } else {
+          setAvatarDisplayUrl(data.signedUrl);
+        }
+      };
+      getAvatarUrl();
+    }
+  }, [profile]);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -71,6 +89,66 @@ export default function Profile() {
       setProfileLoading(false);
     }
   };
+
+  // Upload avatar to Supabase Storage and update profile.avatar_url
+  const handleAvatarUpload = useCallback(async (file: File) => {
+    if (!user) {
+      toast({ title: 'Not signed in', description: 'Please sign in before uploading.', variant: 'destructive' });
+      return;
+    }
+
+    // Build safe filename and bucket
+    const fileExt = (file.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
+    const safeUserId = String(user.id).replace(/[^a-z0-9-_\.]/gi, '-');
+    const fileName = `${safeUserId}/avatar.${fileExt}`;
+    const bucket = import.meta.env.VITE_SUPABASE_AVATAR_BUCKET || 'avatars';
+
+    try {
+      toast({ title: 'Uploading avatar...' });
+
+      // upload to storage (private bucket expected)
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        const message = uploadError.message || String(uploadError);
+        if (message.toLowerCase().includes('bucket') || message.toLowerCase().includes('not found')) {
+          toast({ title: 'Upload failed: bucket not found', description: `Bucket "${bucket}" missing. Ask the project owner to create it.`, variant: 'destructive' });
+        } else {
+          toast({ title: 'Upload failed', description: message, variant: 'destructive' });
+        }
+        console.error('uploadError', uploadError);
+        return;
+      }
+
+      // Use upsert to ensure a profile row exists and include user_id so RLS allows the write
+      const storagePath = fileName;
+      const { data: upserted, error: upsertError } = await supabase
+        .from('profiles')
+        .upsert([{ user_id: user.id, avatar_url: storagePath }], { onConflict: 'user_id' })
+        .select('*')
+        .single();
+
+      if (upsertError) {
+        console.error('upsertError', upsertError);
+        toast({ title: 'Failed to update profile', description: upsertError.message || String(upsertError), variant: 'destructive' });
+        return;
+      }
+
+      // Refresh profile locally from returned row if available
+      if (upserted) {
+        setProfile(upserted as any);
+      } else {
+        fetchProfile(user.id);
+      }
+
+      toast({ title: 'Avatar uploaded' });
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: 'Upload failed', description: err?.message || String(err), variant: 'destructive' });
+    }
+  }, [user, toast]);
 
   const fetchLastLoginInfo = async (userId: string) => {
     try {
@@ -201,6 +279,11 @@ export default function Profile() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm">Student ID Photo</p>
+              <p className="text-xs text-muted-foreground">Your student ID photo is displayed in the Digital ID section. To update it, please use the Digital ID settings or contact your administrator.</p>
+            </div>
+
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div>
                 <p className="font-medium text-sm">Display Name</p>

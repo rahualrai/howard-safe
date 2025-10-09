@@ -268,7 +268,7 @@ export default function Home() {
               </motion.div>
             </Link>
           </motion.div>
-
+          
           {/* Student Hub App Launcher */}
           <div className="mt-8 grid grid-cols-3 gap-3 sm:grid-cols-4">
             <AppTile title="Weather" icon={<Sun size={20} />}>

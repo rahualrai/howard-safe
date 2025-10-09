@@ -15,3 +15,16 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+// Dev helper: expose supabase client on window for quick console debugging
+// Only runs in development to avoid leaking the client on production.
+if (import.meta.env.DEV) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).supabase = supabase;
+    // eslint-disable-next-line no-console
+    console.debug('Supabase client exposed to window.supabase for debugging');
+  } catch (e) {
+    // ignore in environments where window is not available
+  }
+}
