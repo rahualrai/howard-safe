@@ -13,8 +13,20 @@ export default function Tips() {
   const extractPhoneNumber = (contact: string): string => {
     // Remove all non-digit characters except + for international numbers
     const cleaned = contact.replace(/[^\d+]/g, '');
-    // If it starts with +, keep it, otherwise add +1 for US numbers
-    return cleaned.startsWith('+') ? cleaned : `+1${cleaned}`;
+    
+    // If it starts with +, keep it as is
+    if (cleaned.startsWith('+')) {
+      return cleaned;
+    }
+    
+    // For numbers without country code, warn user and return as-is
+    // Let the device handle the number format
+    if (cleaned.length >= 10) {
+      return cleaned;
+    }
+    
+    // For very short numbers, return as-is (might be extension or special number)
+    return cleaned;
   };
 
   // Handle tap-to-call functionality
@@ -22,16 +34,18 @@ export default function Tips() {
     const phoneNumber = extractPhoneNumber(contact);
     const telUrl = `tel:${phoneNumber}`;
     
-    try {
-      // Try to open the phone dialer
-      window.open(telUrl, '_self');
-      
+    // Check if we're on a mobile device or if tel: protocol is supported
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // On mobile devices, try to open the dialer
+      window.location.href = telUrl;
       toast({
         title: "Calling...",
         description: `Opening phone dialer for ${title}`,
       });
-    } catch (error) {
-      // Fallback: copy phone number to clipboard
+    } else {
+      // On desktop, copy to clipboard as fallback
       navigator.clipboard.writeText(phoneNumber).then(() => {
         toast({
           title: "Phone number copied",
@@ -52,16 +66,18 @@ export default function Tips() {
     const phoneNumber = extractPhoneNumber(contact);
     const smsUrl = `sms:${phoneNumber}`;
     
-    try {
-      // Try to open the SMS app
-      window.open(smsUrl, '_self');
-      
+    // Check if we're on a mobile device or if sms: protocol is supported
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // On mobile devices, try to open the SMS app
+      window.location.href = smsUrl;
       toast({
         title: "Texting...",
         description: `Opening SMS for ${title}`,
       });
-    } catch (error) {
-      // Fallback: copy phone number to clipboard
+    } else {
+      // On desktop, copy to clipboard as fallback
       navigator.clipboard.writeText(phoneNumber).then(() => {
         toast({
           title: "Phone number copied",
@@ -77,9 +93,19 @@ export default function Tips() {
     }
   };
 
-  // Check if contact is a phone number (has digits)
+  // Check if contact is a phone number (robust pattern)
   const isPhoneNumber = (contact: string): boolean => {
-    return /\d/.test(contact) && !contact.toLowerCase().includes('download') && !contact.toLowerCase().includes('campus-wide');
+    // Matches phone numbers with optional +, digits, spaces, dashes, parentheses
+    const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+    const trimmedContact = contact.trim();
+    
+    // Must match phone pattern and contain at least 7 digits (minimum for valid phone)
+    const digitCount = (trimmedContact.match(/\d/g) || []).length;
+    
+    return phoneRegex.test(trimmedContact) && 
+           digitCount >= 7 && 
+           !trimmedContact.toLowerCase().includes('download') && 
+           !trimmedContact.toLowerCase().includes('campus-wide');
   };
 
   const safetyTips = [
