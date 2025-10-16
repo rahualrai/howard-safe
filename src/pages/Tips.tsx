@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
 
 export default function Tips() {
   const [activeTab, setActiveTab] = useState<'tips' | 'resources'>('tips');
@@ -14,9 +15,18 @@ export default function Tips() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
+
+  // Use the new emergency contacts hook
+  const { 
+    contacts, 
+    groupedContacts, 
+    loading, 
+    error, 
+    lastSyncTime, 
+    refetch, 
+    isOnline: hookIsOnline 
+  } = useEmergencyContacts();
 
   // Helper function to extract phone number from contact string
   const extractPhoneNumber = (contact: string): string => {
@@ -156,40 +166,27 @@ export default function Tips() {
     }
   ];
 
-  const resources = [
-    {
-      category: "Emergency Contacts",
-      icon: Phone,
-      items: [
-        { title: "Campus Security", contact: "(202) 806-HELP (4357)", description: "24/7 campus emergency line" },
-        { title: "Metropolitan Police", contact: "911", description: "Emergency police response" },
-        { title: "Howard University Hospital", contact: "(202) 865-6100", description: "Campus medical emergency" },
-        { title: "Student Health Center", contact: "(202) 806-7540", description: "Non-emergency medical care" },
-      ]
-    },
-    {
-      category: "Support Services",
-      icon: Users,
-      items: [
-        { title: "Counseling Services", contact: "(202) 806-6870", description: "Mental health support and counseling" },
-        { title: "Title IX Office", contact: "(202) 806-2550", description: "Sexual harassment and discrimination reporting" },
-        { title: "Dean of Students", contact: "(202) 806-2755", description: "Student affairs and support" },
-        { title: "Campus Ministry", contact: "(202) 806-7280", description: "Spiritual guidance and support" },
-      ]
-    },
-    {
-      category: "Safety Resources",
-      icon: Shield,
-      items: [
-        { title: "Safety Escort Service", contact: "(202) 806-4357", description: "Free campus escort service (6 PM - 2 AM)" },
-        { title: "Blue Light Phones", contact: "Campus-wide", description: "Emergency phones located throughout campus" },
-        { title: "LiveSafe App", contact: "Download from app store", description: "Campus safety app for reporting and alerts" },
-        { title: "Safety Training", contact: "(202) 806-1919", description: "Personal safety workshops and training" },
-      ]
-    }
-  ];
+  // Map database categories to display names and icons
+  const categoryConfig = {
+    'emergency-contacts': { label: 'Emergency Contacts', icon: Phone },
+    'support-services': { label: 'Support Services', icon: Users },
+    'safety-resources': { label: 'Safety Resources', icon: Shield },
+  };
 
-  // Load favorites and sync time from localStorage on component mount
+  // Convert grouped contacts to the format expected by the UI
+  const resources = Object.entries(groupedContacts).map(([categoryKey, items]) => ({
+    category: categoryConfig[categoryKey as keyof typeof categoryConfig]?.label || categoryKey,
+    icon: categoryConfig[categoryKey as keyof typeof categoryConfig]?.icon || Shield,
+    items: items.map(item => ({
+      title: item.title,
+      contact: item.contact,
+      description: item.description,
+      priority: item.priority,
+      id: item.id
+    }))
+  }));
+
+  // Load favorites from localStorage on component mount
   useEffect(() => {
     const savedFavorites = localStorage.getItem('emergency-contacts-favorites');
     if (savedFavorites) {
@@ -198,11 +195,6 @@ export default function Tips() {
       } catch (error) {
         console.error('Error loading favorites:', error);
       }
-    }
-
-    const savedSyncTime = localStorage.getItem('emergency-contacts-last-sync');
-    if (savedSyncTime) {
-      setLastSyncTime(new Date(savedSyncTime));
     }
   }, []);
 
@@ -238,43 +230,6 @@ export default function Tips() {
       window.removeEventListener('offline', handleOffline);
     };
   }, [toast]);
-
-  // Simulate sync with remote data source
-  const syncContacts = async () => {
-    if (!isOnline) {
-      toast({
-        title: "Cannot sync offline",
-        description: "Please check your internet connection and try again.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsSyncing(true);
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In a real app, this would fetch from a remote API
-      // For now, we'll just update the sync time
-      const now = new Date();
-      setLastSyncTime(now);
-      localStorage.setItem('emergency-contacts-last-sync', now.toISOString());
-      
-      toast({
-        title: "Sync completed",
-        description: "Emergency contacts are up to date.",
-      });
-    } catch (error) {
-      toast({
-        title: "Sync failed",
-        description: "Unable to update contacts. Using cached data.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
 
   // Generate unique ID for each contact
   const getContactId = (category: string, title: string): string => {
@@ -410,7 +365,7 @@ export default function Tips() {
             {/* Network Status and Sync Section */}
             <div className="space-y-3">
               {/* Offline Alert */}
-              {!isOnline && (
+              {!hookIsOnline && (
                 <Alert className="border-orange-200 bg-orange-50">
                   <WifiOff className="h-4 w-4 text-orange-600" />
                   <AlertDescription className="text-orange-800">
@@ -419,32 +374,42 @@ export default function Tips() {
                 </Alert>
               )}
 
+              {/* Error Alert */}
+              {error && (
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Sync Status */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {isOnline ? (
+                  {hookIsOnline ? (
                     <Wifi className="h-4 w-4 text-green-600" />
                   ) : (
                     <WifiOff className="h-4 w-4 text-orange-600" />
                   )}
                   <span>
-                    {isOnline ? 'Online' : 'Offline'} • 
+                    {hookIsOnline ? 'Online' : 'Offline'} • 
                     {lastSyncTime ? ` Last updated: ${lastSyncTime.toLocaleTimeString()}` : ' Never synced'}
                   </span>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={syncContacts}
-                  disabled={isSyncing || !isOnline}
+                  onClick={refetch}
+                  disabled={loading || !hookIsOnline}
                   className="text-xs"
                 >
-                  {isSyncing ? (
+                  {loading ? (
                     <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
                   ) : (
                     <RefreshCw className="h-3 w-3 mr-1" />
                   )}
-                  {isSyncing ? 'Syncing...' : 'Sync'}
+                  {loading ? 'Syncing...' : 'Sync'}
                 </Button>
               </div>
             </div>
