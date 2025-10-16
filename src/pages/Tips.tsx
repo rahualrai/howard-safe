@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
-import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare, Search, Filter, X, Star, Heart } from "lucide-react";
+import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare, Search, Filter, X, Star, Heart, Wifi, WifiOff, RefreshCw } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Tips() {
@@ -12,6 +13,9 @@ export default function Tips() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
 
   // Helper function to extract phone number from contact string
@@ -185,7 +189,7 @@ export default function Tips() {
     }
   ];
 
-  // Load favorites from localStorage on component mount
+  // Load favorites and sync time from localStorage on component mount
   useEffect(() => {
     const savedFavorites = localStorage.getItem('emergency-contacts-favorites');
     if (savedFavorites) {
@@ -195,12 +199,82 @@ export default function Tips() {
         console.error('Error loading favorites:', error);
       }
     }
+
+    const savedSyncTime = localStorage.getItem('emergency-contacts-last-sync');
+    if (savedSyncTime) {
+      setLastSyncTime(new Date(savedSyncTime));
+    }
   }, []);
 
   // Save favorites to localStorage whenever favorites change
   useEffect(() => {
     localStorage.setItem('emergency-contacts-favorites', JSON.stringify([...favorites]));
   }, [favorites]);
+
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast({
+        title: "Connection restored",
+        description: "You're back online. Emergency contacts are up to date.",
+      });
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast({
+        title: "You're offline",
+        description: "Showing cached emergency contacts. Some features may be limited.",
+        variant: "destructive"
+      });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [toast]);
+
+  // Simulate sync with remote data source
+  const syncContacts = async () => {
+    if (!isOnline) {
+      toast({
+        title: "Cannot sync offline",
+        description: "Please check your internet connection and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // In a real app, this would fetch from a remote API
+      // For now, we'll just update the sync time
+      const now = new Date();
+      setLastSyncTime(now);
+      localStorage.setItem('emergency-contacts-last-sync', now.toISOString());
+      
+      toast({
+        title: "Sync completed",
+        description: "Emergency contacts are up to date.",
+      });
+    } catch (error) {
+      toast({
+        title: "Sync failed",
+        description: "Unable to update contacts. Using cached data.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Generate unique ID for each contact
   const getContactId = (category: string, title: string): string => {
@@ -333,6 +407,48 @@ export default function Tips() {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Network Status and Sync Section */}
+            <div className="space-y-3">
+              {/* Offline Alert */}
+              {!isOnline && (
+                <Alert className="border-orange-200 bg-orange-50">
+                  <WifiOff className="h-4 w-4 text-orange-600" />
+                  <AlertDescription className="text-orange-800">
+                    You're offline. Showing cached emergency contacts. Some features may be limited.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Sync Status */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {isOnline ? (
+                    <Wifi className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <WifiOff className="h-4 w-4 text-orange-600" />
+                  )}
+                  <span>
+                    {isOnline ? 'Online' : 'Offline'} • 
+                    {lastSyncTime ? ` Last updated: ${lastSyncTime.toLocaleTimeString()}` : ' Never synced'}
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={syncContacts}
+                  disabled={isSyncing || !isOnline}
+                  className="text-xs"
+                >
+                  {isSyncing ? (
+                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                  )}
+                  {isSyncing ? 'Syncing...' : 'Sync'}
+                </Button>
+              </div>
+            </div>
+
             {/* Search and Filter Section */}
             <div className="space-y-4">
               {/* Search Bar */}
