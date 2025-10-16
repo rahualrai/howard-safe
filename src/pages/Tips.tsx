@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare, Search, Filter, X } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare, Search, Filter, X, Star, Heart } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,8 @@ export default function Tips() {
   const [activeTab, setActiveTab] = useState<'tips' | 'resources'>('tips');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const { toast } = useToast();
 
   // Helper function to extract phone number from contact string
@@ -183,6 +185,49 @@ export default function Tips() {
     }
   ];
 
+  // Load favorites from localStorage on component mount
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('emergency-contacts-favorites');
+    if (savedFavorites) {
+      try {
+        setFavorites(new Set(JSON.parse(savedFavorites)));
+      } catch (error) {
+        console.error('Error loading favorites:', error);
+      }
+    }
+  }, []);
+
+  // Save favorites to localStorage whenever favorites change
+  useEffect(() => {
+    localStorage.setItem('emergency-contacts-favorites', JSON.stringify([...favorites]));
+  }, [favorites]);
+
+  // Generate unique ID for each contact
+  const getContactId = (category: string, title: string): string => {
+    return `${category.toLowerCase().replace(/\s+/g, '-')}-${title.toLowerCase().replace(/\s+/g, '-')}`;
+  };
+
+  // Toggle favorite status
+  const toggleFavorite = (contactId: string, title: string) => {
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(contactId)) {
+        newFavorites.delete(contactId);
+        toast({
+          title: "Removed from favorites",
+          description: `${title} removed from your favorites`,
+        });
+      } else {
+        newFavorites.add(contactId);
+        toast({
+          title: "Added to favorites",
+          description: `${title} added to your favorites`,
+        });
+      }
+      return newFavorites;
+    });
+  };
+
   // Get all available categories for filter
   const availableCategories = [
     { value: 'all', label: 'All Categories' },
@@ -203,8 +248,17 @@ export default function Tips() {
         return { ...category, items: [] };
       }
 
-      // Filter items by search query
+      // Filter items by search query and favorites
       const filteredItems = category.items.filter(item => {
+        const contactId = getContactId(category.category, item.title);
+        const isFavorite = favorites.has(contactId);
+        
+        // If showing favorites only, filter by favorite status
+        if (showFavoritesOnly && !isFavorite) {
+          return false;
+        }
+        
+        // Filter by search query
         if (!searchQuery.trim()) return true;
         
         const query = searchQuery.toLowerCase();
@@ -217,12 +271,13 @@ export default function Tips() {
 
       return { ...category, items: filteredItems };
     }).filter(category => category.items.length > 0); // Only show categories with matching items
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, favorites, showFavoritesOnly]);
 
   // Clear search and filters
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedCategory('all');
+    setShowFavoritesOnly(false);
   };
 
   return (
@@ -301,6 +356,19 @@ export default function Tips() {
                 )}
               </div>
 
+              {/* Favorites Toggle */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={showFavoritesOnly ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                  className="text-xs"
+                >
+                  <Heart size={12} className="mr-1" />
+                  Favorites ({favorites.size})
+                </Button>
+              </div>
+
               {/* Category Filter */}
               <div className="flex flex-wrap gap-2">
                 {availableCategories.map((category) => (
@@ -318,7 +386,7 @@ export default function Tips() {
               </div>
 
               {/* Clear Filters Button */}
-              {(searchQuery || selectedCategory !== 'all') && (
+              {(searchQuery || selectedCategory !== 'all' || showFavoritesOnly) && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -347,47 +415,65 @@ export default function Tips() {
                   <h2 className="text-xl font-semibold">{category.category}</h2>
                 </div>
                 <div className="space-y-3">
-                  {category.items.map((resource, index) => (
-                    <Card key={index} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{resource.title}</h3>
-                            <p className="text-sm text-muted-foreground mt-1">{resource.description}</p>
-                            <div className="mt-2">
-                              <Badge variant="secondary" className="text-xs">
-                                {resource.contact}
-                              </Badge>
+                  {category.items.map((resource, index) => {
+                    const contactId = getContactId(category.category, resource.title);
+                    const isFavorite = favorites.has(contactId);
+                    
+                    return (
+                      <Card key={index} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold">{resource.title}</h3>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => toggleFavorite(contactId, resource.title)}
+                                  className="h-6 w-6 p-0"
+                                  title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                                >
+                                  <Star 
+                                    className={`h-4 w-4 ${isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground hover:text-yellow-400'}`} 
+                                  />
+                                </Button>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">{resource.description}</p>
+                              <div className="mt-2">
+                                <Badge variant="secondary" className="text-xs">
+                                  {resource.contact}
+                                </Badge>
+                              </div>
                             </div>
+                            
+                            {/* Action buttons for phone numbers */}
+                            {isPhoneNumber(resource.contact) && (
+                              <div className="ml-3 flex flex-col gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => handleCall(resource.contact, resource.title)}
+                                  className="h-8 w-8 p-0"
+                                  title={`Call ${resource.title}`}
+                                >
+                                  <Phone className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleText(resource.contact, resource.title)}
+                                  className="h-8 w-8 p-0"
+                                  title={`Text ${resource.title}`}
+                                >
+                                  <MessageSquare className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                          
-                          {/* Action buttons for phone numbers */}
-                          {isPhoneNumber(resource.contact) && (
-                            <div className="ml-3 flex flex-col gap-2">
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => handleCall(resource.contact, resource.title)}
-                                className="h-8 w-8 p-0"
-                                title={`Call ${resource.title}`}
-                              >
-                                <Phone className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleText(resource.contact, resource.title)}
-                                className="h-8 w-8 p-0"
-                                title={`Text ${resource.title}`}
-                              >
-                                <MessageSquare className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             ))
