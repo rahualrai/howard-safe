@@ -1,11 +1,86 @@
 import { useState } from "react";
-import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye } from "lucide-react";
+import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Tips() {
   const [activeTab, setActiveTab] = useState<'tips' | 'resources'>('tips');
+  const { toast } = useToast();
+
+  // Helper function to extract phone number from contact string
+  const extractPhoneNumber = (contact: string): string => {
+    // Remove all non-digit characters except + for international numbers
+    const cleaned = contact.replace(/[^\d+]/g, '');
+    // If it starts with +, keep it, otherwise add +1 for US numbers
+    return cleaned.startsWith('+') ? cleaned : `+1${cleaned}`;
+  };
+
+  // Handle tap-to-call functionality
+  const handleCall = (contact: string, title: string) => {
+    const phoneNumber = extractPhoneNumber(contact);
+    const telUrl = `tel:${phoneNumber}`;
+    
+    try {
+      // Try to open the phone dialer
+      window.open(telUrl, '_self');
+      
+      toast({
+        title: "Calling...",
+        description: `Opening phone dialer for ${title}`,
+      });
+    } catch (error) {
+      // Fallback: copy phone number to clipboard
+      navigator.clipboard.writeText(phoneNumber).then(() => {
+        toast({
+          title: "Phone number copied",
+          description: `${phoneNumber} copied to clipboard. Paste it in your phone app.`,
+        });
+      }).catch(() => {
+        toast({
+          title: "Unable to call",
+          description: `Phone number: ${phoneNumber}`,
+          variant: "destructive"
+        });
+      });
+    }
+  };
+
+  // Handle tap-to-text functionality
+  const handleText = (contact: string, title: string) => {
+    const phoneNumber = extractPhoneNumber(contact);
+    const smsUrl = `sms:${phoneNumber}`;
+    
+    try {
+      // Try to open the SMS app
+      window.open(smsUrl, '_self');
+      
+      toast({
+        title: "Texting...",
+        description: `Opening SMS for ${title}`,
+      });
+    } catch (error) {
+      // Fallback: copy phone number to clipboard
+      navigator.clipboard.writeText(phoneNumber).then(() => {
+        toast({
+          title: "Phone number copied",
+          description: `${phoneNumber} copied to clipboard. Paste it in your messaging app.`,
+        });
+      }).catch(() => {
+        toast({
+          title: "Unable to text",
+          description: `Phone number: ${phoneNumber}`,
+          variant: "destructive"
+        });
+      });
+    }
+  };
+
+  // Check if contact is a phone number (has digits)
+  const isPhoneNumber = (contact: string): boolean => {
+    return /\d/.test(contact) && !contact.toLowerCase().includes('download') && !contact.toLowerCase().includes('campus-wide');
+  };
 
   const safetyTips = [
     {
@@ -140,18 +215,42 @@ export default function Tips() {
                 </div>
                 <div className="space-y-3">
                   {category.items.map((resource, index) => (
-                    <Card key={index}>
+                    <Card key={index} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h3 className="font-semibold">{resource.title}</h3>
                             <p className="text-sm text-muted-foreground mt-1">{resource.description}</p>
+                            <div className="mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {resource.contact}
+                              </Badge>
+                            </div>
                           </div>
-                          <div className="ml-3">
-                            <Badge variant="secondary" className="text-xs">
-                              {resource.contact}
-                            </Badge>
-                          </div>
+                          
+                          {/* Action buttons for phone numbers */}
+                          {isPhoneNumber(resource.contact) && (
+                            <div className="ml-3 flex flex-col gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleCall(resource.contact, resource.title)}
+                                className="h-8 w-8 p-0"
+                                title={`Call ${resource.title}`}
+                              >
+                                <Phone className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleText(resource.contact, resource.title)}
+                                className="h-8 w-8 p-0"
+                                title={`Text ${resource.title}`}
+                              >
+                                <MessageSquare className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
