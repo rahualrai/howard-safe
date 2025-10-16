@@ -1,11 +1,112 @@
 import { useState } from "react";
-import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye } from "lucide-react";
+import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Tips() {
   const [activeTab, setActiveTab] = useState<'tips' | 'resources'>('tips');
+  const { toast } = useToast();
+
+  // Helper function to extract phone number from contact string
+  const extractPhoneNumber = (contact: string): string => {
+    // Remove all non-digit characters except + for international numbers
+    const cleaned = contact.replace(/[^\d+]/g, '');
+    
+    // If it starts with +, keep it as is
+    if (cleaned.startsWith('+')) {
+      return cleaned;
+    }
+    
+    // For numbers without country code, warn user and return as-is
+    // Let the device handle the number format
+    if (cleaned.length >= 10) {
+      return cleaned;
+    }
+    
+    // For very short numbers, return as-is (might be extension or special number)
+    return cleaned;
+  };
+
+  // Handle tap-to-call functionality
+  const handleCall = (contact: string, title: string) => {
+    const phoneNumber = extractPhoneNumber(contact);
+    const telUrl = `tel:${phoneNumber}`;
+    
+    // Check if we're on a mobile device or if tel: protocol is supported
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // On mobile devices, try to open the dialer
+      window.location.href = telUrl;
+      toast({
+        title: "Calling...",
+        description: `Opening phone dialer for ${title}`,
+      });
+    } else {
+      // On desktop, copy to clipboard as fallback
+      navigator.clipboard.writeText(phoneNumber).then(() => {
+        toast({
+          title: "Phone number copied",
+          description: `${phoneNumber} copied to clipboard. Paste it in your phone app.`,
+        });
+      }).catch(() => {
+        toast({
+          title: "Unable to call",
+          description: `Phone number: ${phoneNumber}`,
+          variant: "destructive"
+        });
+      });
+    }
+  };
+
+  // Handle tap-to-text functionality
+  const handleText = (contact: string, title: string) => {
+    const phoneNumber = extractPhoneNumber(contact);
+    const smsUrl = `sms:${phoneNumber}`;
+    
+    // Check if we're on a mobile device or if sms: protocol is supported
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // On mobile devices, try to open the SMS app
+      window.location.href = smsUrl;
+      toast({
+        title: "Texting...",
+        description: `Opening SMS for ${title}`,
+      });
+    } else {
+      // On desktop, copy to clipboard as fallback
+      navigator.clipboard.writeText(phoneNumber).then(() => {
+        toast({
+          title: "Phone number copied",
+          description: `${phoneNumber} copied to clipboard. Paste it in your messaging app.`,
+        });
+      }).catch(() => {
+        toast({
+          title: "Unable to text",
+          description: `Phone number: ${phoneNumber}`,
+          variant: "destructive"
+        });
+      });
+    }
+  };
+
+  // Check if contact is a phone number (robust pattern)
+  const isPhoneNumber = (contact: string): boolean => {
+    // Matches phone numbers with optional +, digits, spaces, dashes, parentheses
+    const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+    const trimmedContact = contact.trim();
+    
+    // Must match phone pattern and contain at least 7 digits (minimum for valid phone)
+    const digitCount = (trimmedContact.match(/\d/g) || []).length;
+    
+    return phoneRegex.test(trimmedContact) && 
+           digitCount >= 7 && 
+           !trimmedContact.toLowerCase().includes('download') && 
+           !trimmedContact.toLowerCase().includes('campus-wide');
+  };
 
   const safetyTips = [
     {
@@ -140,18 +241,42 @@ export default function Tips() {
                 </div>
                 <div className="space-y-3">
                   {category.items.map((resource, index) => (
-                    <Card key={index}>
+                    <Card key={index} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h3 className="font-semibold">{resource.title}</h3>
                             <p className="text-sm text-muted-foreground mt-1">{resource.description}</p>
+                            <div className="mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {resource.contact}
+                              </Badge>
+                            </div>
                           </div>
-                          <div className="ml-3">
-                            <Badge variant="secondary" className="text-xs">
-                              {resource.contact}
-                            </Badge>
-                          </div>
+                          
+                          {/* Action buttons for phone numbers */}
+                          {isPhoneNumber(resource.contact) && (
+                            <div className="ml-3 flex flex-col gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleCall(resource.contact, resource.title)}
+                                className="h-8 w-8 p-0"
+                                title={`Call ${resource.title}`}
+                              >
+                                <Phone className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleText(resource.contact, resource.title)}
+                                className="h-8 w-8 p-0"
+                                title={`Text ${resource.title}`}
+                              >
+                                <MessageSquare className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
