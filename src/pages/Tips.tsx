@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare, Search, Filter, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Tips() {
   const [activeTab, setActiveTab] = useState<'tips' | 'resources'>('tips');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const { toast } = useToast();
 
   // Helper function to extract phone number from contact string
@@ -180,6 +183,48 @@ export default function Tips() {
     }
   ];
 
+  // Get all available categories for filter
+  const availableCategories = [
+    { value: 'all', label: 'All Categories' },
+    ...resources.map(category => ({
+      value: category.category.toLowerCase().replace(/\s+/g, '-'),
+      label: category.category
+    }))
+  ];
+
+  // Filter and search logic
+  const filteredResources = useMemo(() => {
+    return resources.map(category => {
+      // Filter by category
+      const categoryMatches = selectedCategory === 'all' || 
+        category.category.toLowerCase().replace(/\s+/g, '-') === selectedCategory;
+      
+      if (!categoryMatches) {
+        return { ...category, items: [] };
+      }
+
+      // Filter items by search query
+      const filteredItems = category.items.filter(item => {
+        if (!searchQuery.trim()) return true;
+        
+        const query = searchQuery.toLowerCase();
+        return (
+          item.title.toLowerCase().includes(query) ||
+          item.description.toLowerCase().includes(query) ||
+          item.contact.toLowerCase().includes(query)
+        );
+      });
+
+      return { ...category, items: filteredItems };
+    }).filter(category => category.items.length > 0); // Only show categories with matching items
+  }, [searchQuery, selectedCategory]);
+
+  // Clear search and filters
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary text-primary-foreground px-4 py-6">
@@ -233,7 +278,69 @@ export default function Tips() {
           </div>
         ) : (
           <div className="space-y-6">
-            {resources.map((category, categoryIndex) => (
+            {/* Search and Filter Section */}
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+                <Input
+                  placeholder="Search emergency contacts..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  >
+                    <X size={14} />
+                  </Button>
+                )}
+              </div>
+
+              {/* Category Filter */}
+              <div className="flex flex-wrap gap-2">
+                {availableCategories.map((category) => (
+                  <Button
+                    key={category.value}
+                    variant={selectedCategory === category.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category.value)}
+                    className="text-xs"
+                  >
+                    <Filter size={12} className="mr-1" />
+                    {category.label}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Clear Filters Button */}
+              {(searchQuery || selectedCategory !== 'all') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X size={14} className="mr-1" />
+                  Clear all filters
+                </Button>
+              )}
+
+              {/* Results Count */}
+              {searchQuery && (
+                <div className="text-sm text-muted-foreground">
+                  {filteredResources.reduce((total, category) => total + category.items.length, 0)} result(s) found
+                </div>
+              )}
+            </div>
+
+            {/* Filtered Resources */}
+            {filteredResources.length > 0 ? (
+              filteredResources.map((category, categoryIndex) => (
               <div key={categoryIndex}>
                 <div className="flex items-center space-x-2 mb-4">
                   <category.icon className="h-5 w-5 text-primary" />
@@ -283,7 +390,19 @@ export default function Tips() {
                   ))}
                 </div>
               </div>
-            ))}
+            ))
+            ) : (
+              <div className="text-center py-8">
+                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No results found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Try adjusting your search terms or clearing the filters
+                </p>
+                <Button variant="outline" onClick={clearFilters}>
+                  Clear all filters
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
