@@ -104,14 +104,23 @@ export default function Tips() {
 
   // Check if contact is a phone number (robust pattern)
   const isPhoneNumber = (contact: string): boolean => {
-    // Matches phone numbers with optional +, digits, spaces, dashes, parentheses
-    const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
     const trimmedContact = contact.trim();
     
-    // Must match phone pattern and contain at least 7 digits (minimum for valid phone)
-    const digitCount = (trimmedContact.match(/\d/g) || []).length;
+    // Special cases for emergency numbers
+    if (trimmedContact === '911') {
+      return true;
+    }
     
-    return phoneRegex.test(trimmedContact) && 
+    // Handle numbers with letters (like HELP)
+    const cleanedContact = trimmedContact.replace(/[A-Za-z]/g, '');
+    
+    // Matches phone numbers with optional +, digits, spaces, dashes, parentheses
+    const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+    
+    // Must match phone pattern and contain at least 7 digits (minimum for valid phone)
+    const digitCount = (cleanedContact.match(/\d/g) || []).length;
+    
+    return phoneRegex.test(cleanedContact) && 
            digitCount >= 7 && 
            !trimmedContact.toLowerCase().includes('download') && 
            !trimmedContact.toLowerCase().includes('campus-wide');
