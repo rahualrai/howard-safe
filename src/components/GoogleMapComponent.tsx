@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Wrapper, Status } from '@googlemaps/react-wrapper';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ZoomIn, ZoomOut, Navigation, MapIcon } from 'lucide-react';
+import { ZoomIn, ZoomOut, Navigation, MapIcon, Directions } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import type { LandmarkCategory } from '@/data/howardLandmarks';
 
 declare global {
   interface Window {
@@ -11,13 +12,21 @@ declare global {
   }
 }
 
+type MarkerType = 'safe' | 'incident' | 'welllit' | LandmarkCategory;
+
 interface GoogleMapProps {
   center: { lat: number; lng: number };
   zoom: number;
   markers: Array<{
     position: { lat: number; lng: number };
     title: string;
-    type: 'safe' | 'incident' | 'welllit';
+    type: MarkerType;
+    description?: string;
+    details?: {
+      hours?: string;
+      phone?: string;
+      address?: string;
+    };
   }>;
 }
 
@@ -74,40 +83,136 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           zIndex: m.type === 'incident' ? 100 : 10,
         });
 
-        // Add info window
-        const infoWindow = new google.maps.InfoWindow({
-          content: `
+        // Build info window content - Minimalist & Modern Design
+        const createInfoWindowContent = () => {
+          const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.position.lat},${m.position.lng}`;
+
+          return `
             <style>
-              .gm-ui-hover-effect {
-                background-color: rgba(0, 0, 0, 0.15) !important;
-                border-radius: 50% !important;
-                width: 32px !important;
-                height: 32px !important;
-                position: absolute !important;
-                top: 8px !important;
-                right: 8px !important;
+              * { box-sizing: border-box; }
+              .building-card {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+                width: 320px;
+                background: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
               }
-              .gm-ui-hover-effect:hover {
-                background-color: rgba(0, 0, 0, 0.3) !important;
+              .building-card h3 {
+                margin: 0 0 12px 0;
+                color: #1a1a1a;
+                font-size: 18px;
+                font-weight: 600;
+                line-height: 1.3;
               }
-              .gm-ui-hover-effect > span {
-                background-color: #000 !important;
-                margin: 8px !important;
-                width: 16px !important;
-                height: 16px !important;
+              .building-card p {
+                margin: 0 0 12px 0;
+                color: #6b7280;
+                font-size: 14px;
+                line-height: 1.5;
               }
-              .gm-style-iw-chr {
-                position: relative !important;
+              .building-details {
+                margin: 16px 0;
+                padding-top: 16px;
+                border-top: 1px solid #e5e7eb;
+              }
+              .detail-row {
+                margin-bottom: 10px;
+                font-size: 13px;
+                color: #4b5563;
+              }
+              .detail-label {
+                font-weight: 600;
+                color: #1a1a1a;
+                display: block;
+                margin-bottom: 2px;
+              }
+              .detail-value {
+                color: #6b7280;
+                word-break: break-word;
+              }
+              .detail-value a {
+                color: #3b82f6;
+                text-decoration: none;
+              }
+              .detail-value a:hover {
+                text-decoration: underline;
+              }
+              .button-group {
+                margin-top: 16px;
+                display: flex;
+                gap: 8px;
+              }
+              .directions-btn {
+                flex: 1;
+                padding: 10px 14px;
+                background: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 500;
+                text-decoration: none;
+                display: inline-block;
+                text-align: center;
+                cursor: pointer;
+                transition: background-color 0.2s;
+              }
+              .directions-btn:hover {
+                background: #2563eb;
+              }
+              .category-badge {
+                display: inline-block;
+                padding: 6px 12px;
+                background-color: ${color}20;
+                color: ${color};
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-top: 12px;
               }
             </style>
-            <div style="padding: 10px 40px 10px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <h3 style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">${m.title}</h3>
-              <p style="margin: 0; color: #666; font-size: 14px;">${getMarkerDescription(m.type)}</p>
-              <div style="margin-top: 8px; padding: 4px 8px; background: ${color}; color: white; border-radius: 4px; font-size: 12px; display: inline-block;">
-                ${m.type.charAt(0).toUpperCase() + m.type.slice(1)}
+            <div class="building-card">
+              <h3>${m.title}</h3>
+              ${m.description ? `<p>${m.description}</p>` : ''}
+
+              ${m.details ? `
+                <div class="building-details">
+                  ${m.details.address ? `
+                    <div class="detail-row">
+                      <span class="detail-label">📍 Address</span>
+                      <span class="detail-value">${m.details.address}</span>
+                    </div>
+                  ` : ''}
+                  ${m.details.hours ? `
+                    <div class="detail-row">
+                      <span class="detail-label">🕐 Hours</span>
+                      <span class="detail-value">${m.details.hours}</span>
+                    </div>
+                  ` : ''}
+                  ${m.details.phone ? `
+                    <div class="detail-row">
+                      <span class="detail-label">📞 Phone</span>
+                      <span class="detail-value"><a href="tel:${m.details.phone}">${m.details.phone}</a></span>
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+
+              <div class="button-group">
+                <a href="${directionsUrl}" target="_blank" class="directions-btn">Get Directions</a>
               </div>
+
+              <div class="category-badge">${getMarkerDescription(m.type)}</div>
             </div>
-          `,
+          `;
+        };
+
+        // Add info window
+        const infoWindow = new google.maps.InfoWindow({
+          content: createInfoWindowContent(),
         });
 
         marker.addListener('click', () => {
@@ -121,21 +226,41 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
 
   // Helper functions for marker styling
   const getMarkerColor = (type: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
+      // Legacy types
       safe: '#22c55e',
       incident: '#ef4444',
       welllit: '#3b82f6',
+      // Landmark types
+      academic: '#3b82f6',      // blue
+      dining: '#f59e0b',         // amber
+      safety: '#ef4444',         // red
+      residential: '#8b5cf6',    // purple
     };
-    return colors[type as keyof typeof colors] || '#6b7280';
+    return colors[type] || '#6b7280';
   };
 
   const getMarkerDescription = (type: string) => {
-    const descriptions = {
-      safe: 'Safe zone with security presence',
-      incident: 'Recent security incident reported',
-      welllit: 'Well-lit area for safer walking',
+    const descriptions: Record<string, string> = {
+      // Legacy types
+      safe: 'Safe zone',
+      incident: 'Incident reported',
+      welllit: 'Well-lit area',
+      // Building categories
+      Academic: 'Academic Building',
+      Residential: 'Residential Hall',
+      Dining: 'Dining Facility',
+      Administrative: 'Administrative',
+      Athletic: 'Athletic Facility',
+      Medical: 'Medical Facility',
+      Safety: 'Safety & Security',
+      Parking: 'Parking',
+      Utility: 'Utility Building',
+      Research: 'Research Center',
+      Library: 'Library',
+      Other: 'Building',
     };
-    return descriptions[type as keyof typeof descriptions] || 'Campus location';
+    return descriptions[type] || 'Campus location';
   };
 
   const zoomIn = useCallback(() => {
@@ -232,8 +357,8 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
   }, [map, center, zoom]);
 
   return (
-    <div className="relative w-full h-96">
-      <div ref={mapRef} className="absolute inset-0 rounded-lg" />
+    <div className="relative w-full flex-1 md:h-full md:rounded-none">
+      <div ref={mapRef} className="absolute inset-0 md:rounded-none rounded-lg" />
       
       {/* Map Controls */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
@@ -275,7 +400,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
 };
 
 const LoadingComponent = () => (
-  <div className="h-96 bg-muted/30 border-b border-border relative overflow-hidden">
+  <div className="flex-1 md:h-full bg-muted/30 border-b border-border relative overflow-hidden">
     <div className="absolute inset-0 flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
@@ -286,7 +411,7 @@ const LoadingComponent = () => (
 );
 
 const ErrorComponent = ({ error }: { error: string }) => (
-  <div className="h-96 bg-muted/30 border-b border-border relative overflow-hidden">
+  <div className="flex-1 md:h-full bg-muted/30 border-b border-border relative overflow-hidden">
     <div className="absolute inset-0 flex items-center justify-center">
       <div className="text-center">
         <MapIcon size={48} className="text-muted-foreground mx-auto mb-2" />

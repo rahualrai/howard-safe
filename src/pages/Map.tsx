@@ -4,23 +4,25 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { GoogleMap } from "@/components/GoogleMapComponent";
-import { useState, useEffect } from "react";
-import { Search, Navigation, Phone, MapIcon, Shield, AlertTriangle, ZoomIn, ZoomOut, MapPin } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, Navigation, MapIcon, MapPin, X, ChevronDown } from "lucide-react";
 import { HapticFeedback } from "@/utils/haptics";
 import { ImpactStyle } from "@capacitor/haptics";
 import { useLocationPermission } from "@/hooks/useLocationPermission";
 import { LocationPermissionPrompt } from "@/components/LocationPermissionPrompt";
+import { HOWARD_BUILDINGS, getAllCategories, getAllCampuses, searchBuildings, getCategoryColor, type BuildingCategory, type CampusName } from "@/data/howardBuildingsComplete";
+
+const THE_YARD_CENTER = { lat: 38.9230, lng: -77.0200 };
 
 export default function Map() {
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
-  const [mapCenter, setMapCenter] = useState({ lat: 38.9227, lng: -77.0204 });
+  const [mapCenter, setMapCenter] = useState(THE_YARD_CENTER);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof HOWARD_BUILDINGS>([]);
+  const [activeCategories, setActiveCategories] = useState<Set<BuildingCategory>>(new Set(getAllCategories()));
+  const [activeCampuses, setActiveCampuses] = useState<Set<CampusName>>(new Set(getAllCampuses()));
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const { permission, getCurrentLocation, location } = useLocationPermission();
-  
-  const mapIncidents = [
-    { id: 1, type: "Safe Route", location: "Main Quad to Library", status: "active" },
-    { id: 2, type: "Well-lit Area", location: "Georgia Ave Corridor", status: "verified" },
-    { id: 3, type: "Incident Report", location: "Near Cramton Auditorium", time: "2 hours ago" },
-  ];
 
   // Check location permission on mount and hide prompt when granted
   useEffect(() => {
@@ -40,17 +42,33 @@ export default function Map() {
     }
   }, [permission, getCurrentLocation]);
 
-  // Howard University coordinates (fallback - not used but kept for reference)
-  
-  // Enhanced markers with better pins
-  const mapMarkers = [
-    { position: { lat: 38.9227, lng: -77.0204 }, title: "Howard University Main Campus", type: "safe" as const },
-    { position: { lat: 38.9240, lng: -77.0190 }, title: "Founders Library - Safe Route", type: "safe" as const },
-    { position: { lat: 38.9210, lng: -77.0220 }, title: "Well-lit Walkway - Georgia Ave", type: "welllit" as const },
-    { position: { lat: 38.9250, lng: -77.0180 }, title: "Recent Security Incident", type: "incident" as const },
-    { position: { lat: 38.9235, lng: -77.0195 }, title: "Blue Light Emergency Station", type: "safe" as const },
-    { position: { lat: 38.9220, lng: -77.0210 }, title: "Campus Security Office", type: "safe" as const },
-  ];
+  // Handle search query
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const results = searchBuildings(searchQuery);
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  // Compute markers: filtered buildings
+  const mapMarkers = useMemo(() => {
+    // Filter buildings by active categories and campuses
+    const filtered = HOWARD_BUILDINGS
+      .filter(building => activeCategories.has(building.category) && activeCampuses.has(building.campus))
+      .map(building => ({
+        position: { lat: building.latitude, lng: building.longitude },
+        title: building.name,
+        type: building.category,
+        details: {
+          address: building.address,
+          phone: building.phone,
+        },
+      }));
+
+    return filtered;
+  }, [activeCategories, activeCampuses]);
 
   const handleLocationGranted = (position: GeolocationPosition) => {
     setShowLocationPrompt(false);
@@ -61,7 +79,7 @@ export default function Map() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Location Permission Prompt */}
       {showLocationPrompt && (
         <LocationPermissionPrompt
@@ -71,8 +89,9 @@ export default function Map() {
           onPermissionGranted={handleLocationGranted}
         />
       )}
-      {/* Header */}
-      <header className="bg-card shadow-soft border-b border-border sticky top-0 z-40">
+
+      {/* MOBILE HEADER - Hidden on Desktop */}
+      <header className="md:hidden bg-card shadow-soft border-b border-border sticky top-0 z-40">
         <div className="px-mobile-padding py-4">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl font-semibold text-foreground">Campus Map</h1>
@@ -87,13 +106,50 @@ export default function Map() {
             </Badge>
           </div>
           
-          {/* Search Bar */}
+          {/* Search Bar with Autocomplete */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input 
-              placeholder="Search locations..."
+            <Input
+              placeholder="Search buildings..."
               className="pl-10 bg-muted/50 border-border"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchDropdown(e.target.value.length > 0);
+              }}
+              onFocus={() => searchQuery.length > 0 && setShowSearchDropdown(true)}
             />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchDropdown(false);
+                }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X size={18} />
+              </button>
+            )}
+
+            {/* Search Dropdown */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                {searchResults.slice(0, 8).map((building) => (
+                  <button
+                    key={building.id}
+                    className="w-full text-left px-4 py-2 hover:bg-muted border-b border-border last:border-b-0 transition-colors"
+                    onClick={() => {
+                      setMapCenter({ lat: building.latitude, lng: building.longitude });
+                      setSearchQuery('');
+                      setShowSearchDropdown(false);
+                    }}
+                  >
+                    <div className="font-medium text-sm">{building.name}</div>
+                    <div className="text-xs text-muted-foreground">{building.campus} • {building.category}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Location Prompt Button */}
@@ -108,72 +164,197 @@ export default function Map() {
               Enable Location for Better Safety
             </Button>
           )}
+
+          {/* Category Filters */}
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Building Types ({mapMarkers.length})</p>
+            <div className="flex flex-wrap gap-2">
+              {getAllCategories().map((category) => (
+                <Button
+                  key={category}
+                  variant={activeCategories.has(category) ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const newCategories = new Set(activeCategories);
+                    if (newCategories.has(category)) {
+                      newCategories.delete(category);
+                    } else {
+                      newCategories.add(category);
+                    }
+                    setActiveCategories(newCategories);
+                  }}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Campus Filters */}
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Campuses</p>
+            <div className="flex flex-wrap gap-2">
+              {getAllCampuses().map((campus) => (
+                <Button
+                  key={campus}
+                  variant={activeCampuses.has(campus) ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const newCampuses = new Set(activeCampuses);
+                    if (newCampuses.has(campus)) {
+                      newCampuses.delete(campus);
+                    } else {
+                      newCampuses.add(campus);
+                    }
+                    setActiveCampuses(newCampuses);
+                  }}
+                >
+                  {campus}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
 
+      {/* DESKTOP SIDEBAR - Hidden on Mobile */}
+      <aside className="hidden md:flex md:flex-col md:w-80 md:border-r md:border-border md:bg-card md:overflow-y-auto md:shadow-soft">
+        <div className="p-6 space-y-6">
+          {/* Title */}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Campus Map</h1>
+            <p className="text-sm text-muted-foreground mt-1">{mapMarkers.length} buildings shown</p>
+          </div>
+
+          {/* Search Bar with Autocomplete */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+            <Input
+              placeholder="Search buildings..."
+              className="pl-10 bg-muted/50 border-border"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchDropdown(e.target.value.length > 0);
+              }}
+              onFocus={() => searchQuery.length > 0 && setShowSearchDropdown(true)}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchDropdown(false);
+                }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X size={18} />
+              </button>
+            )}
+
+            {/* Search Dropdown */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                {searchResults.slice(0, 8).map((building) => (
+                  <button
+                    key={building.id}
+                    className="w-full text-left px-4 py-2 hover:bg-muted border-b border-border last:border-b-0 transition-colors"
+                    onClick={() => {
+                      setMapCenter({ lat: building.latitude, lng: building.longitude });
+                      setSearchQuery('');
+                      setShowSearchDropdown(false);
+                    }}
+                  >
+                    <div className="font-medium text-sm">{building.name}</div>
+                    <div className="text-xs text-muted-foreground">{building.campus} • {building.category}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Location Button */}
+          {(permission === 'unknown' || permission === 'prompt' || permission === 'denied') && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowLocationPrompt(true)}
+            >
+              <MapPin className="w-4 h-4 mr-2" />
+              Enable Location
+            </Button>
+          )}
+
+          {/* Category Filters */}
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-3">Building Types</p>
+            <div className="flex flex-wrap gap-2">
+              {getAllCategories().map((category) => (
+                <Button
+                  key={category}
+                  variant={activeCategories.has(category) ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const newCategories = new Set(activeCategories);
+                    if (newCategories.has(category)) {
+                      newCategories.delete(category);
+                    } else {
+                      newCategories.add(category);
+                    }
+                    setActiveCategories(newCategories);
+                  }}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Campus Filters */}
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-3">Campuses</p>
+            <div className="flex flex-wrap gap-2">
+              {getAllCampuses().map((campus) => (
+                <Button
+                  key={campus}
+                  variant={activeCampuses.has(campus) ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const newCampuses = new Set(activeCampuses);
+                    if (newCampuses.has(campus)) {
+                      newCampuses.delete(campus);
+                    } else {
+                      newCampuses.add(campus);
+                    }
+                    setActiveCampuses(newCampuses);
+                  }}
+                >
+                  {campus}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </aside>
+
       {/* Main Content */}
-      <main className="relative flex-1">
+      <main className="relative flex-1 flex flex-col md:h-screen">
         {/* Google Maps with current location */}
-        <GoogleMap 
-          center={permission === 'granted' && location ? 
-            { lat: location.coords.latitude, lng: location.coords.longitude } : 
+        <GoogleMap
+          center={permission === 'granted' && location ?
+            { lat: location.coords.latitude, lng: location.coords.longitude } :
             mapCenter
           }
           zoom={permission === 'granted' ? 17 : 16}
           markers={mapMarkers}
         />
 
-        {/* Map Legend & Information */}
-        <div className="px-mobile-padding py-4 pb-24">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-foreground mb-3">Map Information</h2>
-            
-            <div className="grid grid-cols-1 gap-3">
-              {mapIncidents.map((item) => (
-                <Card key={item.id} className="shadow-soft border-border">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {item.type === "Safe Route" && (
-                          <div className="w-8 h-8 bg-success/10 rounded-full flex items-center justify-center">
-                            <Shield className="text-success" size={16} />
-                          </div>
-                        )}
-                        {item.type === "Well-lit Area" && (
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                            <Shield className="text-primary" size={16} />
-                          </div>
-                        )}
-                        {item.type === "Incident Report" && (
-                          <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center">
-                            <AlertTriangle className="text-accent" size={16} />
-                          </div>
-                        )}
-                        
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{item.type}</p>
-                          <p className="text-xs text-muted-foreground">{item.location}</p>
-                          {item.time && (
-                            <p className="text-xs text-muted-foreground">{item.time}</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {item.status && (
-                        <Badge 
-                          variant={item.status === "active" ? "default" : "secondary"}
-                          className="text-xs"
-                        >
-                          {item.status}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* Spacing for bottom navigation (mobile only) */}
+        <div className="md:hidden h-24" />
       </main>
 
     </div>
