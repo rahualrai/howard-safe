@@ -12,10 +12,10 @@ export type QuickLink = {
 };
 
 const DEFAULT_LINKS: QuickLink[] = [
-  { id: "1", label: "Blackboard", href: "https://blackboard.howard.edu" },
+  { id: "1", label: "Canvas", href: "https://canvas.howard.edu" },
   { id: "2", label: "Bison Email", href: "https://outlook.office.com" },
   { id: "3", label: "Financial Aid", href: "https://www2.howard.edu/student-financial-services" },
-  { id: "4", label: "Course Registration", href: "https://ssb-prod.ec.howard.edu" },
+  { id: "4", label: "Course Registration", href: "https://www.myworkday.com/howard/d/task/3005$2765.htmld#backheader=true" },
   { id: "5", label: "Handshake", href: "https://howard.joinhandshake.com" },
 ];
 
