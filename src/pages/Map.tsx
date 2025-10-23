@@ -4,16 +4,18 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { GoogleMap } from "@/components/GoogleMapComponent";
-import { useState, useEffect } from "react";
-import { Search, Navigation, Phone, MapIcon, Shield, AlertTriangle, ZoomIn, ZoomOut, MapPin } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, Navigation, Phone, MapIcon, Shield, AlertTriangle, ZoomIn, ZoomOut, MapPin, GraduationCap, UtensilsCrossed, AlertCircle, Home } from "lucide-react";
 import { HapticFeedback } from "@/utils/haptics";
 import { ImpactStyle } from "@capacitor/haptics";
 import { useLocationPermission } from "@/hooks/useLocationPermission";
 import { LocationPermissionPrompt } from "@/components/LocationPermissionPrompt";
+import { HOWARD_LANDMARKS, THE_YARD_CENTER, getAllCategories, getCategoryDisplayName, type LandmarkCategory } from "@/data/howardLandmarks";
 
 export default function Map() {
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
-  const [mapCenter, setMapCenter] = useState({ lat: 38.9227, lng: -77.0204 });
+  const [mapCenter, setMapCenter] = useState(THE_YARD_CENTER);
+  const [activeFilters, setActiveFilters] = useState<Set<LandmarkCategory>>(new Set(getAllCategories()));
   const { permission, getCurrentLocation, location } = useLocationPermission();
   
   const mapIncidents = [
@@ -40,17 +42,32 @@ export default function Map() {
     }
   }, [permission, getCurrentLocation]);
 
-  // Howard University coordinates (fallback - not used but kept for reference)
-  
-  // Enhanced markers with better pins
-  const mapMarkers = [
-    { position: { lat: 38.9227, lng: -77.0204 }, title: "Howard University Main Campus", type: "safe" as const },
-    { position: { lat: 38.9240, lng: -77.0190 }, title: "Founders Library - Safe Route", type: "safe" as const },
-    { position: { lat: 38.9210, lng: -77.0220 }, title: "Well-lit Walkway - Georgia Ave", type: "welllit" as const },
-    { position: { lat: 38.9250, lng: -77.0180 }, title: "Recent Security Incident", type: "incident" as const },
-    { position: { lat: 38.9235, lng: -77.0195 }, title: "Blue Light Emergency Station", type: "safe" as const },
-    { position: { lat: 38.9220, lng: -77.0210 }, title: "Campus Security Office", type: "safe" as const },
-  ];
+  // Compute markers: legacy incidents + filtered landmarks
+  const mapMarkers = useMemo(() => {
+    // Legacy security markers (kept for backward compatibility)
+    const legacyMarkers = [
+      { position: { lat: 38.9227, lng: -77.0204 }, title: "Howard University Main Campus", type: "safe" as const },
+      { position: { lat: 38.9240, lng: -77.0190 }, title: "Founders Library - Safe Route", type: "safe" as const },
+      { position: { lat: 38.9210, lng: -77.0220 }, title: "Well-lit Walkway - Georgia Ave", type: "welllit" as const },
+      { position: { lat: 38.9250, lng: -77.0180 }, title: "Recent Security Incident", type: "incident" as const },
+      { position: { lat: 38.9235, lng: -77.0195 }, title: "Blue Light Emergency Station", type: "safe" as const },
+      { position: { lat: 38.9220, lng: -77.0210 }, title: "Campus Security Office", type: "safe" as const },
+    ];
+
+    // Filtered landmarks
+    const filteredLandmarks = HOWARD_LANDMARKS
+      .filter(landmark => activeFilters.has(landmark.category))
+      .map(landmark => ({
+        position: { lat: landmark.latitude, lng: landmark.longitude },
+        title: landmark.name,
+        type: landmark.category,
+        description: landmark.description,
+        details: landmark.details,
+      }));
+
+    // Combine both
+    return [...legacyMarkers, ...filteredLandmarks];
+  }, [activeFilters]);
 
   const handleLocationGranted = (position: GeolocationPosition) => {
     setShowLocationPrompt(false);
@@ -108,6 +125,36 @@ export default function Map() {
               Enable Location for Better Safety
             </Button>
           )}
+
+          {/* Filter Buttons */}
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Filter Landmarks</p>
+            <div className="flex flex-wrap gap-2">
+              {getAllCategories().map((category) => (
+                <Button
+                  key={category}
+                  variant={activeFilters.has(category) ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const newFilters = new Set(activeFilters);
+                    if (newFilters.has(category)) {
+                      newFilters.delete(category);
+                    } else {
+                      newFilters.add(category);
+                    }
+                    setActiveFilters(newFilters);
+                  }}
+                >
+                  {category === 'academic' && <GraduationCap className="w-3 h-3 mr-1" />}
+                  {category === 'dining' && <UtensilsCrossed className="w-3 h-3 mr-1" />}
+                  {category === 'safety' && <AlertCircle className="w-3 h-3 mr-1" />}
+                  {category === 'residential' && <Home className="w-3 h-3 mr-1" />}
+                  {getCategoryDisplayName(category)}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
 

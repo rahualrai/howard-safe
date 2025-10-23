@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Wrapper, Status } from '@googlemaps/react-wrapper';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ZoomIn, ZoomOut, Navigation, MapIcon } from 'lucide-react';
+import { ZoomIn, ZoomOut, Navigation, MapIcon, Directions } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import type { LandmarkCategory } from '@/data/howardLandmarks';
 
 declare global {
   interface Window {
@@ -11,13 +12,21 @@ declare global {
   }
 }
 
+type MarkerType = 'safe' | 'incident' | 'welllit' | LandmarkCategory;
+
 interface GoogleMapProps {
   center: { lat: number; lng: number };
   zoom: number;
   markers: Array<{
     position: { lat: number; lng: number };
     title: string;
-    type: 'safe' | 'incident' | 'welllit';
+    type: MarkerType;
+    description?: string;
+    details?: {
+      hours?: string;
+      phone?: string;
+      address?: string;
+    };
   }>;
 }
 
@@ -74,40 +83,90 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           zIndex: m.type === 'incident' ? 100 : 10,
         });
 
-        // Add info window
-        const infoWindow = new google.maps.InfoWindow({
-          content: `
+        // Build info window content
+        const createInfoWindowContent = () => {
+          const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.position.lat},${m.position.lng}`;
+
+          return `
             <style>
-              .gm-ui-hover-effect {
-                background-color: rgba(0, 0, 0, 0.15) !important;
-                border-radius: 50% !important;
-                width: 32px !important;
-                height: 32px !important;
-                position: absolute !important;
-                top: 8px !important;
-                right: 8px !important;
+              .landmark-info {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                min-width: 280px;
+                max-width: 320px;
               }
-              .gm-ui-hover-effect:hover {
-                background-color: rgba(0, 0, 0, 0.3) !important;
+              .landmark-info h3 {
+                margin: 0 0 8px 0;
+                color: #1a1a1a;
+                font-size: 16px;
+                font-weight: 600;
               }
-              .gm-ui-hover-effect > span {
-                background-color: #000 !important;
-                margin: 8px !important;
-                width: 16px !important;
-                height: 16px !important;
+              .landmark-info p {
+                margin: 0 0 8px 0;
+                color: #666;
+                font-size: 14px;
+                line-height: 1.4;
               }
-              .gm-style-iw-chr {
-                position: relative !important;
+              .landmark-details {
+                margin: 8px 0;
+                font-size: 13px;
+                color: #555;
+              }
+              .detail-item {
+                margin: 4px 0;
+                padding: 4px 0;
+              }
+              .detail-label {
+                font-weight: 600;
+                color: #333;
+              }
+              .landmark-badge {
+                display: inline-block;
+                margin: 8px 0 0 0;
+                padding: 4px 8px;
+                background: ${color};
+                color: white;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+              }
+              .directions-button {
+                display: inline-block;
+                margin-top: 8px;
+                padding: 8px 12px;
+                background: #4285F4;
+                color: white;
+                border-radius: 4px;
+                font-size: 13px;
+                font-weight: 500;
+                text-decoration: none;
+                cursor: pointer;
+                margin-right: 4px;
+              }
+              .directions-button:hover {
+                background: #3367D6;
               }
             </style>
-            <div style="padding: 10px 40px 10px 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <h3 style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">${m.title}</h3>
-              <p style="margin: 0; color: #666; font-size: 14px;">${getMarkerDescription(m.type)}</p>
-              <div style="margin-top: 8px; padding: 4px 8px; background: ${color}; color: white; border-radius: 4px; font-size: 12px; display: inline-block;">
-                ${m.type.charAt(0).toUpperCase() + m.type.slice(1)}
+            <div class="landmark-info">
+              <h3>${m.title}</h3>
+              ${m.description ? `<p>${m.description}</p>` : ''}
+              ${m.details ? `
+                <div class="landmark-details">
+                  ${m.details.address ? `<div class="detail-item"><span class="detail-label">Address:</span><br>${m.details.address}</div>` : ''}
+                  ${m.details.hours ? `<div class="detail-item"><span class="detail-label">Hours:</span><br>${m.details.hours}</div>` : ''}
+                  ${m.details.phone ? `<div class="detail-item"><span class="detail-label">Phone:</span><br><a href="tel:${m.details.phone}">${m.details.phone}</a></div>` : ''}
+                </div>
+              ` : ''}
+              <div>
+                <a href="${directionsUrl}" target="_blank" class="directions-button">Get Directions →</a>
               </div>
+              <div class="landmark-badge">${getMarkerDescription(m.type)}</div>
             </div>
-          `,
+          `;
+        };
+
+        // Add info window
+        const infoWindow = new google.maps.InfoWindow({
+          content: createInfoWindowContent(),
         });
 
         marker.addListener('click', () => {
@@ -121,21 +180,33 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
 
   // Helper functions for marker styling
   const getMarkerColor = (type: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
+      // Legacy types
       safe: '#22c55e',
       incident: '#ef4444',
       welllit: '#3b82f6',
+      // Landmark types
+      academic: '#3b82f6',      // blue
+      dining: '#f59e0b',         // amber
+      safety: '#ef4444',         // red
+      residential: '#8b5cf6',    // purple
     };
-    return colors[type as keyof typeof colors] || '#6b7280';
+    return colors[type] || '#6b7280';
   };
 
   const getMarkerDescription = (type: string) => {
-    const descriptions = {
+    const descriptions: Record<string, string> = {
+      // Legacy types
       safe: 'Safe zone with security presence',
       incident: 'Recent security incident reported',
       welllit: 'Well-lit area for safer walking',
+      // Landmark types
+      academic: 'Academic Building',
+      dining: 'Dining & Food',
+      safety: 'Safety & Security',
+      residential: 'Residential Hall',
     };
-    return descriptions[type as keyof typeof descriptions] || 'Campus location';
+    return descriptions[type] || 'Campus location';
   };
 
   const zoomIn = useCallback(() => {
