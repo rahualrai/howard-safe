@@ -5,17 +5,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { GoogleMap } from "@/components/GoogleMapComponent";
 import { useState, useEffect, useMemo } from "react";
-import { Search, Navigation, Phone, MapIcon, Shield, AlertTriangle, ZoomIn, ZoomOut, MapPin, GraduationCap, UtensilsCrossed, AlertCircle, Home } from "lucide-react";
+import { Search, Navigation, MapIcon, MapPin, X, ChevronDown } from "lucide-react";
 import { HapticFeedback } from "@/utils/haptics";
 import { ImpactStyle } from "@capacitor/haptics";
 import { useLocationPermission } from "@/hooks/useLocationPermission";
 import { LocationPermissionPrompt } from "@/components/LocationPermissionPrompt";
-import { HOWARD_LANDMARKS, THE_YARD_CENTER, getAllCategories, getCategoryDisplayName, type LandmarkCategory } from "@/data/howardLandmarks";
+import { HOWARD_BUILDINGS, getAllCategories, getAllCampuses, searchBuildings, getCategoryColor, type BuildingCategory, type CampusName } from "@/data/howardBuildingsComplete";
+
+const THE_YARD_CENTER = { lat: 38.9230, lng: -77.0200 };
 
 export default function Map() {
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [mapCenter, setMapCenter] = useState(THE_YARD_CENTER);
-  const [activeFilters, setActiveFilters] = useState<Set<LandmarkCategory>>(new Set(getAllCategories()));
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof HOWARD_BUILDINGS>([]);
+  const [activeCategories, setActiveCategories] = useState<Set<BuildingCategory>>(new Set(getAllCategories()));
+  const [activeCampuses, setActiveCampuses] = useState<Set<CampusName>>(new Set(getAllCampuses()));
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const { permission, getCurrentLocation, location } = useLocationPermission();
   
   const mapIncidents = [
@@ -42,32 +48,34 @@ export default function Map() {
     }
   }, [permission, getCurrentLocation]);
 
-  // Compute markers: legacy incidents + filtered landmarks
-  const mapMarkers = useMemo(() => {
-    // Legacy security markers (kept for backward compatibility)
-    const legacyMarkers = [
-      { position: { lat: 38.9227, lng: -77.0204 }, title: "Howard University Main Campus", type: "safe" as const },
-      { position: { lat: 38.9240, lng: -77.0190 }, title: "Founders Library - Safe Route", type: "safe" as const },
-      { position: { lat: 38.9210, lng: -77.0220 }, title: "Well-lit Walkway - Georgia Ave", type: "welllit" as const },
-      { position: { lat: 38.9250, lng: -77.0180 }, title: "Recent Security Incident", type: "incident" as const },
-      { position: { lat: 38.9235, lng: -77.0195 }, title: "Blue Light Emergency Station", type: "safe" as const },
-      { position: { lat: 38.9220, lng: -77.0210 }, title: "Campus Security Office", type: "safe" as const },
-    ];
+  // Handle search query
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const results = searchBuildings(searchQuery);
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
 
-    // Filtered landmarks
-    const filteredLandmarks = HOWARD_LANDMARKS
-      .filter(landmark => activeFilters.has(landmark.category))
-      .map(landmark => ({
-        position: { lat: landmark.latitude, lng: landmark.longitude },
-        title: landmark.name,
-        type: landmark.category,
-        description: landmark.description,
-        details: landmark.details,
+  // Compute markers: filtered buildings
+  const mapMarkers = useMemo(() => {
+    // Filter buildings by active categories and campuses
+    const filtered = HOWARD_BUILDINGS
+      .filter(building => activeCategories.has(building.category))
+      .filter(building => activeCampuses.has(building.campus))
+      .map(building => ({
+        position: { lat: building.latitude, lng: building.longitude },
+        title: building.name,
+        type: building.category,
+        details: {
+          address: building.address,
+          phone: building.phone,
+        },
       }));
 
-    // Combine both
-    return [...legacyMarkers, ...filteredLandmarks];
-  }, [activeFilters]);
+    return filtered;
+  }, [activeCategories, activeCampuses]);
 
   const handleLocationGranted = (position: GeolocationPosition) => {
     setShowLocationPrompt(false);
@@ -104,13 +112,50 @@ export default function Map() {
             </Badge>
           </div>
           
-          {/* Search Bar */}
+          {/* Search Bar with Autocomplete */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input 
-              placeholder="Search locations..."
+            <Input
+              placeholder="Search buildings..."
               className="pl-10 bg-muted/50 border-border"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchDropdown(e.target.value.length > 0);
+              }}
+              onFocus={() => searchQuery.length > 0 && setShowSearchDropdown(true)}
             />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchDropdown(false);
+                }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X size={18} />
+              </button>
+            )}
+
+            {/* Search Dropdown */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                {searchResults.slice(0, 8).map((building) => (
+                  <button
+                    key={building.id}
+                    className="w-full text-left px-4 py-2 hover:bg-muted border-b border-border last:border-b-0 transition-colors"
+                    onClick={() => {
+                      setMapCenter({ lat: building.latitude, lng: building.longitude });
+                      setSearchQuery('');
+                      setShowSearchDropdown(false);
+                    }}
+                  >
+                    <div className="font-medium text-sm">{building.name}</div>
+                    <div className="text-xs text-muted-foreground">{building.campus} • {building.category}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Location Prompt Button */}
@@ -126,31 +171,53 @@ export default function Map() {
             </Button>
           )}
 
-          {/* Filter Buttons */}
+          {/* Category Filters */}
           <div className="mt-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Filter Landmarks</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Building Types ({mapMarkers.length})</p>
             <div className="flex flex-wrap gap-2">
               {getAllCategories().map((category) => (
                 <Button
                   key={category}
-                  variant={activeFilters.has(category) ? "default" : "outline"}
+                  variant={activeCategories.has(category) ? "default" : "outline"}
                   size="sm"
                   className="text-xs"
                   onClick={() => {
-                    const newFilters = new Set(activeFilters);
-                    if (newFilters.has(category)) {
-                      newFilters.delete(category);
+                    const newCategories = new Set(activeCategories);
+                    if (newCategories.has(category)) {
+                      newCategories.delete(category);
                     } else {
-                      newFilters.add(category);
+                      newCategories.add(category);
                     }
-                    setActiveFilters(newFilters);
+                    setActiveCategories(newCategories);
                   }}
                 >
-                  {category === 'academic' && <GraduationCap className="w-3 h-3 mr-1" />}
-                  {category === 'dining' && <UtensilsCrossed className="w-3 h-3 mr-1" />}
-                  {category === 'safety' && <AlertCircle className="w-3 h-3 mr-1" />}
-                  {category === 'residential' && <Home className="w-3 h-3 mr-1" />}
-                  {getCategoryDisplayName(category)}
+                  {category}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Campus Filters */}
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Campuses</p>
+            <div className="flex flex-wrap gap-2">
+              {getAllCampuses().map((campus) => (
+                <Button
+                  key={campus}
+                  variant={activeCampuses.has(campus) ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const newCampuses = new Set(activeCampuses);
+                    if (newCampuses.has(campus)) {
+                      newCampuses.delete(campus);
+                    } else {
+                      newCampuses.add(campus);
+                    }
+                    setActiveCampuses(newCampuses);
+                  }}
+                >
+                  {campus}
                 </Button>
               ))}
             </div>

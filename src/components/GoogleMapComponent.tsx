@@ -83,83 +83,129 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           zIndex: m.type === 'incident' ? 100 : 10,
         });
 
-        // Build info window content
+        // Build info window content - Minimalist & Modern Design
         const createInfoWindowContent = () => {
           const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.position.lat},${m.position.lng}`;
 
           return `
             <style>
-              .landmark-info {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                min-width: 280px;
-                max-width: 320px;
+              * { box-sizing: border-box; }
+              .building-card {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+                width: 320px;
+                background: #ffffff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
               }
-              .landmark-info h3 {
-                margin: 0 0 8px 0;
+              .building-card h3 {
+                margin: 0 0 12px 0;
                 color: #1a1a1a;
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: 600;
+                line-height: 1.3;
               }
-              .landmark-info p {
-                margin: 0 0 8px 0;
-                color: #666;
+              .building-card p {
+                margin: 0 0 12px 0;
+                color: #6b7280;
                 font-size: 14px;
-                line-height: 1.4;
+                line-height: 1.5;
               }
-              .landmark-details {
-                margin: 8px 0;
+              .building-details {
+                margin: 16px 0;
+                padding-top: 16px;
+                border-top: 1px solid #e5e7eb;
+              }
+              .detail-row {
+                margin-bottom: 10px;
                 font-size: 13px;
-                color: #555;
-              }
-              .detail-item {
-                margin: 4px 0;
-                padding: 4px 0;
+                color: #4b5563;
               }
               .detail-label {
                 font-weight: 600;
-                color: #333;
+                color: #1a1a1a;
+                display: block;
+                margin-bottom: 2px;
               }
-              .landmark-badge {
-                display: inline-block;
-                margin: 8px 0 0 0;
-                padding: 4px 8px;
-                background: ${color};
-                color: white;
-                border-radius: 4px;
-                font-size: 12px;
-                font-weight: 500;
+              .detail-value {
+                color: #6b7280;
+                word-break: break-word;
               }
-              .directions-button {
-                display: inline-block;
-                margin-top: 8px;
-                padding: 8px 12px;
-                background: #4285F4;
+              .detail-value a {
+                color: #3b82f6;
+                text-decoration: none;
+              }
+              .detail-value a:hover {
+                text-decoration: underline;
+              }
+              .button-group {
+                margin-top: 16px;
+                display: flex;
+                gap: 8px;
+              }
+              .directions-btn {
+                flex: 1;
+                padding: 10px 14px;
+                background: #3b82f6;
                 color: white;
-                border-radius: 4px;
+                border: none;
+                border-radius: 6px;
                 font-size: 13px;
                 font-weight: 500;
                 text-decoration: none;
+                display: inline-block;
+                text-align: center;
                 cursor: pointer;
-                margin-right: 4px;
+                transition: background-color 0.2s;
               }
-              .directions-button:hover {
-                background: #3367D6;
+              .directions-btn:hover {
+                background: #2563eb;
+              }
+              .category-badge {
+                display: inline-block;
+                padding: 6px 12px;
+                background-color: ${color}20;
+                color: ${color};
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-top: 12px;
               }
             </style>
-            <div class="landmark-info">
+            <div class="building-card">
               <h3>${m.title}</h3>
               ${m.description ? `<p>${m.description}</p>` : ''}
+
               ${m.details ? `
-                <div class="landmark-details">
-                  ${m.details.address ? `<div class="detail-item"><span class="detail-label">Address:</span><br>${m.details.address}</div>` : ''}
-                  ${m.details.hours ? `<div class="detail-item"><span class="detail-label">Hours:</span><br>${m.details.hours}</div>` : ''}
-                  ${m.details.phone ? `<div class="detail-item"><span class="detail-label">Phone:</span><br><a href="tel:${m.details.phone}">${m.details.phone}</a></div>` : ''}
+                <div class="building-details">
+                  ${m.details.address ? `
+                    <div class="detail-row">
+                      <span class="detail-label">📍 Address</span>
+                      <span class="detail-value">${m.details.address}</span>
+                    </div>
+                  ` : ''}
+                  ${m.details.hours ? `
+                    <div class="detail-row">
+                      <span class="detail-label">🕐 Hours</span>
+                      <span class="detail-value">${m.details.hours}</span>
+                    </div>
+                  ` : ''}
+                  ${m.details.phone ? `
+                    <div class="detail-row">
+                      <span class="detail-label">📞 Phone</span>
+                      <span class="detail-value"><a href="tel:${m.details.phone}">${m.details.phone}</a></span>
+                    </div>
+                  ` : ''}
                 </div>
               ` : ''}
-              <div>
-                <a href="${directionsUrl}" target="_blank" class="directions-button">Get Directions →</a>
+
+              <div class="button-group">
+                <a href="${directionsUrl}" target="_blank" class="directions-btn">Get Directions</a>
               </div>
-              <div class="landmark-badge">${getMarkerDescription(m.type)}</div>
+
+              <div class="category-badge">${getMarkerDescription(m.type)}</div>
             </div>
           `;
         };
@@ -197,14 +243,22 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
   const getMarkerDescription = (type: string) => {
     const descriptions: Record<string, string> = {
       // Legacy types
-      safe: 'Safe zone with security presence',
-      incident: 'Recent security incident reported',
-      welllit: 'Well-lit area for safer walking',
-      // Landmark types
-      academic: 'Academic Building',
-      dining: 'Dining & Food',
-      safety: 'Safety & Security',
-      residential: 'Residential Hall',
+      safe: 'Safe zone',
+      incident: 'Incident reported',
+      welllit: 'Well-lit area',
+      // Building categories
+      Academic: 'Academic Building',
+      Residential: 'Residential Hall',
+      Dining: 'Dining Facility',
+      Administrative: 'Administrative',
+      Athletic: 'Athletic Facility',
+      Medical: 'Medical Facility',
+      Safety: 'Safety & Security',
+      Parking: 'Parking',
+      Utility: 'Utility Building',
+      Research: 'Research Center',
+      Library: 'Library',
+      Other: 'Building',
     };
     return descriptions[type] || 'Campus location';
   };
