@@ -101,7 +101,7 @@ export function useEmergencyContacts() {
     } finally {
       setLoading(false);
     }
-  }, [loadCachedData, saveToCache, toast, contacts.length]);
+  }, [loadCachedData, saveToCache, toast]);
 
   // Initial load
   useEffect(() => {
