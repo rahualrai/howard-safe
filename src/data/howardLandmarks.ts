@@ -1,6 +1,10 @@
 /**
  * Howard University Campus Landmarks and Points of Interest
  * Data structure for map pins with accurate coordinates
+ *
+ * @deprecated
+ * This file contains a legacy, incomplete set of 25 landmarks.
+ * For the full dataset of 167 buildings, use howardBuildingsComplete.ts instead.
  */
 
 export type LandmarkCategory = 'academic' | 'dining' | 'safety' | 'residential';
