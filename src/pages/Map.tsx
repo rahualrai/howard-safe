@@ -80,7 +80,7 @@ export default function Map() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Location Permission Prompt */}
       {showLocationPrompt && (
         <LocationPermissionPrompt
@@ -90,8 +90,9 @@ export default function Map() {
           onPermissionGranted={handleLocationGranted}
         />
       )}
-      {/* Header */}
-      <header className="bg-card shadow-soft border-b border-border sticky top-0 z-40">
+
+      {/* MOBILE HEADER - Hidden on Desktop */}
+      <header className="md:hidden bg-card shadow-soft border-b border-border sticky top-0 z-40">
         <div className="px-mobile-padding py-4">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl font-semibold text-foreground">Campus Map</h1>
@@ -219,20 +220,142 @@ export default function Map() {
         </div>
       </header>
 
+      {/* DESKTOP SIDEBAR - Hidden on Mobile */}
+      <aside className="hidden md:flex md:flex-col md:w-80 md:border-r md:border-border md:bg-card md:overflow-y-auto md:shadow-soft">
+        <div className="p-6 space-y-6">
+          {/* Title */}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Campus Map</h1>
+            <p className="text-sm text-muted-foreground mt-1">{mapMarkers.length} buildings shown</p>
+          </div>
+
+          {/* Search Bar with Autocomplete */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+            <Input
+              placeholder="Search buildings..."
+              className="pl-10 bg-muted/50 border-border"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchDropdown(e.target.value.length > 0);
+              }}
+              onFocus={() => searchQuery.length > 0 && setShowSearchDropdown(true)}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchDropdown(false);
+                }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X size={18} />
+              </button>
+            )}
+
+            {/* Search Dropdown */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+                {searchResults.slice(0, 8).map((building) => (
+                  <button
+                    key={building.id}
+                    className="w-full text-left px-4 py-2 hover:bg-muted border-b border-border last:border-b-0 transition-colors"
+                    onClick={() => {
+                      setMapCenter({ lat: building.latitude, lng: building.longitude });
+                      setSearchQuery('');
+                      setShowSearchDropdown(false);
+                    }}
+                  >
+                    <div className="font-medium text-sm">{building.name}</div>
+                    <div className="text-xs text-muted-foreground">{building.campus} • {building.category}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Location Button */}
+          {(permission === 'unknown' || permission === 'prompt' || permission === 'denied') && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowLocationPrompt(true)}
+            >
+              <MapPin className="w-4 h-4 mr-2" />
+              Enable Location
+            </Button>
+          )}
+
+          {/* Category Filters */}
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-3">Building Types</p>
+            <div className="flex flex-wrap gap-2">
+              {getAllCategories().map((category) => (
+                <Button
+                  key={category}
+                  variant={activeCategories.has(category) ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const newCategories = new Set(activeCategories);
+                    if (newCategories.has(category)) {
+                      newCategories.delete(category);
+                    } else {
+                      newCategories.add(category);
+                    }
+                    setActiveCategories(newCategories);
+                  }}
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Campus Filters */}
+          <div>
+            <p className="text-sm font-semibold text-foreground mb-3">Campuses</p>
+            <div className="flex flex-wrap gap-2">
+              {getAllCampuses().map((campus) => (
+                <Button
+                  key={campus}
+                  variant={activeCampuses.has(campus) ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const newCampuses = new Set(activeCampuses);
+                    if (newCampuses.has(campus)) {
+                      newCampuses.delete(campus);
+                    } else {
+                      newCampuses.add(campus);
+                    }
+                    setActiveCampuses(newCampuses);
+                  }}
+                >
+                  {campus}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </aside>
+
       {/* Main Content */}
-      <main className="relative flex-1">
+      <main className="relative flex-1 flex flex-col md:h-screen">
         {/* Google Maps with current location */}
-        <GoogleMap 
-          center={permission === 'granted' && location ? 
-            { lat: location.coords.latitude, lng: location.coords.longitude } : 
+        <GoogleMap
+          center={permission === 'granted' && location ?
+            { lat: location.coords.latitude, lng: location.coords.longitude } :
             mapCenter
           }
           zoom={permission === 'granted' ? 17 : 16}
           markers={mapMarkers}
         />
 
-        {/* Spacing for bottom navigation */}
-        <div className="h-24" />
+        {/* Spacing for bottom navigation (mobile only) */}
+        <div className="md:hidden h-24" />
       </main>
 
     </div>

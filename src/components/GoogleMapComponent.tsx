@@ -357,8 +357,8 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
   }, [map, center, zoom]);
 
   return (
-    <div className="relative w-full h-96">
-      <div ref={mapRef} className="absolute inset-0 rounded-lg" />
+    <div className="relative w-full h-96 md:h-full md:rounded-none">
+      <div ref={mapRef} className="absolute inset-0 md:rounded-none rounded-lg" />
       
       {/* Map Controls */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
@@ -400,7 +400,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
 };
 
 const LoadingComponent = () => (
-  <div className="h-96 bg-muted/30 border-b border-border relative overflow-hidden">
+  <div className="h-96 md:h-full bg-muted/30 border-b border-border relative overflow-hidden">
     <div className="absolute inset-0 flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
@@ -411,7 +411,7 @@ const LoadingComponent = () => (
 );
 
 const ErrorComponent = ({ error }: { error: string }) => (
-  <div className="h-96 bg-muted/30 border-b border-border relative overflow-hidden">
+  <div className="h-96 md:h-full bg-muted/30 border-b border-border relative overflow-hidden">
     <div className="absolute inset-0 flex items-center justify-center">
       <div className="text-center">
         <MapIcon size={48} className="text-muted-foreground mx-auto mb-2" />
