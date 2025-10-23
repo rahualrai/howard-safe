@@ -56,8 +56,7 @@ export default function Map() {
   const mapMarkers = useMemo(() => {
     // Filter buildings by active categories and campuses
     const filtered = HOWARD_BUILDINGS
-      .filter(building => activeCategories.has(building.category))
-      .filter(building => activeCampuses.has(building.campus))
+      .filter(building => activeCategories.has(building.category) && activeCampuses.has(building.campus))
       .map(building => ({
         position: { lat: building.latitude, lng: building.longitude },
         title: building.name,
