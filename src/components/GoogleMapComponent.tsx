@@ -97,6 +97,17 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
                 padding: 20px;
                 border-radius: 8px;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                padding-top: 36px;
+                position: relative;
+              }
+              .gm-ui-hover-effect {
+                background-color: #f3f4f6 !important;
+                border-radius: 4px !important;
+                opacity: 0.9 !important;
+              }
+              button[aria-label="Close"] {
+                color: #374151 !important;
+                filter: invert(0.8) !important;
               }
               .building-card h3 {
                 margin: 0 0 12px 0;
