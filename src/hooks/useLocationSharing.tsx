@@ -41,6 +41,12 @@ export function useLocationSharing(userId: string | undefined) {
       setFriendsLocations(data || []);
     } catch (error) {
       console.error('Error fetching friends locations:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load friends locations',
+        variant: 'destructive',
+      });
+      setFriendsLocations([]);
     }
   }, [userId]);
 
