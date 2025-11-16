@@ -186,11 +186,19 @@ export function useEmergencyContacts(userId?: string | null) {
     }
   }, []);
 
-  // Fetch contacts from database
+  // Fetch contacts from database (offline-first approach)
   const fetchContacts = useCallback(async (useCache = true) => {
-    // Load cached data first for immediate display
+    // ALWAYS load cached data first for immediate display (offline-first)
     if (useCache) {
       loadCachedData();
+    }
+
+    // Only attempt to fetch if online (cost/latency efficient)
+    if (!navigator.onLine) {
+      // Offline: Use cache silently, no errors
+      setLoading(false);
+      setError(null);
+      return;
     }
 
     try {
@@ -234,27 +242,21 @@ export function useEmergencyContacts(userId?: string | null) {
         const now = new Date();
         setLastSyncTime(now);
         saveToCache(data, now);
-        
-        toast({
-          title: "Contacts updated",
-          description: "Emergency contacts have been refreshed from the server.",
-        });
+        // Silent update - no toast (background refresh)
       }
     } catch (error) {
       console.error('Error fetching emergency contacts:', error);
       
-      // If we have cached data, use it
-      if (useCache && contacts.length > 0) {
-        toast({
-          title: "Using cached data",
-          description: "Showing previously loaded emergency contacts.",
-          variant: "destructive"
-        });
-        setError(null);
+      // Offline-first: If we have cached data, use it silently (no error toasts)
+      // Emergency contacts MUST work offline
+      const hasCachedData = useCache && localStorage.getItem('emergency-contacts-cache');
+      if (hasCachedData) {
+        setError(null); // Don't show errors if cache exists
+        setLoading(false);
         return;
       }
       
-      // If no cached data and fetch fails, use fallback data
+      // Only show error if no cache exists (first-time user, no data at all)
       if (contacts.length === 0) {
         console.warn('No cached data available, using fallback emergency contacts');
         const now = new Date();
@@ -262,22 +264,37 @@ export function useEmergencyContacts(userId?: string | null) {
         setLastSyncTime(now);
         saveToCache(FALLBACK_CONTACTS, now);
         setError(null);
-        toast({
-          title: "Using default contacts",
-          description: "Database not available. Showing default emergency contacts.",
-        });
+        // No toast - fallback data is shown silently
       } else {
-        setError(error instanceof Error ? error.message : 'Failed to fetch contacts');
-        toast({
-          title: "Unable to load contacts",
-          description: "Please check your internet connection and try again.",
-          variant: "destructive"
-        });
+        // Only set error if we truly have no data (shouldn't happen with fallback)
+        setError(null);
       }
     } finally {
       setLoading(false);
     }
-  }, [loadCachedData, saveToCache, toast]);
+  }, [loadCachedData, saveToCache, userId]);
+
+  // Network status monitoring
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Auto-refresh when coming back online (silent background refresh)
+      fetchContacts(true);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [fetchContacts]);
 
   // Initial load
   useEffect(() => {
@@ -437,7 +454,7 @@ export function useEmergencyContacts(userId?: string | null) {
     error,
     lastSyncTime,
     refetch: () => fetchContacts(false),
-    isOnline: navigator.onLine,
+    isOnline,
     addUserContact,
     updateUserContact,
     deleteUserContact,

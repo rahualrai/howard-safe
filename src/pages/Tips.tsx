@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare, Search, Filter, X, Star, Heart, Wifi, WifiOff, RefreshCw } from "lucide-react";
+import { Shield, Book, Phone, MapPin, AlertTriangle, Users, Lock, Eye, MessageSquare, Search, Filter, X, Star, Heart, Wifi, WifiOff } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -489,32 +489,16 @@ export default function Tips() {
               )}
 
               {/* Sync Status */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {hookIsOnline ? (
-                    <Wifi className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <WifiOff className="h-4 w-4 text-orange-600" />
-                  )}
-                  <span>
-                    {hookIsOnline ? 'Online' : 'Offline'} • 
-                    {lastSyncTime ? ` Last updated: ${lastSyncTime.toLocaleTimeString()}` : ' Never synced'}
-                  </span>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={refetch}
-                  disabled={loading || !hookIsOnline}
-                  className="text-xs"
-                >
-                  {loading ? (
-                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                  )}
-                  {loading ? 'Syncing...' : 'Sync'}
-                </Button>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                {hookIsOnline ? (
+                  <Wifi className="h-4 w-4 text-green-600" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-orange-600" />
+                )}
+                <span>
+                  {hookIsOnline ? 'Online' : 'Offline'} • 
+                  {lastSyncTime ? ` Last updated: ${lastSyncTime.toLocaleTimeString()}` : ' Never synced'}
+                </span>
               </div>
             </div>
 
