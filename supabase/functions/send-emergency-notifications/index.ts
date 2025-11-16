@@ -1,12 +1,8 @@
-// Supabase Edge Function to send emergency notifications
-// This needs to be deployed to your Supabase project
+// Supabase Edge Function to send emergency notifications via Twilio SMS and SendGrid email
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-// You'll need to add these secrets to your Supabase project:
-// TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
-// SENDGRID_API_KEY (optional, for email)
-
+// Environment variables configured in Supabase secrets
 const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID')
 const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')
 const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER')
