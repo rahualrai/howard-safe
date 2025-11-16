@@ -9,28 +9,11 @@ export type Service = {
   isOpen: boolean;
   hours: string;
   url?: string;
+  openTime?: string;
+  closeTime?: string;
+  daysOpen?: string[];
+  isClosed?: boolean;
 };
-
-const MOCK_DINING: Service[] = [
-  { name: "1867 Café", isOpen: false, hours: "Closed", url: "https://howard.campusdish.com/LocationsAndMenus/1867Cafe" },
-  { name: "Bethune Annex Café", isOpen: true, hours: "4:00 PM – 10:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/BethuneAnnexCafe" },
-  { name: "Bison Brew", isOpen: true, hours: "8:00 AM – 8:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/BisonBrew" },
-  { name: "Blackburn Café", isOpen: true, hours: "4:00 PM – 9:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/BlackburnCafe" },
-  { name: "Chick-fil-A", isOpen: true, hours: "8:30 AM – 8:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/ChickfilA" },
-  { name: "Everbowl", isOpen: true, hours: "11:00 AM – 10:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/Everbowl" },
-  { name: "202 Market", isOpen: true, hours: "9:00 AM – 8:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/202Market" },
-  { name: "The Halal Shack", isOpen: true, hours: "11:00 AM – 10:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/TheHalalShack" },
-  { name: "The Market at Bethune Annex", isOpen: true, hours: "8:00 AM – 10:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/MarketatBethuneAnnex" },
-  { name: "The Market at West Tower", isOpen: true, hours: "8:00 AM – 10:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/MarketatWestTower" },
-  { name: "Jack's Burrito", isOpen: true, hours: "11:00 AM – 10:00 PM", url: "https://howard.campusdish.com/LocationsAndMenus/JacksBurrito" },
-];
-
-const MOCK_SERVICES: Service[] = [
-  { name: "Founders Library", isOpen: true, hours: "8:00 AM – 10:00 PM" },
-  { name: "Campus Gym", isOpen: false, hours: "Closed • Opens 9:00 AM" },
-  { name: "Student Health Center", isOpen: true, hours: "9:00 AM – 5:00 PM" },
-  { name: "Advising Office", isOpen: true, hours: "10:00 AM – 4:00 PM" },
-];
 
 export function DiningServices() {
   const { data: servicesData, isLoading, error } = useQuery({
@@ -38,32 +21,86 @@ export function DiningServices() {
     queryFn: async () => {
       const { data, error } = await (supabase
         .from("services" as any)
-        .select("name,category,is_open,hours")) as unknown as {
-          data: { name: string; category: "dining" | "service"; is_open: boolean; hours: string | null }[] | null;
+        .select("name,category,hours,url,open_time,close_time,days_open,is_closed")) as unknown as {
+          data: { 
+            name: string; 
+            category: "dining" | "service"; 
+            hours: string | null;
+            url: string | null;
+            open_time: string | null;
+            close_time: string | null;
+            days_open: string[] | null;
+            is_closed: boolean;
+          }[] | null;
           error: any;
         };
       if (error) throw error;
-      return data ?? [];
+      
+      // Compute is_open status on the client side
+      const now = new Date();
+      const currentTime = now.toLocaleTimeString('en-US', { 
+        hour12: false, 
+        hour: '2-digit', 
+        minute: '2-digit',
+        timeZone: 'America/New_York'
+      });
+      const currentDay = now.toLocaleDateString('en-US', { 
+        weekday: 'long',
+        timeZone: 'America/New_York'
+      }).toLowerCase();
+      
+      return (data ?? []).map(service => {
+        let isOpen = false;
+        
+        if (!service.is_closed && service.open_time && service.close_time) {
+          // Check if today is in days_open
+          const isOpenToday = !service.days_open || service.days_open.includes(currentDay);
+          
+          // Check if current time is within operating hours
+          const isWithinHours = currentTime >= service.open_time && currentTime < service.close_time;
+          
+          isOpen = isOpenToday && isWithinHours;
+        }
+        
+        return { ...service, is_open: isOpen };
+      });
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60, // Refresh every minute for accurate open/closed status
   });
 
-  const dining = (servicesData && servicesData.length > 0)
-    ? servicesData.filter(s => s.category === "dining").map<Service>(s => ({
-        name: s.name,
-        isOpen: s.is_open,
-        hours: s.hours ?? "",
-        url: MOCK_DINING.find(d => d.name === s.name)?.url, // match URL if available
-      }))
-    : MOCK_DINING;
+  // Helper function to format time for display
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
 
-  const otherServices = (servicesData && servicesData.length > 0)
-    ? servicesData.filter(s => s.category === "service").map<Service>(s => ({
-        name: s.name,
-        isOpen: s.is_open,
-        hours: s.hours ?? "",
-      }))
-    : MOCK_SERVICES;
+  const dining = servicesData
+    ?.filter(s => s.category === "dining")
+    .map<Service>(s => ({
+      name: s.name,
+      isOpen: s.is_open,
+      hours: s.hours ?? "",
+      url: s.url ?? undefined,
+      openTime: s.open_time ?? undefined,
+      closeTime: s.close_time ?? undefined,
+      daysOpen: s.days_open ?? undefined,
+      isClosed: s.is_closed,
+    })) ?? [];
+
+  const otherServices = servicesData
+    ?.filter(s => s.category === "service")
+    .map<Service>(s => ({
+      name: s.name,
+      isOpen: s.is_open,
+      hours: s.hours ?? "",
+      openTime: s.open_time ?? undefined,
+      closeTime: s.close_time ?? undefined,
+      daysOpen: s.days_open ?? undefined,
+      isClosed: s.is_closed,
+    })) ?? [];
 
   return (
     <Card className="shadow-primary/10 border-border/50">
@@ -74,62 +111,152 @@ export function DiningServices() {
       </CardHeader>
       <CardContent className="pt-0 space-y-4">
         {isLoading && <div className="text-sm text-muted-foreground">Loading services…</div>}
-        {error && <div className="text-sm text-destructive">Unable to load services. Showing current defaults.</div>}
+        {error && <div className="text-sm text-destructive">Unable to load services. Please try again later.</div>}
 
-        <div>
-          <div className="text-sm font-medium mb-2">Dining Halls</div>
-          <div className="grid grid-cols-1 gap-2">
-            {dining.map((d) => (
-              <div key={d.name} className="flex items-center justify-between rounded-lg border p-3 bg-card/60">
-                <div>
-                  {d.url ? (
-                    <a
-                      href={d.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-sm text-primary hover:underline"
+        {!isLoading && !error && dining.length === 0 && otherServices.length === 0 && (
+          <div className="text-sm text-muted-foreground">No services available at this time.</div>
+        )}
+
+        {dining.length > 0 && (
+          <div>
+            <div className="text-sm font-medium mb-2">Dining Halls</div>
+            <div className="grid grid-cols-1 gap-2">
+              {dining.map((d) => {
+                // Determine status text
+                let statusText = d.isOpen ? "Open" : "Closed";
+                let statusDetail = d.hours;
+                
+                if (!d.isOpen && d.openTime && !d.isClosed) {
+                  // Check if it opens today
+                  const now = new Date();
+                  const currentDay = now.toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    timeZone: 'America/New_York'
+                  }).toLowerCase();
+                  
+                  const opensToday = !d.daysOpen || d.daysOpen.includes(currentDay);
+                  
+                  if (opensToday) {
+                    // Opens later today
+                    statusDetail = `Opens at ${formatTime(d.openTime)} today`;
+                  } else if (d.daysOpen && d.daysOpen.length > 0) {
+                    // Find next day it opens
+                    const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                    const currentDayIndex = daysOfWeek.indexOf(currentDay);
+                    
+                    let nextOpenDay = '';
+                    for (let i = 1; i <= 7; i++) {
+                      const nextDayIndex = (currentDayIndex + i) % 7;
+                      const nextDay = daysOfWeek[nextDayIndex];
+                      if (d.daysOpen.includes(nextDay)) {
+                        // Capitalize first letter
+                        nextOpenDay = nextDay.charAt(0).toUpperCase() + nextDay.slice(1);
+                        break;
+                      }
+                    }
+                    
+                    if (nextOpenDay) {
+                      statusDetail = `Opens at ${formatTime(d.openTime)} (${nextOpenDay})`;
+                    }
+                  }
+                }
+                
+                return (
+                  <div key={d.name} className="flex items-center justify-between rounded-lg border p-3 bg-card/60">
+                    <div>
+                      {d.url ? (
+                        <a
+                          href={d.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-sm text-primary hover:underline"
+                        >
+                          {d.name}
+                        </a>
+                      ) : (
+                        <div className="font-medium text-sm">{d.name}</div>
+                      )}
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock size={12} /> {statusDetail}
+                      </div>
+                    </div>
+                    <Badge
+                      variant={d.isOpen ? "default" : "secondary"}
+                      className={d.isOpen ? "bg-green-600" : "bg-gray-500"}
                     >
-                      {d.name}
-                    </a>
-                  ) : (
-                    <div className="font-medium text-sm">{d.name}</div>
-                  )}
-                  <div className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock size={12} /> {d.hours}
+                      {statusText}
+                    </Badge>
                   </div>
-                </div>
-                <Badge
-                  variant={d.isOpen ? "default" : "secondary"}
-                  className={d.isOpen ? "bg-green-600" : "bg-gray-500"}
-                >
-                  {d.isOpen ? "Open" : "Closed"}
-                </Badge>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div>
-          <div className="text-sm font-medium mb-2">Campus Services</div>
-          <div className="grid grid-cols-1 gap-2">
-            {otherServices.map((s) => (
-              <div key={s.name} className="flex items-center justify-between rounded-lg border p-3 bg-card/60">
-                <div>
-                  <div className="font-medium text-sm">{s.name}</div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock size={12} /> {s.hours}
+        {otherServices.length > 0 && (
+          <div>
+            <div className="text-sm font-medium mb-2">Campus Services</div>
+            <div className="grid grid-cols-1 gap-2">
+              {otherServices.map((s) => {
+                // Determine status text
+                let statusText = s.isOpen ? "Open" : "Closed";
+                let statusDetail = s.hours;
+                
+                if (!s.isOpen && s.openTime && !s.isClosed) {
+                  // Check if it opens today
+                  const now = new Date();
+                  const currentDay = now.toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    timeZone: 'America/New_York'
+                  }).toLowerCase();
+                  
+                  const opensToday = !s.daysOpen || s.daysOpen.includes(currentDay);
+                  
+                  if (opensToday) {
+                    // Opens later today
+                    statusDetail = `Opens at ${formatTime(s.openTime)} today`;
+                  } else if (s.daysOpen && s.daysOpen.length > 0) {
+                    // Find next day it opens
+                    const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                    const currentDayIndex = daysOfWeek.indexOf(currentDay);
+                    
+                    let nextOpenDay = '';
+                    for (let i = 1; i <= 7; i++) {
+                      const nextDayIndex = (currentDayIndex + i) % 7;
+                      const nextDay = daysOfWeek[nextDayIndex];
+                      if (s.daysOpen.includes(nextDay)) {
+                        // Capitalize first letter
+                        nextOpenDay = nextDay.charAt(0).toUpperCase() + nextDay.slice(1);
+                        break;
+                      }
+                    }
+                    
+                    if (nextOpenDay) {
+                      statusDetail = `Opens at ${formatTime(s.openTime)} (${nextOpenDay})`;
+                    }
+                  }
+                }
+                
+                return (
+                  <div key={s.name} className="flex items-center justify-between rounded-lg border p-3 bg-card/60">
+                    <div>
+                      <div className="font-medium text-sm">{s.name}</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock size={12} /> {statusDetail}
+                      </div>
+                    </div>
+                    <Badge
+                      variant={s.isOpen ? "default" : "secondary"}
+                      className={s.isOpen ? "bg-green-600" : "bg-gray-500"}
+                    >
+                      {statusText}
+                    </Badge>
                   </div>
-                </div>
-                <Badge
-                  variant={s.isOpen ? "default" : "secondary"}
-                  className={s.isOpen ? "bg-green-600" : "bg-gray-500"}
-                >
-                  {s.isOpen ? "Open" : "Closed"}
-                </Badge>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
