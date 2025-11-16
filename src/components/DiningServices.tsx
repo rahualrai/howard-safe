@@ -136,9 +136,47 @@ export function DiningServices() {
                   
                   const opensToday = !d.daysOpen || d.daysOpen.includes(currentDay);
                   
+                  // Helper to parse "HH:mm" into a Date object for today in America/New_York
+                  function getTodayOpenDate(openTimeStr: string) {
+                    // Get today's date in America/New_York
+                    const nowNY = new Date(
+                      now.toLocaleString('en-US', { timeZone: 'America/New_York' })
+                    );
+                    const [hours, minutes] = openTimeStr.split(':').map(Number);
+                    const openDate = new Date(nowNY);
+                    openDate.setHours(hours, minutes, 0, 0);
+                    return openDate;
+                  }
+
                   if (opensToday) {
-                    // Opens later today
-                    statusDetail = `Opens at ${formatTime(d.openTime)} today`;
+                    // Only show "Opens at ... today" if current time is before opening time
+                    const openDate = getTodayOpenDate(d.openTime);
+                    // Compare now in NY timezone
+                    const nowNY = new Date(
+                      now.toLocaleString('en-US', { timeZone: 'America/New_York' })
+                    );
+                    if (nowNY < openDate) {
+                      statusDetail = `Opens at ${formatTime(d.openTime)} today`;
+                    } else if (d.daysOpen && d.daysOpen.length > 0) {
+                      // Find next day it opens
+                      const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                      const currentDayIndex = daysOfWeek.indexOf(currentDay);
+                      
+                      let nextOpenDay = '';
+                      for (let i = 1; i <= 7; i++) {
+                        const nextDayIndex = (currentDayIndex + i) % 7;
+                        const nextDay = daysOfWeek[nextDayIndex];
+                        if (d.daysOpen.includes(nextDay)) {
+                          // Capitalize first letter
+                          nextOpenDay = nextDay.charAt(0).toUpperCase() + nextDay.slice(1);
+                          break;
+                        }
+                      }
+                      
+                      if (nextOpenDay) {
+                        statusDetail = `Opens at ${formatTime(d.openTime)} (${nextOpenDay})`;
+                      }
+                    }
                   } else if (d.daysOpen && d.daysOpen.length > 0) {
                     // Find next day it opens
                     const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
