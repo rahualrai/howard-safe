@@ -43,6 +43,10 @@ CREATE TABLE IF NOT EXISTS public.user_locations (
   is_active BOOLEAN NOT NULL DEFAULT true
 );
 
+-- Ensure only one active location per user
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_locations_active_unique
+  ON public.user_locations(user_id)
+  WHERE is_active = true;
 -- Location sharing preferences (who can see your location)
 CREATE TABLE IF NOT EXISTS public.location_sharing_preferences (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
