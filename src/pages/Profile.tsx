@@ -70,7 +70,6 @@ export default function Profile() {
     friends,
     friendRequests,
     searchResults,
-    loading: friendsLoading,
     searchUsers,
     sendFriendRequest,
     acceptFriendRequest,
