@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 export default function Tips() {
   const [activeTab, setActiveTab] = useState<'tips' | 'resources'>('tips');
@@ -15,9 +17,23 @@ export default function Tips() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
 
-  // Use the new emergency contacts hook
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Use the new emergency contacts hook with user ID
   const { 
     contacts, 
     groupedContacts, 
@@ -25,8 +41,12 @@ export default function Tips() {
     error, 
     lastSyncTime, 
     refetch, 
-    isOnline: hookIsOnline 
-  } = useEmergencyContacts();
+    isOnline: hookIsOnline,
+    isUserContact,
+  } = useEmergencyContacts(user?.id);
+
+  // Count personal contacts
+  const personalContactsCount = contacts.filter(contact => isUserContact(contact)).length;
 
   // Helper function to extract phone number from contact string
   const extractPhoneNumber = (contact: string): string => {
@@ -112,19 +132,65 @@ export default function Tips() {
     }
   };
 
-  // Check if contact is a phone number (robust pattern)
+  /**
+   * Determines if a contact string should display call/text buttons.
+   * 
+   * Rules:
+   * 1. Special emergency numbers (911, 112, etc.) - always show buttons
+   * 2. Phone numbers with letters (e.g., "HELP") - extract digits and validate
+   * 3. Standard phone numbers - must have at least 7 digits
+   * 4. Exclude non-phone contacts (websites, email addresses, etc.)
+   * 
+   * @param contact - The contact string to check
+   * @returns true if call/text buttons should be displayed
+   */
   const isPhoneNumber = (contact: string): boolean => {
-    // Matches phone numbers with optional +, digits, spaces, dashes, parentheses
-    const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
     const trimmedContact = contact.trim();
     
-    // Must match phone pattern and contain at least 7 digits (minimum for valid phone)
-    const digitCount = (trimmedContact.match(/\d/g) || []).length;
+    // Special emergency numbers - always show buttons
+    const emergencyNumbers = ['911', '112', '999', '000'];
+    if (emergencyNumbers.includes(trimmedContact)) {
+      return true;
+    }
     
-    return phoneRegex.test(trimmedContact) && 
-           digitCount >= 7 && 
-           !trimmedContact.toLowerCase().includes('download') && 
-           !trimmedContact.toLowerCase().includes('campus-wide');
+    // Remove all non-digit characters (including letters) to check digit count
+    const digitsOnly = trimmedContact.replace(/\D/g, '');
+    const digitCount = digitsOnly.length;
+    
+    // Must have at least 7 digits for a valid phone number
+    // (allows for international numbers, extensions, etc.)
+    if (digitCount < 7) {
+      return false;
+    }
+    
+    // Exclude obvious non-phone contacts
+    const lowerContact = trimmedContact.toLowerCase();
+    const excludePatterns = [
+      'download',
+      'campus-wide',
+      'http',
+      'https',
+      'www.',
+      '@', // email addresses
+      '.com',
+      '.org',
+      '.edu',
+      '.gov',
+    ];
+    
+    if (excludePatterns.some(pattern => lowerContact.includes(pattern))) {
+      return false;
+    }
+    
+    // Check if it contains phone-like patterns (digits, spaces, dashes, parentheses, plus)
+    // This allows formats like: (202) 806-HELP (4357), +1-202-555-1234, etc.
+    const phoneLikePattern = /^[\d\s\-\(\)\+A-Za-z]+$/;
+    if (!phoneLikePattern.test(trimmedContact)) {
+      return false;
+    }
+    
+    // If we have enough digits and it looks like a phone number, show buttons
+    return true;
   };
 
   const safetyTips = [
@@ -173,8 +239,30 @@ export default function Tips() {
     'safety-resources': { label: 'Safety Resources', icon: Shield },
   };
 
-  // Convert grouped contacts to the format expected by the UI
-  const resources = Object.entries(groupedContacts).map(([categoryKey, items]) => ({
+  // Separate global contacts from user-saved contacts
+  const globalContacts: typeof contacts = [];
+  const personalContacts: typeof contacts = [];
+  
+  contacts.forEach(contact => {
+    if (isUserContact(contact)) {
+      personalContacts.push(contact);
+    } else {
+      globalContacts.push(contact);
+    }
+  });
+
+  // Group global contacts by category
+  const globalGrouped = globalContacts.reduce((acc, contact) => {
+    const categoryKey = contact.category;
+    if (!acc[categoryKey]) {
+      acc[categoryKey] = [];
+    }
+    acc[categoryKey].push(contact);
+    return acc;
+  }, {} as Record<string, typeof contacts>);
+
+  // Convert global grouped contacts to the format expected by the UI
+  const globalResources = Object.entries(globalGrouped).map(([categoryKey, items]) => ({
     category: categoryConfig[categoryKey as keyof typeof categoryConfig]?.label || categoryKey,
     icon: categoryConfig[categoryKey as keyof typeof categoryConfig]?.icon || Shield,
     items: items.map(item => ({
@@ -185,6 +273,22 @@ export default function Tips() {
       id: item.id
     }))
   }));
+
+  // Create "Your Saved" section for personal contacts
+  const personalResources = personalContacts.length > 0 ? [{
+    category: 'Your Saved',
+    icon: Heart,
+    items: personalContacts.map(item => ({
+      title: item.title,
+      contact: item.contact,
+      description: item.description,
+      priority: item.priority,
+      id: item.id
+    }))
+  }] : [];
+
+  // Combine resources: personal contacts first, then global contacts
+  const resources = [...personalResources, ...globalResources];
 
   // Load favorites from localStorage on component mount
   useEffect(() => {
@@ -477,6 +581,13 @@ export default function Tips() {
                   <X size={14} className="mr-1" />
                   Clear all filters
                 </Button>
+              )}
+
+              {/* Note: Personal contacts are managed from Profile Settings */}
+              {user && (
+                <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                  💡 Manage your personal emergency contacts from <strong>Profile Settings</strong>
+                </div>
               )}
 
               {/* Results Count */}

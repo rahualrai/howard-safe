@@ -18,6 +18,8 @@ import { AddFriendDialog } from "@/components/AddFriendDialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { MapPin } from "lucide-react";
+import { EmergencyContactsDialog } from "@/components/EmergencyContactsDialog";
+import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
 
 // Type definitions
 interface Profile {
@@ -50,6 +52,7 @@ export default function Profile() {
   const [lastLoginInfo, setLastLoginInfo] = useState<LoginInfo | null>(null);
   const [digitalID, setDigitalID] = useState<DigitalIDData | null>(null);
   const [showIDForm, setShowIDForm] = useState(false);
+  const [showEmergencyContacts, setShowEmergencyContacts] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -86,6 +89,10 @@ export default function Profile() {
     startSharingLocation,
     stopSharingLocation,
   } = useLocationSharing(user?.id);
+
+  // Get personal emergency contacts count
+  const { contacts, isUserContact } = useEmergencyContacts(user?.id);
+  const personalContactsCount = contacts.filter(contact => isUserContact(contact)).length;
 
   useEffect(() => {
     if (user && isValidSession) {
@@ -405,9 +412,19 @@ export default function Profile() {
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div>
                 <p className="font-medium text-sm">Emergency Contacts</p>
-                <p className="text-xs text-muted-foreground">People to notify in emergencies</p>
+                <p className="text-xs text-muted-foreground">
+                  {personalContactsCount > 0 
+                    ? `${personalContactsCount} personal contact${personalContactsCount !== 1 ? 's' : ''}`
+                    : 'People to notify in emergencies'}
+                </p>
               </div>
-              <Button variant="outline" size="sm">Manage</Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowEmergencyContacts(true)}
+              >
+                Manage
+              </Button>
             </div>
             
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
@@ -583,6 +600,13 @@ export default function Profile() {
         onOpenChange={setShowIDForm}
         existingData={digitalID}
         onSuccess={() => user && fetchDigitalID(user.id)}
+      />
+
+      {/* Emergency Contacts Dialog */}
+      <EmergencyContactsDialog
+        open={showEmergencyContacts}
+        onOpenChange={setShowEmergencyContacts}
+        userId={user?.id || null}
       />
     </div>
   );
