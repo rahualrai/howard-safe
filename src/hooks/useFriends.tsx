@@ -50,15 +50,7 @@ export function useFriends(userId: string | undefined) {
     try {
       const { data: friendships, error } = await supabase
         .from('friendships')
-        .select(`
-          id,
-          friend_id,
-          created_at,
-          profiles:friend_id (
-            username,
-            avatar_url
-          )
-        `)
+        .select('id, friend_id, created_at')
         .eq('user_id', userId);
 
       if (error) throw error;
@@ -68,14 +60,32 @@ export function useFriends(userId: string | undefined) {
         return;
       }
 
-      // Map friends data from joined profiles
+      const friendIds = friendships.map((friendship: any) => friendship.friend_id);
+
+      const profilesMap = new Map<string, any>();
+
+      if (friendIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, username, avatar_url')
+          .in('user_id', friendIds);
+
+        if (profilesError) throw profilesError;
+
+        profiles?.forEach((profile: any) => {
+          profilesMap.set(profile.user_id, profile);
+        });
+      }
+
+      // Map friends data from fetched profiles
       const friendsWithProfiles = friendships.map((friendship: any) => {
+        const profile = profilesMap.get(friendship.friend_id);
         return {
           id: friendship.id,
           friend_id: friendship.friend_id,
-          username: friendship.profiles?.username || null,
+          username: profile?.username || null,
           email: '', // Email not available from client-side queries
-          avatar_url: friendship.profiles?.avatar_url || null,
+          avatar_url: profile?.avatar_url || null,
           created_at: friendship.created_at,
         };
       });
@@ -96,21 +106,48 @@ export function useFriends(userId: string | undefined) {
     if (!userId) return;
 
     try {
-      // Get requests where user is requester or addressee, and join profiles in one query
+      // Get requests where user is requester or addressee
       const { data: requests, error } = await supabase
         .from('friend_requests')
-        .select(`
-          *,
-          requester:requester_id (user_id, username, avatar_url),
-          addressee:addressee_id (user_id, username, avatar_url)
-        `)
+        .select('*')
         .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // The requests already include requester and addressee profile info
-      setFriendRequests(requests || []);
+      if (!requests || requests.length === 0) {
+        setFriendRequests([]);
+        return;
+      }
+
+      const userIds = Array.from(
+        new Set(
+          requests.flatMap((request: any) => [request.requester_id, request.addressee_id])
+        )
+      );
+
+      const profilesMap = new Map<string, any>();
+
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, username, avatar_url')
+          .in('user_id', userIds);
+
+        if (profilesError) throw profilesError;
+
+        profiles?.forEach((profile: any) => {
+          profilesMap.set(profile.user_id, profile);
+        });
+      }
+
+      const enrichedRequests: FriendRequest[] = requests.map((request: any) => ({
+        ...request,
+        requester: profilesMap.get(request.requester_id) || undefined,
+        addressee: profilesMap.get(request.addressee_id) || undefined,
+      }));
+
+      setFriendRequests(enrichedRequests);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
     }
