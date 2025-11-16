@@ -215,7 +215,7 @@ export function DigitalIDForm({ open, onOpenChange, existingData, onSuccess }: D
         <DialogHeader>
           <DialogTitle>{existingData ? "Edit" : "Add"} Digital ID</DialogTitle>
           <DialogDescription>
-            Enter your student information to create your digital ID card
+            Enter your student information to create or update your digital ID card
           </DialogDescription>
         </DialogHeader>
 
