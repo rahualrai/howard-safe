@@ -96,51 +96,21 @@ export function useFriends(userId: string | undefined) {
     if (!userId) return;
 
     try {
-      // Get requests where user is requester or addressee
+      // Get requests where user is requester or addressee, and join profiles in one query
       const { data: requests, error } = await supabase
         .from('friend_requests')
-        .select('*')
+        .select(`
+          *,
+          requester:requester_id (user_id, username, avatar_url),
+          addressee:addressee_id (user_id, username, avatar_url)
+        `)
         .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Get profiles for all requesters and addressees
-      const userIds = new Set<string>();
-      (requests || []).forEach((r: any) => {
-        userIds.add(r.requester_id);
-        userIds.add(r.addressee_id);
-      });
-
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, username, avatar_url')
-        .in('user_id', Array.from(userIds));
-
-      if (profilesError) throw profilesError;
-
-      // Map requests data
-      const requestsWithProfiles = (requests || []).map((request: any) => {
-        const requesterProfile = profiles?.find((p: any) => p.user_id === request.requester_id);
-        const addresseeProfile = profiles?.find((p: any) => p.user_id === request.addressee_id);
-        return {
-          ...request,
-          requester: {
-            user_id: request.requester_id,
-            username: requesterProfile?.username || null,
-            avatar_url: requesterProfile?.avatar_url || null,
-            email: '', // Email not available from client-side queries
-          },
-          addressee: {
-            user_id: request.addressee_id,
-            username: addresseeProfile?.username || null,
-            avatar_url: addresseeProfile?.avatar_url || null,
-            email: '', // Email not available from client-side queries
-          },
-        };
-      });
-
-      setFriendRequests(requestsWithProfiles);
+      // The requests already include requester and addressee profile info
+      setFriendRequests(requests || []);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
     }
