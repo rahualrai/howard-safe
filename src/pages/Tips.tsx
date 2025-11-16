@@ -234,9 +234,9 @@ export default function Tips() {
 
   // Map database categories to display names and icons
   const categoryConfig = {
-    'emergency-contacts': { label: 'Emergency Contacts', icon: Phone },
-    'support-services': { label: 'Support Services', icon: Users },
-    'safety-resources': { label: 'Safety Resources', icon: Shield },
+    'emergency-contacts': { label: 'Other Emergency Contacts', icon: Phone },
+    'support-services': { label: 'Other Support Services', icon: Users },
+    'safety-resources': { label: 'Other Safety Resources', icon: Shield },
   };
 
   // Separate global contacts from user-saved contacts
@@ -274,9 +274,9 @@ export default function Tips() {
     }))
   }));
 
-  // Create "Your Saved" section for personal contacts
+  // Create "Personal Emergency Contacts" section for personal contacts
   const personalResources = personalContacts.length > 0 ? [{
-    category: 'Your Saved',
+    category: 'Personal Emergency Contacts',
     icon: Heart,
     items: personalContacts.map(item => ({
       title: item.title,
