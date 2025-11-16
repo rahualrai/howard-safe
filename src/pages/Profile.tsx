@@ -10,6 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
 import { DigitalIDForm } from "@/components/DigitalIDForm";
+import { useFriends } from "@/hooks/useFriends";
+import { useLocationSharing } from "@/hooks/useLocationSharing";
+import { FriendsList } from "@/components/FriendsList";
+import { FriendRequests } from "@/components/FriendRequests";
+import { AddFriendDialog } from "@/components/AddFriendDialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { MapPin } from "lucide-react";
 
 // Type definitions
 interface Profile {
@@ -56,6 +64,29 @@ export default function Profile() {
     requireAuth: true,
     redirectTo: '/auth'
   });
+
+  // Friends and location sharing
+  const {
+    friends,
+    friendRequests,
+    searchResults,
+    loading: friendsLoading,
+    searchUsers,
+    sendFriendRequest,
+    acceptFriendRequest,
+    rejectFriendRequest,
+    cancelFriendRequest,
+    removeFriend,
+  } = useFriends(user?.id);
+
+  const {
+    friendsLocations,
+    sharingPreferences,
+    isSharing,
+    updateSharingPreferences,
+    startSharingLocation,
+    stopSharingLocation,
+  } = useLocationSharing(user?.id);
 
   useEffect(() => {
     if (user && isValidSession) {
@@ -387,6 +418,82 @@ export default function Profile() {
               </div>
               <Button variant="outline" size="sm">Change</Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Friends & Location Sharing */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="flex items-center space-x-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Friends & Location</CardTitle>
+            </div>
+            <AddFriendDialog
+              onSearch={searchUsers}
+              searchResults={searchResults}
+              onSendRequest={sendFriendRequest}
+              currentUserId={user?.id || ''}
+              existingFriendIds={friends.map((f) => f.friend_id)}
+              pendingRequests={friendRequests.filter((r) => r.status === 'pending')}
+            />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Location Sharing Toggle */}
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-primary" />
+                <div>
+                  <Label htmlFor="location-sharing" className="font-medium text-sm cursor-pointer">
+                    Share Location with Friends
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {isSharing ? 'Your location is being shared' : 'Enable to share your location'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {isSharing ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={stopSharingLocation}
+                    className="h-8"
+                  >
+                    Stop
+                  </Button>
+                ) : (
+                  <Switch
+                    id="location-sharing"
+                    checked={sharingPreferences?.share_with_friends || false}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        startSharingLocation();
+                      } else {
+                        updateSharingPreferences({ share_with_friends: false });
+                      }
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Friend Requests */}
+            {friendRequests.filter((r) => r.status === 'pending').length > 0 && (
+              <FriendRequests
+                friendRequests={friendRequests}
+                currentUserId={user?.id || ''}
+                onAccept={acceptFriendRequest}
+                onReject={rejectFriendRequest}
+                onCancel={cancelFriendRequest}
+              />
+            )}
+
+            {/* Friends List */}
+            <FriendsList
+              friends={friends}
+              friendsLocations={friendsLocations}
+              onRemoveFriend={removeFriend}
+            />
           </CardContent>
         </Card>
 

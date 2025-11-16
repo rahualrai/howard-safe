@@ -122,7 +122,7 @@ export default function Auth() {
       if (data.user) {
         try {
           const { data: twoFactorData } = await supabase
-            .from('user_2fa_secrets')
+            .from('user_2fa_secrets' as any)
             .select('is_enabled')
             .eq('user_id', data.user.id)
             .single();
@@ -137,6 +137,32 @@ export default function Auth() {
         } catch (error: unknown) {
           // 2FA table might not exist yet, continue without 2FA
           console.debug('2FA check skipped:', error);
+        }
+      }
+
+      // Ensure profile exists for friend system
+      if (data.user) {
+        try {
+          await supabase.rpc('ensure_profile_exists' as any, { user_uuid: data.user.id });
+        } catch (error) {
+          // If function doesn't exist yet, try to create profile directly
+          console.debug('Profile ensure function not available, creating profile directly:', error);
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert(
+              {
+                user_id: data.user.id,
+                username: data.user.user_metadata?.username || 
+                         data.user.user_metadata?.full_name || 
+                         data.user.user_metadata?.name || 
+                         data.user.email?.split('@')[0] || 
+                         'User',
+              },
+              { onConflict: 'user_id' }
+            );
+          if (profileError) {
+            console.warn('Could not ensure profile exists:', profileError);
+          }
         }
       }
 
@@ -170,7 +196,7 @@ export default function Auth() {
     try {
       // Get the 2FA secret for the user
       const { data: twoFactorData, error: fetchError } = await supabase
-        .from('user_2fa_secrets')
+        .from('user_2fa_secrets' as any)
         .select('secret')
         .eq('user_id', pendingSession.user.id)
         .single();

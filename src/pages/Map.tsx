@@ -11,6 +11,8 @@ import { ImpactStyle } from "@capacitor/haptics";
 import { useLocationPermission } from "@/hooks/useLocationPermission";
 import { LocationPermissionPrompt } from "@/components/LocationPermissionPrompt";
 import { HOWARD_BUILDINGS, getAllCategories, getAllCampuses, searchBuildings, getCategoryColor, type BuildingCategory, type CampusName } from "@/data/howardBuildingsComplete";
+import { useLocationSharing } from "@/hooks/useLocationSharing";
+import { useSecurityValidation } from "@/hooks/useSecurityValidation";
 
 const THE_YARD_CENTER = { lat: 38.9230, lng: -77.0200 };
 
@@ -23,6 +25,10 @@ export default function Map() {
   const [activeCampuses, setActiveCampuses] = useState<Set<CampusName>>(new Set(['Main'] as CampusName[]));
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const { permission, getCurrentLocation, location } = useLocationPermission();
+  
+  // Get current user for friends location
+  const { user } = useSecurityValidation({ requireAuth: false });
+  const { friendsLocations } = useLocationSharing(user?.id);
 
   // Check location permission on mount and hide prompt when granted
   useEffect(() => {
@@ -44,10 +50,10 @@ export default function Map() {
     }
   }, [searchQuery]);
 
-  // Compute markers: filtered buildings
+  // Compute markers: filtered buildings + friends locations
   const mapMarkers = useMemo(() => {
     // Filter buildings by active categories and campuses
-    const filtered = HOWARD_BUILDINGS
+    const buildingMarkers = HOWARD_BUILDINGS
       .filter(building => activeCategories.has(building.category) && activeCampuses.has(building.campus))
       .map(building => ({
         position: { lat: building.latitude, lng: building.longitude },
@@ -59,8 +65,21 @@ export default function Map() {
         },
       }));
 
-    return filtered;
-  }, [activeCategories, activeCampuses]);
+    // Add friends location markers
+    const friendMarkers = friendsLocations
+      .filter(loc => loc.is_sharing && loc.latitude && loc.longitude)
+      .map(loc => ({
+        position: { lat: loc.latitude, lng: loc.longitude },
+        title: loc.friend_username || 'Friend',
+        type: 'friend' as const,
+        details: {
+          timestamp: loc.location_timestamp,
+          friendId: loc.friend_id,
+        },
+      }));
+
+    return [...buildingMarkers, ...friendMarkers];
+  }, [activeCategories, activeCampuses, friendsLocations]);
 
   const handleLocationGranted = (position: GeolocationPosition) => {
     setShowLocationPrompt(false);
@@ -214,7 +233,9 @@ export default function Map() {
           {/* Title */}
           <div>
             <h1 className="text-2xl font-bold text-foreground">Campus Map</h1>
-            <p className="text-sm text-muted-foreground mt-1">{mapMarkers.length} buildings shown</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {mapMarkers.filter(m => m.type !== 'friend').length} buildings, {friendsLocations.filter(loc => loc.is_sharing && loc.latitude && loc.longitude).length} friends
+            </p>
           </div>
 
           {/* Search Bar with Autocomplete */}

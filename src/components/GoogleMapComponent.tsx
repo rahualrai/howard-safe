@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-type MarkerType = 'safe' | 'incident' | 'welllit' | LandmarkCategory;
+type MarkerType = 'safe' | 'incident' | 'welllit' | 'friend' | LandmarkCategory;
 
 interface GoogleMapProps {
   center: { lat: number; lng: number };
@@ -26,6 +26,8 @@ interface GoogleMapProps {
       hours?: string;
       phone?: string;
       address?: string;
+      timestamp?: string;
+      friendId?: string;
     };
   }>;
 }
@@ -67,24 +69,85 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
       // Add new markers with standard markers
       markers.forEach((m) => {
         const color = getMarkerColor(m.type);
+        const isFriend = m.type === 'friend';
 
         const marker = new google.maps.Marker({
           position: m.position,
           map,
           title: m.title,
           icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 6,
+            path: isFriend ? google.maps.SymbolPath.BACKWARD_CLOSED_ARROW : google.maps.SymbolPath.CIRCLE,
+            scale: isFriend ? 8 : 6,
             fillColor: color,
             fillOpacity: 1,
             strokeColor: '#fff',
             strokeWeight: 3,
+            rotation: isFriend ? 0 : 0,
           },
-          zIndex: m.type === 'incident' ? 100 : 10,
+          zIndex: m.type === 'incident' ? 100 : m.type === 'friend' ? 50 : 10,
         });
 
         // Build info window content - Minimalist & Modern Design
         const createInfoWindowContent = () => {
+          // Friend marker info window
+          if (m.type === 'friend') {
+            const timestamp = m.details?.timestamp 
+              ? new Date(m.details.timestamp).toLocaleString()
+              : 'Unknown';
+            const timeAgo = m.details?.timestamp
+              ? (() => {
+                  const diff = Math.floor((Date.now() - new Date(m.details.timestamp).getTime()) / 1000 / 60);
+                  if (diff < 1) return 'Just now';
+                  if (diff < 60) return `${diff}m ago`;
+                  return `${Math.floor(diff / 60)}h ago`;
+                })()
+              : '';
+            
+            return `
+              <style>
+                * { box-sizing: border-box; }
+                .friend-card {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+                  width: 280px;
+                  background: #ffffff;
+                  padding: 20px;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                  padding-top: 36px;
+                  position: relative;
+                }
+                .friend-card h3 {
+                  margin: 0 0 8px 0;
+                  color: #1a1a1a;
+                  font-size: 18px;
+                  font-weight: 600;
+                }
+                .friend-card p {
+                  margin: 0;
+                  color: #6b7280;
+                  font-size: 14px;
+                }
+                .friend-badge {
+                  display: inline-block;
+                  padding: 6px 12px;
+                  background-color: #10b98120;
+                  color: #10b981;
+                  border-radius: 20px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  margin-top: 12px;
+                }
+              </style>
+              <div class="friend-card">
+                <h3>👤 ${m.title}</h3>
+                <p>📍 Location shared</p>
+                <p style="margin-top: 8px; font-size: 12px; color: #9ca3af;">${timeAgo} • ${timestamp}</p>
+                <div class="friend-badge">Friend Location</div>
+              </div>
+            `;
+          }
+
+          // Building marker info window
           const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.position.lat},${m.position.lng}`;
 
           return `
@@ -242,6 +305,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
       safe: '#22c55e',
       incident: '#ef4444',
       welllit: '#3b82f6',
+      friend: '#10b981',         // green for friends
       // Landmark types
       academic: '#3b82f6',      // blue
       dining: '#f59e0b',         // amber
