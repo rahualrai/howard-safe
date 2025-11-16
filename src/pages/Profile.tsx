@@ -23,7 +23,8 @@ import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
 import { BugReportDialog } from "@/components/BugReportDialog";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { ChangelogDialog } from "@/components/ChangelogDialog";
-import { Info, Bug, MessageSquare, Sparkles } from "lucide-react";
+import { Info, Bug, MessageSquare, Sparkles, X } from "lucide-react";
+import { useAppUpdates } from "@/hooks/useAppUpdates";
 
 // Type definitions
 interface Profile {
@@ -65,6 +66,9 @@ export default function Profile() {
   // Get app version from package.json
   const appVersion = "1.1.1"; // Update this when releasing new versions
   const navigate = useNavigate();
+  
+  // Check for app updates
+  const { hasUpdate, latestVersion, markAsSeen } = useAppUpdates(appVersion);
   
   // Use enhanced security validation
   const { 
@@ -602,6 +606,49 @@ export default function Profile() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
+            {/* Update Available Alert */}
+            {hasUpdate && (
+              <Alert className="border-primary bg-primary/5">
+                <Sparkles className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between gap-3">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">New Update Available!</p>
+                    <p className="text-xs text-muted-foreground">
+                      Version {latestVersion} is now available. Check out what's new!
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        setShowChangelog(true);
+                        markAsSeen();
+                      }}
+                    >
+                      View Updates
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-muted"
+                      onClick={() => {
+                        markAsSeen();
+                        toast({
+                          title: "Notification dismissed",
+                          description: "You can always check for updates in What's New.",
+                          duration: 2000,
+                        });
+                      }}
+                      aria-label="Dismiss update notification"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div>
                 <p className="font-medium text-sm">App Version</p>
@@ -611,11 +658,25 @@ export default function Profile() {
             </div>
             
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
-                <p className="font-medium text-sm">What's New</p>
-                <p className="text-xs text-muted-foreground">See recent updates and changes</p>
+              <div className="flex items-center gap-2">
+                <div>
+                  <p className="font-medium text-sm">What's New</p>
+                  <p className="text-xs text-muted-foreground">See recent updates and changes</p>
+                </div>
+                {hasUpdate && (
+                  <Badge variant="destructive" className="ml-2">
+                    New
+                  </Badge>
+                )}
               </div>
-              <Button variant="outline" size="sm" onClick={() => setShowChangelog(true)}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setShowChangelog(true);
+                  markAsSeen();
+                }}
+              >
                 <Sparkles className="h-4 w-4 mr-1" />
                 View
               </Button>
