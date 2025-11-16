@@ -22,6 +22,7 @@ import { QuickLinksDashboard } from "@/components/QuickLinksDashboard";
 import { BisonChat } from "@/components/BisonChat";
 import { CalendarSync } from "@/components/CalendarSync";
 import { AppTile } from "@/components/AppTile";
+import { sendEmergencyAlert } from "@/utils/emergencyAlert";
 
 export default function Home() {
   const { toast } = useToast();
@@ -80,12 +81,31 @@ export default function Home() {
     await HapticFeedback.impact(ImpactStyle.Heavy);
     await HapticFeedback.notification(NotificationType.Warning);
     
-    // Simulate emergency action
+    // Show loading toast
     toast({
-      title: "Emergency Alert Sent",
-      description: "Campus security has been notified of your location.",
-      variant: "destructive"
+      title: "Sending emergency alert...",
+      description: "Getting your location and notifying contacts.",
     });
+
+    // Send emergency alert to contacts via Twilio
+    const result = await sendEmergencyAlert({
+      alertType: 'quick_help',
+      message: 'Quick Help button pressed - user may need assistance'
+    });
+
+    if (result.success) {
+      toast({
+        title: "Emergency Alert Sent",
+        description: `${result.contactsNotified} emergency contact${result.contactsNotified !== 1 ? 's' : ''} notified with your location.`,
+        variant: "default"
+      });
+    } else {
+      toast({
+        title: "Alert Failed",
+        description: result.error || "Failed to send emergency alert. Please call 911 if needed.",
+        variant: "destructive"
+      });
+    }
   };
 
 
