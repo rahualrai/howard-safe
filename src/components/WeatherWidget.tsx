@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Thermometer, Wind, CloudRain, Sun, Cloud } from "lucide-react";
+import { Thermometer, Wind, CloudRain, Sun, Cloud, MapPin, School } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useLocationPermission } from "@/hooks/useLocationPermission";
+import { Button } from "@/components/ui/button";
 
 const HU_COORDS = { lat: 38.9226, lon: -77.0190 };
 
@@ -27,34 +30,117 @@ function weatherIcon(code: number) {
 }
 
 export function WeatherWidget() {
+  const [useCurrentLocation, setUseCurrentLocation] = useState(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [temperatureUnit, setTemperatureUnit] = useState<"fahrenheit" | "celsius">("fahrenheit");
+  const { getCurrentLocation, permission } = useLocationPermission();
+
+  // Determine which coordinates to use
+  const activeCoords = useCurrentLocation && userCoords ? userCoords : HU_COORDS;
+  const locationName = useCurrentLocation && userCoords ? "Your Location" : "Howard University";
+
   const { data, isLoading, error } = useQuery<WeatherResponse>({
-    queryKey: ["weather", HU_COORDS],
+    queryKey: ["weather", activeCoords, temperatureUnit],
     queryFn: async () => {
       const params = new URLSearchParams({
-        latitude: String(HU_COORDS.lat),
-        longitude: String(HU_COORDS.lon),
+        latitude: String(activeCoords.lat),
+        longitude: String(activeCoords.lon),
         current: ["temperature_2m", "wind_speed_10m", "weather_code"].join(","),
         hourly: ["temperature_2m", "weather_code"].join(","),
         forecast_days: "1",
         timezone: "auto",
-        temperature_unit: "fahrenheit",
-        wind_speed_unit: "mph",
+        temperature_unit: temperatureUnit,
+        wind_speed_unit: temperatureUnit === "fahrenheit" ? "mph" : "kmh",
       });
       const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to load weather");
       return res.json();
     },
     staleTime: 1000 * 60 * 10,
+    enabled: !useCurrentLocation || !!userCoords, // Only fetch if we have coords when using current location
   });
 
+  // Handle switching to current location
+  const handleUseCurrentLocation = async () => {
+    const position = await getCurrentLocation();
+    if (position) {
+      setUserCoords({
+        lat: position.coords.latitude,
+        lon: position.coords.longitude,
+      });
+      setUseCurrentLocation(true);
+    }
+  };
+
+  // Handle switching to Howard location
+  const handleUseHowardLocation = () => {
+    setUseCurrentLocation(false);
+  };
+
   return (
-    <Card className="shadow-primary/10 border-border/50">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          Weather @ HU
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
+    <div className="space-y-4">
+      {/* Location Selection Buttons */}
+      <div className="flex gap-2">
+        <Button
+          variant={!useCurrentLocation ? "default" : "outline"}
+          size="sm"
+          className="flex-1 gap-2"
+          onClick={handleUseHowardLocation}
+        >
+          <School size={16} />
+          Howard University
+        </Button>
+        <Button
+          variant={useCurrentLocation ? "default" : "outline"}
+          size="sm"
+          className="flex-1 gap-2"
+          onClick={handleUseCurrentLocation}
+          disabled={permission === 'denied'}
+        >
+          <MapPin size={16} />
+          My Location
+        </Button>
+      </div>
+
+      {/* Weather Display */}
+      <Card className="shadow-primary/10 border-border/50">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              {useCurrentLocation ? (
+                <>
+                  <MapPin size={16} className="text-primary" />
+                  Weather @ {locationName}
+                </>
+              ) : (
+                <>
+                  <School size={16} className="text-primary" />
+                  Weather @ HU
+                </>
+              )}
+            </CardTitle>
+            {/* Temperature Unit Toggle */}
+            <div className="flex gap-1 border rounded-md">
+              <Button
+                variant={temperatureUnit === "fahrenheit" ? "default" : "ghost"}
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setTemperatureUnit("fahrenheit")}
+              >
+                °F
+              </Button>
+              <Button
+                variant={temperatureUnit === "celsius" ? "default" : "ghost"}
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => setTemperatureUnit("celsius")}
+              >
+                °C
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
         {isLoading && (
           <div className="text-sm text-muted-foreground">Loading weather...</div>
         )}
@@ -68,10 +154,10 @@ export function WeatherWidget() {
               <div>
                 <div className="text-2xl font-semibold flex items-baseline gap-1">
                   {Math.round(data.current.temperature_2m)}
-                  <span className="text-sm text-muted-foreground">°F</span>
+                  <span className="text-sm text-muted-foreground">°{temperatureUnit === "fahrenheit" ? "F" : "C"}</span>
                 </div>
                 <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Wind size={14} /> {Math.round(data.current.wind_speed_10m)} mph
+                  <Wind size={14} /> {Math.round(data.current.wind_speed_10m)} {temperatureUnit === "fahrenheit" ? "mph" : "km/h"}
                 </div>
               </div>
             </div>
@@ -95,7 +181,8 @@ export function WeatherWidget() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { User } from "@supabase/supabase-js";
-import { Bell, User as UserIcon, LogOut, Shield, AlertTriangle } from "lucide-react";
+import { Bell, User as UserIcon, LogOut, Shield, AlertTriangle, IdCard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
-import { useCallback } from "react";
+import { DigitalIDForm } from "@/components/DigitalIDForm";
 
 // Type definitions
 interface Profile {
@@ -25,11 +25,23 @@ interface LoginInfo {
   event_details?: Record<string, unknown>;
 }
 
+interface DigitalIDData {
+  id: string;
+  full_name: string;
+  student_id: string;
+  program: string;
+  class_year: string;
+  photo_url?: string;
+  status: string;
+}
+
 export default function Profile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [lastLoginInfo, setLastLoginInfo] = useState<LoginInfo | null>(null);
+  const [digitalID, setDigitalID] = useState<DigitalIDData | null>(null);
+  const [showIDForm, setShowIDForm] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -49,6 +61,7 @@ export default function Profile() {
     if (user && isValidSession) {
       fetchProfile(user.id);
       fetchLastLoginInfo(user.id);
+      fetchDigitalID(user.id);
     }
   }, [user, isValidSession]);
   useEffect(() => {
@@ -182,10 +195,29 @@ export default function Profile() {
       }
 
       if (data && data.length > 1) {
-        setLastLoginInfo(data[1]); // Second most recent is the "last" login
+        setLastLoginInfo(data[1] as LoginInfo); // Second most recent is the "last" login
       }
     } catch (error) {
       console.warn('Error fetching login history:', error);
+    }
+  };
+
+  const fetchDigitalID = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('digital_ids' as any)
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching digital ID:', error);
+        return;
+      }
+
+      setDigitalID(data as unknown as DigitalIDData);
+    } catch (error) {
+      console.error('Digital ID fetch error:', error);
     }
   };
 
@@ -241,7 +273,7 @@ export default function Profile() {
             {profile?.username && profile.username !== (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]) && (
               <div>
                 <p className="text-sm text-muted-foreground">Username</p>
-                <p className="font-medium">{profile.username}</p>
+                <p className="font-medium">{String(profile.username)}</p>
               </div>
             )}
             <div>
@@ -306,9 +338,30 @@ export default function Profile() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm">Student ID Photo</p>
-              <p className="text-xs text-muted-foreground">Your student ID photo is displayed in the Digital ID section. To update it, please use the Digital ID settings or contact your administrator.</p>
+            {/* Digital ID Management */}
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div className="flex-1">
+                <p className="font-medium text-sm flex items-center gap-2">
+                  <IdCard size={16} />
+                  Digital ID
+                </p>
+                {digitalID ? (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {digitalID.full_name} • {digitalID.student_id}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add your student ID information
+                  </p>
+                )}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowIDForm(true)}
+              >
+                {digitalID ? 'Edit' : 'Add'}
+              </Button>
             </div>
 
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
@@ -417,6 +470,14 @@ export default function Profile() {
           Sign Out
         </Button>
       </main>
+
+      {/* Digital ID Form Dialog */}
+      <DigitalIDForm
+        open={showIDForm}
+        onOpenChange={setShowIDForm}
+        existingData={digitalID}
+        onSuccess={() => user && fetchDigitalID(user.id)}
+      />
     </div>
   );
 }
