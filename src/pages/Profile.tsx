@@ -215,7 +215,7 @@ export default function Profile() {
         return;
       }
 
-      setDigitalID(data as unknown as DigitalIDData);
+      setDigitalID(data);
     } catch (error) {
       console.error('Digital ID fetch error:', error);
     }
