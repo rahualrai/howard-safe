@@ -50,34 +50,32 @@ export function useFriends(userId: string | undefined) {
     try {
       const { data: friendships, error } = await supabase
         .from('friendships')
-        .select('id, friend_id, created_at')
+        .select(`
+          id,
+          friend_id,
+          created_at,
+          profiles:friend_id (
+            username,
+            avatar_url
+          )
+        `)
         .eq('user_id', userId);
 
       if (error) throw error;
 
-      // Get profiles for all friends
-      const friendIds = (friendships || []).map((f: any) => f.friend_id);
-      if (friendIds.length === 0) {
+      if (!friendships || friendships.length === 0) {
         setFriends([]);
         return;
       }
 
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, username, avatar_url')
-        .in('user_id', friendIds);
-
-      if (profilesError) throw profilesError;
-
-      // Map friends data
-      const friendsWithProfiles = (friendships || []).map((friendship: any) => {
-        const profile = profiles?.find((p: any) => p.user_id === friendship.friend_id);
+      // Map friends data from joined profiles
+      const friendsWithProfiles = friendships.map((friendship: any) => {
         return {
           id: friendship.id,
           friend_id: friendship.friend_id,
-          username: profile?.username || null,
+          username: friendship.profiles?.username || null,
           email: '', // Email not available from client-side queries
-          avatar_url: profile?.avatar_url || null,
+          avatar_url: friendship.profiles?.avatar_url || null,
           created_at: friendship.created_at,
         };
       });
