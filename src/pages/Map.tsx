@@ -19,8 +19,8 @@ export default function Map() {
   const [mapCenter, setMapCenter] = useState(THE_YARD_CENTER);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<typeof HOWARD_BUILDINGS>([]);
-  const [activeCategories, setActiveCategories] = useState<Set<BuildingCategory>>(new Set(getAllCategories()));
-  const [activeCampuses, setActiveCampuses] = useState<Set<CampusName>>(new Set(getAllCampuses()));
+  const [activeCategories, setActiveCategories] = useState<Set<BuildingCategory>>(new Set(['Administrative', 'Safety'] as BuildingCategory[]));
+  const [activeCampuses, setActiveCampuses] = useState<Set<CampusName>>(new Set(['Main'] as CampusName[]));
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const { permission, getCurrentLocation, location } = useLocationPermission();
 
@@ -30,17 +30,9 @@ export default function Map() {
       setShowLocationPrompt(true);
     } else if (permission === 'granted') {
       setShowLocationPrompt(false);
-      // Get current location and center map
-      getCurrentLocation().then((position) => {
-        if (position) {
-          setMapCenter({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        }
-      });
+      // Don't auto-zoom to user location - just show the marker on the map
     }
-  }, [permission, getCurrentLocation]);
+  }, [permission]);
 
   // Handle search query
   useEffect(() => {
@@ -72,10 +64,7 @@ export default function Map() {
 
   const handleLocationGranted = (position: GeolocationPosition) => {
     setShowLocationPrompt(false);
-    setMapCenter({
-      lat: position.coords.latitude,
-      lng: position.coords.longitude
-    });
+    // Don't change map center - location marker will show on the map automatically
   };
 
   return (
@@ -343,13 +332,10 @@ export default function Map() {
 
       {/* Main Content */}
       <main className="relative flex-1 flex flex-col md:h-screen">
-        {/* Google Maps with current location */}
+        {/* Google Maps - centered on The Yard */}
         <GoogleMap
-          center={permission === 'granted' && location ?
-            { lat: location.coords.latitude, lng: location.coords.longitude } :
-            mapCenter
-          }
-          zoom={permission === 'granted' ? 17 : 16}
+          center={mapCenter}
+          zoom={16}
           markers={mapMarkers}
         />
 
