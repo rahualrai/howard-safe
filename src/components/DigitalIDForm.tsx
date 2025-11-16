@@ -185,7 +185,7 @@ export function DigitalIDForm({ open, onOpenChange, existingData, onSuccess }: D
       };
 
       const { error } = await supabase
-        .from('digital_ids' as any)
+        .from('digital_ids')
         .upsert(digitalIdData, { onConflict: 'user_id' });
 
       if (error) throw error;
