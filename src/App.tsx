@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { RouteTransition } from "@/components/RouteTransition";
 import { BottomNavigation } from "@/components/BottomNavigation";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { usePreloadRoute } from "@/hooks/usePreloadRoute";
 import { lazy } from "react";
 import NotFound from "./pages/NotFound";
@@ -45,15 +46,61 @@ function AppRouter() {
   return (
     <RouteTransition>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/map" element={<Map />} />
-  <Route path="/calendar" element={<CalendarPage />} />
-  <Route path="/oauth2callback" element={<OAuth2Callback />} />
-        <Route path="/tips" element={<Tips />} />
-        <Route path="/report" element={<ReportIncident />} />
+        {/* Public routes */}
         <Route path="/auth" element={<Auth />} />
-        <Route path="/profile" element={<Profile />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="/oauth2callback" element={<OAuth2Callback />} />
+        
+        {/* Protected routes */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/map"
+          element={
+            <ProtectedRoute>
+              <Map />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <ProtectedRoute>
+              <CalendarPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tips"
+          element={
+            <ProtectedRoute>
+              <Tips />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/report"
+          element={
+            <ProtectedRoute>
+              <ReportIncident />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </RouteTransition>
