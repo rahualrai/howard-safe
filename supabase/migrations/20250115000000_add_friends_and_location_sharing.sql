@@ -154,6 +154,28 @@ FOR DELETE
 USING (auth.uid() = user_id OR auth.uid() = friend_id);
 
 -- ============================================
+-- FRIENDSHIP DELETION TRIGGER
+-- ============================================
+
+-- Function to delete both rows of a bidirectional friendship
+CREATE OR REPLACE FUNCTION public.delete_bidirectional_friendship()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Delete the corresponding row where user_id and friend_id are swapped
+  DELETE FROM public.friendships
+  WHERE (user_id = OLD.friend_id AND friend_id = OLD.user_id);
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to call the function after a friendship row is deleted
+DROP TRIGGER IF EXISTS delete_bidirectional_friendship_trigger ON public.friendships;
+CREATE TRIGGER delete_bidirectional_friendship_trigger
+AFTER DELETE ON public.friendships
+FOR EACH ROW
+EXECUTE FUNCTION public.delete_bidirectional_friendship();
+
+-- ============================================
 -- LOCATION POLICIES
 -- ============================================
 
