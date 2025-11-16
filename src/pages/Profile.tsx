@@ -207,11 +207,22 @@ export default function Profile() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
+            {/* Display Name - Show user's name prominently */}
+            <div>
+              <p className="text-sm text-muted-foreground">Name</p>
+              <p className="font-semibold text-lg">
+                {profile?.username || 
+                 user.user_metadata?.full_name || 
+                 user.user_metadata?.name || 
+                 user.email?.split('@')[0] || 
+                 'User'}
+              </p>
+            </div>
             <div>
               <p className="text-sm text-muted-foreground">Email</p>
               <p className="font-medium">{user.email}</p>
             </div>
-            {profile?.username && (
+            {profile?.username && profile.username !== (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]) && (
               <div>
                 <p className="text-sm text-muted-foreground">Username</p>
                 <p className="font-medium">{profile.username}</p>
