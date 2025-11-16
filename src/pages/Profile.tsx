@@ -20,6 +20,10 @@ import { Label } from "@/components/ui/label";
 import { MapPin } from "lucide-react";
 import { EmergencyContactsDialog } from "@/components/EmergencyContactsDialog";
 import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
+import { BugReportDialog } from "@/components/BugReportDialog";
+import { FeedbackDialog } from "@/components/FeedbackDialog";
+import { ChangelogDialog } from "@/components/ChangelogDialog";
+import { Info, Bug, MessageSquare, Sparkles } from "lucide-react";
 
 // Type definitions
 interface Profile {
@@ -53,7 +57,13 @@ export default function Profile() {
   const [digitalID, setDigitalID] = useState<DigitalIDData | null>(null);
   const [showIDForm, setShowIDForm] = useState(false);
   const [showEmergencyContacts, setShowEmergencyContacts] = useState(false);
+  const [showBugReport, setShowBugReport] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
   const { toast } = useToast();
+  
+  // Get app version from package.json
+  const appVersion = "1.1.1"; // Update this when releasing new versions
   const navigate = useNavigate();
   
   // Use enhanced security validation
@@ -583,6 +593,58 @@ export default function Profile() {
           </CardContent>
         </Card>
 
+        {/* App & Support */}
+        <Card>
+          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+            <div className="flex items-center space-x-2">
+              <Info className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">App & Support</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">App Version</p>
+                <p className="text-xs text-muted-foreground">Current version of the app</p>
+              </div>
+              <Badge variant="secondary">{appVersion}</Badge>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">What's New</p>
+                <p className="text-xs text-muted-foreground">See recent updates and changes</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowChangelog(true)}>
+                <Sparkles className="h-4 w-4 mr-1" />
+                View
+              </Button>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">Report a Bug</p>
+                <p className="text-xs text-muted-foreground">Found an issue? Let us know</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowBugReport(true)}>
+                <Bug className="h-4 w-4 mr-1" />
+                Report
+              </Button>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div>
+                <p className="font-medium text-sm">Send Feedback</p>
+                <p className="text-xs text-muted-foreground">Share your thoughts and suggestions</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowFeedback(true)}>
+                <MessageSquare className="h-4 w-4 mr-1" />
+                Feedback
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Sign Out */}
         <Button 
           onClick={handleSignOut}
@@ -607,6 +669,26 @@ export default function Profile() {
         open={showEmergencyContacts}
         onOpenChange={setShowEmergencyContacts}
         userId={user?.id || null}
+      />
+
+      {/* Bug Report Dialog */}
+      <BugReportDialog
+        open={showBugReport}
+        onOpenChange={setShowBugReport}
+        userId={user?.id || null}
+      />
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog
+        open={showFeedback}
+        onOpenChange={setShowFeedback}
+        userId={user?.id || null}
+      />
+
+      {/* Changelog Dialog */}
+      <ChangelogDialog
+        open={showChangelog}
+        onOpenChange={setShowChangelog}
       />
     </div>
   );
