@@ -11,11 +11,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
 import { useCallback } from "react";
 
+// Type definitions
+interface Profile {
+  user_id: string;
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
+interface LoginInfo {
+  created_at: string;
+  event_details?: Record<string, unknown>;
+}
+
 export default function Profile() {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [lastLoginInfo, setLastLoginInfo] = useState<any>(null);
+  const [lastLoginInfo, setLastLoginInfo] = useState<LoginInfo | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -73,13 +87,14 @@ export default function Profile() {
       }
 
       setProfile(data);
-      
+
       // Log successful profile access
       await logSecurityEvent('profile_accessed', {
         userId,
         timestamp: new Date().toISOString()
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('Profile fetch error:', error);
       toast({
         title: "Error loading profile",
         description: "Unable to load your profile information.",
@@ -99,7 +114,7 @@ export default function Profile() {
 
     // Build safe filename and bucket
     const fileExt = (file.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
-    const safeUserId = String(user.id).replace(/[^a-z0-9-_\.]/gi, '-');
+    const safeUserId = String(user.id).replace(/[^a-z0-9-_.]/gi, '-');
     const fileName = `${safeUserId}/avatar.${fileExt}`;
     const bucket = import.meta.env.VITE_SUPABASE_AVATAR_BUCKET || 'avatars';
 
@@ -138,17 +153,18 @@ export default function Profile() {
 
       // Refresh profile locally from returned row if available
       if (upserted) {
-        setProfile(upserted as any);
+        setProfile(upserted as Profile);
       } else {
         fetchProfile(user.id);
       }
 
       toast({ title: 'Avatar uploaded' });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast({ title: 'Upload failed', description: err?.message || String(err), variant: 'destructive' });
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Upload failed', description: errorMessage, variant: 'destructive' });
     }
-  }, [user, toast]);
+  }, [user, toast, fetchProfile]);
 
   const fetchLastLoginInfo = async (userId: string) => {
     try {

@@ -6,10 +6,20 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { User } from "@supabase/supabase-js";
+import { User, AuthResponse } from "@supabase/supabase-js";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Shield } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+
+// Type definitions
+interface TwoFASecret {
+  is_enabled?: boolean;
+  secret?: string;
+}
+
+interface PendingSession {
+  user: User;
+}
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -18,7 +28,7 @@ export default function Auth() {
   const [user, setUser] = useState<User | null>(null);
   const [show2FA, setShow2FA] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [pendingSession, setPendingSession] = useState<any>(null);
+  const [pendingSession, setPendingSession] = useState<PendingSession | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -52,7 +62,7 @@ export default function Auth() {
   };
 
   // Security audit logging - simplified to avoid 401 errors
-  const logSecurityEvent = async (eventType: string, details: any) => {
+  const logSecurityEvent = async (eventType: string, details: Record<string, unknown>) => {
     // Only log to console for debugging
     console.debug('Security event:', eventType, details);
   };
@@ -112,19 +122,19 @@ export default function Auth() {
       if (data.user) {
         try {
           const { data: twoFactorData } = await supabase
-            .from('user_2fa_secrets' as any)
+            .from('user_2fa_secrets')
             .select('is_enabled')
             .eq('user_id', data.user.id)
             .single();
 
-          if ((twoFactorData as any)?.is_enabled) {
+          if ((twoFactorData as TwoFASecret)?.is_enabled) {
             // Store session temporarily and show 2FA input
             setPendingSession(data);
             setShow2FA(true);
             setLoading(false);
             return;
           }
-        } catch (error) {
+        } catch (error: unknown) {
           // 2FA table might not exist yet, continue without 2FA
           console.debug('2FA check skipped:', error);
         }
@@ -135,9 +145,10 @@ export default function Auth() {
         email: sanitizedEmail,
         timestamp: new Date().toISOString()
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       await logSecurityEvent('signin_error', {
-        error: error?.message || 'Unknown error',
+        error: errorMessage,
         timestamp: new Date().toISOString()
       });
 
@@ -159,7 +170,7 @@ export default function Auth() {
     try {
       // Get the 2FA secret for the user
       const { data: twoFactorData, error: fetchError } = await supabase
-        .from('user_2fa_secrets' as any)
+        .from('user_2fa_secrets')
         .select('secret')
         .eq('user_id', pendingSession.user.id)
         .single();
@@ -177,7 +188,8 @@ export default function Auth() {
       // Verify TOTP code (simplified - in production, use a proper TOTP library)
       // For now, we'll use a simple verification approach
       // In production, you'd use: import { authenticator } from 'otplib';
-      const isValid = await verifyTOTP((twoFactorData as any).secret, twoFactorCode);
+      const secret = (twoFactorData as TwoFASecret).secret ?? '';
+      const isValid = await verifyTOTP(secret, twoFactorCode);
 
       if (isValid) {
         // 2FA verified, session is already established
@@ -195,7 +207,8 @@ export default function Auth() {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('2FA verification error:', error);
       toast({
         title: "Error",
         description: "An error occurred during 2FA verification.",
@@ -250,7 +263,8 @@ export default function Auth() {
           });
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('Google OAuth error:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",

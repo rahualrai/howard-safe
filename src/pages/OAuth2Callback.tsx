@@ -97,12 +97,13 @@ export default function OAuth2Callback() {
             });
           }, 2000);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('OAuth callback error:', err);
-        setError(err.message || 'Authentication failed');
+        const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+        setError(errorMessage);
         toast({
           title: "Sign in failed",
-          description: err.message || 'Please try again.',
+          description: errorMessage || 'Please try again.',
           variant: "destructive",
         });
         setTimeout(() => {
