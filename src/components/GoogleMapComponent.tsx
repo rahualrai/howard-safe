@@ -74,7 +74,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           title: m.title,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
-            scale: 8,
+            scale: 6,
             fillColor: color,
             fillOpacity: 1,
             strokeColor: '#fff',
