@@ -43,14 +43,26 @@ create policy "digital_ids_delete_own"
   to authenticated
   using (auth.uid() = user_id);
 
--- Create a function to automatically update the updated_at timestamp
-create or replace function public.handle_updated_at()
-returns trigger as $$
+-- Create a function to automatically update the updated_at timestamp, only if it does not already exist
+do $$
 begin
-  new.updated_at = now();
-  return new;
+  if not exists (
+    select 1 from pg_proc
+    where proname = 'handle_updated_at'
+      and pg_function_is_visible(oid)
+  ) then
+    execute $func$
+      create function public.handle_updated_at()
+      returns trigger as $$
+      begin
+        new.updated_at = now();
+        return new;
+      end;
+      $$ language plpgsql;
+    $func$;
+  end if;
 end;
-$$ language plpgsql;
+$$;
 
 -- Create trigger to auto-update updated_at
 create trigger digital_ids_updated_at
