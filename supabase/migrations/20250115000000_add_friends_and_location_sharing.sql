@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS public.user_2fa_secrets (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
   secret TEXT NOT NULL,
+  -- Backup codes must be hashed before storage (do not store plain text codes)
   backup_codes TEXT[],
   is_enabled BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
