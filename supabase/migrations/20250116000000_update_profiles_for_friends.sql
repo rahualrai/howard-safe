@@ -24,7 +24,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = public
 AS $$
 BEGIN
-  -- Create profile if it doesn't exist
+  -- Create profile for new user (skip if already exists)
   INSERT INTO public.profiles (user_id, username)
   VALUES (
     new.id, 
