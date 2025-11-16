@@ -76,13 +76,13 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           map,
           title: m.title,
           icon: {
-            path: isFriend ? google.maps.SymbolPath.BACKWARD_CLOSED_ARROW : google.maps.SymbolPath.CIRCLE,
+            path: google.maps.SymbolPath.CIRCLE,
             scale: isFriend ? 8 : 6,
-            fillColor: color,
+            fillColor: isFriend ? '#4285F4' : color, // Use Google blue for friend marker
             fillOpacity: 1,
             strokeColor: '#fff',
             strokeWeight: 3,
-            rotation: isFriend ? 0 : 0,
+            rotation: 0,
           },
           zIndex: m.type === 'incident' ? 100 : m.type === 'friend' ? 50 : 10,
         });
