@@ -232,13 +232,6 @@ export default function Tips() {
     }
   ];
 
-  // Map database categories to display names and icons
-  const categoryConfig = {
-    'emergency-contacts': { label: 'Other Emergency Contacts', icon: Phone },
-    'support-services': { label: 'Other Support Services', icon: Users },
-    'safety-resources': { label: 'Other Safety Resources', icon: Shield },
-  };
-
   // Separate global contacts from user-saved contacts
   const globalContacts: typeof contacts = [];
   const personalContacts: typeof contacts = [];
@@ -250,6 +243,19 @@ export default function Tips() {
       globalContacts.push(contact);
     }
   });
+
+  // Map database categories to display names and icons
+  // Dynamic category labels based on whether user has personal contacts
+  const hasPersonalContacts = personalContacts.length > 0;
+  
+  const categoryConfig = {
+    'emergency-contacts': { 
+      label: hasPersonalContacts ? 'Other Emergency Contacts' : 'Emergency Contacts', 
+      icon: Phone 
+    },
+    'support-services': { label: 'Support Services', icon: Users },
+    'safety-resources': { label: 'Safety Resources', icon: Shield },
+  };
 
   // Group global contacts by category
   const globalGrouped = globalContacts.reduce((acc, contact) => {
@@ -274,9 +280,9 @@ export default function Tips() {
     }))
   }));
 
-  // Create "Personal Emergency Contacts" section for personal contacts
+  // Create "Emergency Contacts" section for personal contacts (user's saved contacts)
   const personalResources = personalContacts.length > 0 ? [{
-    category: 'Personal Emergency Contacts',
+    category: 'Emergency Contacts',
     icon: Heart,
     items: personalContacts.map(item => ({
       title: item.title,
