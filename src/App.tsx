@@ -12,6 +12,7 @@ import { lazy } from "react";
 import NotFound from "./pages/NotFound";
 import CalendarPage from "@/pages/Calendar";
 import OAuth2Callback from "@/pages/OAuth2Callback";
+import GoogleCalendarCallback from "@/pages/GoogleCalendarCallback";
 
 // Lazy load all pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -49,6 +50,7 @@ function AppRouter() {
         {/* Public routes */}
         <Route path="/auth" element={<Auth />} />
         <Route path="/oauth2callback" element={<OAuth2Callback />} />
+        <Route path="/google-calendar-callback" element={<GoogleCalendarCallback />} />
         
         {/* Protected routes */}
         <Route

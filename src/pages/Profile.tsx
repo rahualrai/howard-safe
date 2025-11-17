@@ -18,8 +18,8 @@ import { AddFriendDialog } from "@/components/AddFriendDialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { MapPin } from "lucide-react";
-import { EmergencyContactsDialog } from "@/components/EmergencyContactsDialog";
-import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
+import { EmergencyContactsManager } from "@/components/EmergencyContactsManager";
+import { useUserEmergencyContacts } from "@/hooks/useUserEmergencyContacts";
 import { BugReportDialog } from "@/components/BugReportDialog";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { ChangelogDialog } from "@/components/ChangelogDialog";
@@ -104,9 +104,9 @@ export default function Profile() {
     stopSharingLocation,
   } = useLocationSharing(user?.id);
 
-  // Get personal emergency contacts count
-  const { contacts, isUserContact } = useEmergencyContacts(user?.id);
-  const personalContactsCount = contacts.filter(contact => isUserContact(contact)).length;
+  // Get personal emergency contacts count (for Twilio notifications)
+  const { contacts: emergencyContacts } = useUserEmergencyContacts();
+  const personalContactsCount = emergencyContacts.length;
 
   useEffect(() => {
     if (user && isValidSession) {
@@ -725,11 +725,10 @@ export default function Profile() {
         onSuccess={() => user && fetchDigitalID(user.id)}
       />
 
-      {/* Emergency Contacts Dialog */}
-      <EmergencyContactsDialog
+      {/* Emergency Contacts Manager (Twilio Notifications) */}
+      <EmergencyContactsManager
         open={showEmergencyContacts}
         onOpenChange={setShowEmergencyContacts}
-        userId={user?.id || null}
       />
 
       {/* Bug Report Dialog */}

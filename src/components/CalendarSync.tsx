@@ -6,7 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 
 // NOTE: Replace this with your real Google OAuth client ID and authorized redirect URI
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
-const REDIRECT_URI = `${window.location.origin}/oauth2callback`;
+const REDIRECT_URI = `${window.location.origin}/google-calendar-callback`;
+
+// Debug: Log the redirect URI on component load
+console.log('📍 Google Calendar Redirect URI:', REDIRECT_URI);
 
 // Utility to build a Google Calendar event creation link
 function buildGoogleCalendarLink(opts: {
