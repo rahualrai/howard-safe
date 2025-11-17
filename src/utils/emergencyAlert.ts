@@ -149,9 +149,8 @@ export async function sendEmergencyAlert(
       throw new Error('Failed to create emergency alert');
     }
 
-    // TODO: In a production environment, you would call a Supabase Edge Function here
+    // TODO: In a production environment, need to call a Supabase Edge Function here
     // that sends SMS/email notifications to all the contacts
-    // For now, we'll just log this action
     console.log('Emergency alert created:', {
       alertId: alert.id,
       contactsNotified: contacts.length,
