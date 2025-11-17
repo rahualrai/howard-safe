@@ -107,6 +107,90 @@ export type Database = {
         }
         Relationships: []
       }
+      bug_reports: {
+        Row: {
+          id: string
+          user_id: string | null
+          title: string
+          description: string
+          steps_to_reproduce: string | null
+          device_info: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          title: string
+          description: string
+          steps_to_reproduce?: string | null
+          device_info?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          title?: string
+          description?: string
+          steps_to_reproduce?: string | null
+          device_info?: Json | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      user_feedback: {
+        Row: {
+          id: string
+          user_id: string | null
+          type: string
+          message: string
+          rating: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          type: string
+          message: string
+          rating?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          type?: string
+          message?: string
+          rating?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      changelog_entries: {
+        Row: {
+          id: string
+          version: string
+          title: string
+          description: string
+          release_date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          version: string
+          title: string
+          description: string
+          release_date: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          version?: string
+          title?: string
+          description?: string
+          release_date?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
