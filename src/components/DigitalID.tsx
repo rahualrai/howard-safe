@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { IdCard, AlertCircle, User } from "lucide-react";
+import { IdCard, AlertCircle, User, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -127,20 +127,20 @@ export function DigitalID() {
         <CardTitle className="text-base flex items-center gap-2">
           <IdCard size={18} /> Digital ID
         </CardTitle>
-        <Sheet open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={setOpen}>
           <div className="flex items-center gap-2">
-            <SheetTrigger asChild>
+            <DialogTrigger asChild>
               <Button size="sm" variant="outline" disabled={!digitalID && !loading}>
                 Show ID
               </Button>
-            </SheetTrigger>
+            </DialogTrigger>
             <Button size="sm" variant="ghost" onClick={openAtrium}>Open Atrium</Button>
           </div>
 
-          <SheetContent side="bottom" className="max-h-[80vh]">
-            <SheetHeader>
-              <SheetTitle>Your Howard ID</SheetTitle>
-            </SheetHeader>
+          <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-center text-xl">Your Howard ID</DialogTitle>
+            </DialogHeader>
 
             <div className="mt-4">
               {loading ? (
@@ -155,50 +155,44 @@ export function DigitalID() {
                   </AlertDescription>
                 </Alert>
               ) : (
-                <div className="mx-auto max-w-sm">
-                  <div className="rounded-xl border bg-card p-5 shadow-sm">
-                    <div className="flex items-start gap-4">
+                <div className="mx-auto max-w-lg">
+                  <div className="rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-card to-primary/5 overflow-hidden shadow-2xl">
+                    {/* Header */}
+                    <div className="text-center py-4 bg-primary/10 border-b-2 border-primary/20">
+                      <div className="text-sm font-semibold text-primary mb-1">HOWARD UNIVERSITY</div>
+                      <div className="text-xs text-muted-foreground">Student Identification Card</div>
+                    </div>
+                    
+                    {/* Full Photo Display */}
+                    <div className="relative bg-muted">
                       {photoUrl ? (
                         <img
                           src={photoUrl}
                           alt="Student photo ID"
-                          className="w-24 h-24 rounded-md object-cover border"
+                          className="w-full h-auto object-contain"
                         />
                       ) : (
-                        <div className="w-24 h-24 rounded-md border bg-muted flex items-center justify-center">
-                          <User className="w-12 h-12 text-muted-foreground" />
+                        <div className="w-full h-96 bg-muted flex items-center justify-center">
+                          <User className="w-32 h-32 text-muted-foreground" />
                         </div>
                       )}
+                    </div>
 
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-lg font-semibold">{digitalID.full_name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {digitalID.program} • {digitalID.class_year}
-                            </div>
-                          </div>
-                          <Badge variant="secondary">Student</Badge>
-                        </div>
-                        <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                          <div className="text-muted-foreground">HU ID</div>
-                          <div className="font-medium">{digitalID.student_id}</div>
-                          <div className="text-muted-foreground">Status</div>
-                          <div className="font-medium text-green-600">
-                            {digitalID.status === 'active' ? 'Active' : digitalID.status}
-                          </div>
-                        </div>
-                        <div className="mt-5 text-xs text-muted-foreground">
-                          For security, this ID auto-hides after 30s. Do not share screenshots.
-                        </div>
+                    {/* Security Notice - Only at bottom */}
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                          For security purposes, do not share screenshots of this ID. Use official channels for identity verification.
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
             </div>
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       </CardHeader>
       <CardContent className="pt-0 text-sm text-muted-foreground">
         {loading ? (
