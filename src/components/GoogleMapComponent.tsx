@@ -12,7 +12,8 @@ declare global {
   }
 }
 
-type MarkerType = 'safe' | 'incident' | 'welllit' | 'friend' | LandmarkCategory;
+type IncidentCategory = 'theft' | 'harassment' | 'suspicious_activity' | 'safety_hazard' | 'medical_emergency' | 'other';
+type MarkerType = 'safe' | 'incident' | 'welllit' | 'friend' | LandmarkCategory | IncidentCategory;
 
 interface GoogleMapProps {
   center: { lat: number; lng: number };
@@ -28,6 +29,15 @@ interface GoogleMapProps {
       address?: string;
       timestamp?: string;
       friendId?: string;
+      // Incident-specific details
+      incidentCategory?: string;
+      incidentStatus?: string;
+      incidentTime?: string;
+      reportedTime?: string;
+      photos?: Array<{
+        url: string;
+        alt: string;
+      }>;
     };
   }>;
 }
@@ -84,14 +94,120 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
             strokeWeight: 3,
             rotation: 0,
           },
-          zIndex: m.type === 'incident' ? 100 : m.type === 'friend' ? 50 : 10,
+          zIndex: (m.type === 'incident' || ['theft', 'harassment', 'suspicious_activity', 'safety_hazard', 'medical_emergency', 'other'].includes(m.type)) ? 100 : m.type === 'friend' ? 50 : 10,
         });
 
         // Build info window content - Minimalist & Modern Design
         const createInfoWindowContent = () => {
+          // Incident marker info window
+          if (m.details?.incidentCategory) {
+            const incidentTime = m.details.incidentTime
+              ? new Date(m.details.incidentTime).toLocaleString()
+              : 'Time unknown';
+            const reportedTime = m.details.reportedTime
+              ? new Date(m.details.reportedTime).toLocaleString()
+              : 'Unknown';
+            const timeAgo = m.details.reportedTime
+              ? (() => {
+                  const diff = Math.floor((Date.now() - new Date(m.details.reportedTime).getTime()) / 1000 / 60);
+                  if (diff < 1) return 'Just now';
+                  if (diff < 60) return `${diff}m ago`;
+                  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+                  return `${Math.floor(diff / 1440)}d ago`;
+                })()
+              : '';
+
+            const statusColor = m.details.incidentStatus === 'resolved' ? '#22c55e' :
+                               m.details.incidentStatus === 'investigating' ? '#f59e0b' : '#ef4444';
+            const statusLabel = m.details.incidentStatus ? m.details.incidentStatus.charAt(0).toUpperCase() + m.details.incidentStatus.slice(1) : 'Pending';
+
+            const photos = m.details.photos || [];
+            const photosHtml = photos.length > 0 ? `
+              <div style="margin: 16px 0; border-radius: 6px; overflow: hidden; background: #f3f4f6;">
+                <img src="${photos[0].url}" alt="${photos[0].alt}" style="width: 100%; height: auto; display: block;" />
+                ${photos.length > 1 ? `<div style="font-size: 12px; color: #6b7280; padding: 8px; text-align: center;">+ ${photos.length - 1} more photo${photos.length > 2 ? 's' : ''}</div>` : ''}
+              </div>
+            ` : '';
+
+            return `
+              <style>
+                * { box-sizing: border-box; }
+                .incident-card {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+                  width: 300px;
+                  background: #ffffff;
+                  padding: 20px;
+                  border-radius: 8px;
+                  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                  padding-top: 36px;
+                  position: relative;
+                }
+                .incident-card h3 {
+                  margin: 0 0 8px 0;
+                  color: #1a1a1a;
+                  font-size: 18px;
+                  font-weight: 600;
+                }
+                .incident-card p {
+                  margin: 0 0 12px 0;
+                  color: #6b7280;
+                  font-size: 14px;
+                  line-height: 1.5;
+                }
+                .incident-badge {
+                  display: inline-block;
+                  padding: 6px 12px;
+                  background-color: ${color}20;
+                  color: ${color};
+                  border-radius: 20px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  margin-right: 8px;
+                }
+                .status-badge {
+                  display: inline-block;
+                  padding: 6px 12px;
+                  background-color: ${statusColor}20;
+                  color: ${statusColor};
+                  border-radius: 20px;
+                  font-size: 12px;
+                  font-weight: 600;
+                }
+                .incident-times {
+                  margin: 12px 0;
+                  padding: 12px;
+                  background: #f9fafb;
+                  border-radius: 6px;
+                  font-size: 13px;
+                  color: #6b7280;
+                }
+                .incident-times-label {
+                  font-weight: 600;
+                  color: #374151;
+                  margin-bottom: 4px;
+                }
+              </style>
+              <div class="incident-card">
+                <h3>${m.title}</h3>
+                ${m.description ? `<p>${m.description}</p>` : ''}
+                ${photosHtml}
+                <div class="incident-badge">${m.details.incidentCategory}</div>
+                <div class="status-badge">${statusLabel}</div>
+                <div class="incident-times">
+                  <div class="incident-times-label">Incident Occurred</div>
+                  <div>${incidentTime}</div>
+                  <div style="margin-top: 8px; border-top: 1px solid #e5e7eb; padding-top: 8px;">
+                    <div class="incident-times-label">Reported</div>
+                    <div>${timeAgo} • ${reportedTime}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
           // Friend marker info window
           if (m.type === 'friend') {
-            const timestamp = m.details?.timestamp 
+            const timestamp = m.details?.timestamp
               ? new Date(m.details.timestamp).toLocaleString()
               : 'Unknown';
             const timeAgo = m.details?.timestamp
@@ -102,7 +218,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
                   return `${Math.floor(diff / 60)}h ago`;
                 })()
               : '';
-            
+
             return `
               <style>
                 * { box-sizing: border-box; }
@@ -311,6 +427,13 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
       dining: '#f59e0b',         // amber
       safety: '#ef4444',         // red
       residential: '#8b5cf6',    // purple
+      // Incident category types
+      theft: '#ef4444',           // red
+      harassment: '#a855f7',      // purple
+      suspicious_activity: '#f97316', // orange
+      safety_hazard: '#eab308',   // yellow
+      medical_emergency: '#ec4899', // pink
+      other: '#6b7280',           // gray
     };
     return colors[type] || '#6b7280';
   };
@@ -334,6 +457,12 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
       Research: 'Research Center',
       Library: 'Library',
       Other: 'Building',
+      // Incident categories
+      theft: 'Theft/Property Crime',
+      harassment: 'Harassment',
+      suspicious_activity: 'Suspicious Activity',
+      safety_hazard: 'Safety Hazard',
+      medical_emergency: 'Medical Emergency',
     };
     return descriptions[type] || 'Campus location';
   };
