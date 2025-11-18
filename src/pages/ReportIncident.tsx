@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertTriangle, MapPin, Send, Camera, Shield } from "lucide-react";
+import { AlertTriangle, MapPin, Send, Camera, Shield, Loader } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { CameraCapture } from "@/components/CameraCapture";
@@ -16,9 +16,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
 import { sanitizeInput, validateTextField, rateLimiter, getClientInfo, generateSecureId } from "@/utils/security";
+import { supabase } from "@/integrations/supabase/client";
+import { IncidentPhotoService } from "@/services/incidentPhotoService";
+
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
 
 export default function ReportIncident() {
   const [category, setCategory] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [anonymous, setAnonymous] = useState(false);
@@ -26,6 +34,11 @@ export default function ReportIncident() {
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [incidentTime, setIncidentTime] = useState<string>(
+    new Date().toISOString().slice(0, 16)
+  );
   const { toast } = useToast();
   
   // Use security validation to ensure user is authenticated for reporting
@@ -65,29 +78,56 @@ export default function ReportIncident() {
     }
   }, [category, description, location]);
 
+  const captureCurrentLocation = async () => {
+    setIsGettingLocation(true);
+    await HapticFeedback.impact(ImpactStyle.Light);
+
+    if (!navigator.geolocation) {
+      toast({
+        title: "Location not supported",
+        description: "Your browser doesn't support geolocation",
+        variant: "destructive"
+      });
+      setIsGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCoordinates({ latitude, longitude });
+        setLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+        toast({
+          title: "Location captured",
+          description: "Your location has been added to the report"
+        });
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        toast({
+          title: "Unable to get location",
+          description: error.message || "Please check your location permissions",
+          variant: "destructive"
+        });
+        setIsGettingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   const handleLocationToggle = async () => {
     await HapticFeedback.impact(ImpactStyle.Light);
     setUseCurrentLocation(!useCurrentLocation);
     if (!useCurrentLocation) {
-      setLocation("Using current location...");
+      await captureCurrentLocation();
     } else {
       setLocation("");
+      setCoordinates(null);
     }
   };
 
   const handleSubmit = async () => {
-    // Rate limiting check
-    const rateLimitKey = `incident_report_${user?.id || 'anonymous'}`;
-    if (!rateLimiter.canAttempt(rateLimitKey, 3, 300000)) { // 3 attempts per 5 minutes
-      const remainingTime = Math.ceil(rateLimiter.getRemainingTime(rateLimitKey) / 60000);
-      toast({
-        title: "Too many submissions",
-        description: `Please wait ${remainingTime} minutes before submitting another report.`,
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Enhanced validation
     if (!validateForm()) {
       toast({
@@ -105,15 +145,15 @@ export default function ReportIncident() {
       // Generate unique report ID for tracking
       const reportId = generateSecureId();
       const clientInfo = getClientInfo();
-      
+
       // Sanitize all inputs with enhanced options
       const sanitizedData = {
         reportId,
         category: sanitizeInput(category, { maxLength: 50 }),
+        categoryCustom: category === 'other' ? sanitizeInput(customCategory, { maxLength: 100 }) : null,
         location: sanitizeInput(location, { maxLength: 200 }),
         description: sanitizeInput(description, { maxLength: 2000, allowLineBreaks: true }),
         anonymous,
-        useCurrentLocation,
         photoCount: photos.length,
         timestamp: new Date().toISOString(),
         userId: user?.id || null,
@@ -123,22 +163,124 @@ export default function ReportIncident() {
       // Log the incident report submission for security monitoring
       await logSecurityEvent('incident_report_submitted', sanitizedData);
 
-      // Simulate report submission with enhanced error handling
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Simulate random failures for testing error handling
-          if (Math.random() > 0.95) {
-            reject(new Error('Network timeout'));
-          } else {
-            resolve(true);
+      // Create incident report in database
+      const categoryMap: Record<string, string> = {
+        suspicious: 'suspicious_activity',
+        safety_hazard: 'safety_hazard',
+        medical: 'medical_emergency',
+        theft: 'theft',
+        harassment: 'harassment',
+        other: 'other'
+      };
+
+      const { data: incidentData, error: incidentError } = await supabase
+        .from('incident_reports')
+        .insert({
+          user_id: anonymous ? null : user?.id,
+          category: categoryMap[category] || category,
+          category_custom: category === 'other' ? sanitizedData.categoryCustom : null,
+          location_text: sanitizedData.location || null,
+          latitude: coordinates?.latitude || null,
+          longitude: coordinates?.longitude || null,
+          description: sanitizedData.description,
+          incident_time: incidentTime ? new Date(incidentTime).toISOString() : null,
+          is_anonymous: anonymous,
+          client_info: clientInfo,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (incidentError) {
+        throw new Error(`Failed to create incident report: ${incidentError.message}`);
+      }
+
+      // Upload photos if there are any
+      if (photos.length > 0 && incidentData) {
+        console.log(`📸 Attempting to upload ${photos.length} photos for incident ${incidentData.id}`);
+        const filesToUpload: File[] = [];
+
+        // Convert captured photos to File objects
+        for (const photo of photos) {
+          if (photo.dataUrl) {
+            console.log('Converting dataUrl photo to File...', photo.filename);
+            // Convert base64 data URL to File
+            try {
+              const byteString = atob(photo.dataUrl.split(',')[1]);
+              const ab = new ArrayBuffer(byteString.length);
+              const ua = new Uint8Array(ab);
+              for (let i = 0; i < byteString.length; i++) {
+                ua[i] = byteString.charCodeAt(i);
+              }
+              const blob = new Blob([ab], { type: 'image/jpeg' });
+              const file = new File([blob], photo.filename || `incident_photo_${Date.now()}.jpg`, {
+                type: 'image/jpeg'
+              });
+              filesToUpload.push(file);
+              console.log('DataUrl converted to File:', file.name, file.size);
+            } catch (error) {
+              console.error('Error converting dataUrl to File:', error);
+            }
           }
-        }, 2000);
-      });
-      
+        }
+
+        // Upload photos
+        if (filesToUpload.length > 0) {
+          console.log(`Uploading ${filesToUpload.length} files to storage...`);
+          const uploadResult = await IncidentPhotoService.uploadPhotos(
+            filesToUpload,
+            incidentData.id,
+            anonymous ? undefined : user?.id
+          );
+
+          console.log('Upload result:', uploadResult);
+
+          if (!uploadResult.success && uploadResult.failedPhotos > 0) {
+            console.warn(`❌ Failed to upload ${uploadResult.failedPhotos} photos`, uploadResult.error);
+            toast({
+              title: "⚠️ Photo upload warning",
+              description: `${uploadResult.failedPhotos} photos failed to upload, but incident was recorded`,
+              variant: "destructive"
+            });
+          } else if (uploadResult.success) {
+            console.log(`✅ Successfully uploaded ${uploadResult.urls.length} photos`);
+          }
+
+          // Link photos to incident in database
+          if (uploadResult.urls.length > 0) {
+            console.log('Linking photos to incident in database...');
+            const photoRecords = uploadResult.urls.map((url) => {
+              // Extract path from signed URL
+              const pathMatch = url.match(/object\/public\/incident-photos\/([^?]+)/);
+              const path = pathMatch ? pathMatch[1] : null;
+              return {
+                incident_id: incidentData.id,
+                storage_path: path || url,
+                file_size: filesToUpload[0]?.size || 0
+              };
+            });
+
+            const { error: photoError } = await supabase
+              .from('incident_photos')
+              .insert(photoRecords);
+
+            if (photoError) {
+              console.warn('❌ Failed to link photos to incident:', photoError);
+            } else {
+              console.log('✅ Photos linked to incident successfully');
+            }
+          }
+        } else {
+          console.warn('No files to upload after conversion');
+        }
+      } else {
+        console.log(`No photos to upload (photos.length=${photos.length})`);
+      }
+
       await HapticFeedback.notification(NotificationType.Success);
       toast({
         title: "Report submitted successfully",
-        description: `Report ID: ${reportId.substring(0, 8).toUpperCase()}. Your incident report has been sent to campus security.`,
+        description: `Report ID: ${incidentData.id.substring(0, 8).toUpperCase()}. Your incident report has been sent to campus security.`,
       });
 
       // Clear form
@@ -147,12 +289,16 @@ export default function ReportIncident() {
       setDescription("");
       setAnonymous(false);
       setUseCurrentLocation(false);
+      setCoordinates(null);
       setPhotos([]);
       setValidationErrors({});
+      setIncidentTime(new Date().toISOString().slice(0, 16));
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
       // Log failed submission with enhanced error details
       await logSecurityEvent('incident_report_failed', {
-        error: (error as Error).message,
+        error: errorMessage,
         timestamp: new Date().toISOString(),
         userId: user?.id || null,
         ...getClientInfo()
@@ -160,7 +306,7 @@ export default function ReportIncident() {
 
       toast({
         title: "Submission failed",
-        description: "Please try again or contact security directly if the problem persists.",
+        description: errorMessage || "Please try again or contact security directly if the problem persists.",
         variant: "destructive"
       });
     } finally {
@@ -198,7 +344,12 @@ export default function ReportIncident() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="category">Category of Incident *</Label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select value={category} onValueChange={(value) => {
+                  setCategory(value);
+                  if (value !== "other") {
+                    setCustomCategory("");
+                  }
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select incident type" />
                   </SelectTrigger>
@@ -216,6 +367,22 @@ export default function ReportIncident() {
                 )}
               </div>
 
+              {category === "other" && (
+                <div className="space-y-2">
+                  <Label htmlFor="custom-category">Describe the incident type *</Label>
+                  <Input
+                    id="custom-category"
+                    placeholder="e.g., Noise complaint, Vandalism, etc."
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    maxLength={100}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {customCategory.length}/100 characters
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="location">Location of Incident</Label>
                 <div className="space-y-2">
@@ -224,28 +391,45 @@ export default function ReportIncident() {
                     placeholder="Enter location or building name"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    disabled={useCurrentLocation}
                     maxLength={200}
                   />
                   {validationErrors.location && (
                     <p className="text-sm text-destructive">{validationErrors.location}</p>
                   )}
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="current-location"
-                      checked={useCurrentLocation}
-                      onCheckedChange={(checked) => {
-                        if (typeof checked === 'boolean') {
-                          handleLocationToggle();
-                        }
-                      }}
-                    />
-                    <Label htmlFor="current-location" className="text-sm flex items-center gap-1">
-                      <MapPin size={14} />
-                      Use Current Location
-                    </Label>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={captureCurrentLocation}
+                    disabled={isGettingLocation}
+                    className="w-full"
+                  >
+                    {isGettingLocation ? (
+                      <>
+                        <Loader size={16} className="mr-2 animate-spin" />
+                        Getting Location...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin size={16} className="mr-2" />
+                        Capture Current Location
+                      </>
+                    )}
+                  </Button>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="incident-time">When did this happen?</Label>
+                <Input
+                  id="incident-time"
+                  type="datetime-local"
+                  value={incidentTime}
+                  onChange={(e) => setIncidentTime(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional - leave blank for current time
+                </p>
               </div>
 
               <div className="space-y-2">
