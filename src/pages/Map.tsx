@@ -14,6 +14,7 @@ import { HOWARD_BUILDINGS, getAllCategories, getAllCampuses, searchBuildings, ge
 import { useLocationSharing } from "@/hooks/useLocationSharing";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
 import { useIncidents } from "@/hooks/useIncidents";
+import { IncidentPhotoService } from "@/services/incidentPhotoService";
 
 const THE_YARD_CENTER = { lat: 38.9230, lng: -77.0200 };
 
@@ -126,6 +127,14 @@ export default function Map() {
         },
       }));
 
+    // Helper to get public URL for incident photos (bucket is public)
+    const getPhotoUrl = (storagePath: string) => {
+      // storage_path format: "user-id/incident-id/timestamp.jpg"
+      // Public URL format: https://project.supabase.co/storage/v1/object/public/incident-photos/path
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+      return `${supabaseUrl}/storage/v1/object/public/incident-photos/${storagePath}`;
+    };
+
     // Filter and add incident markers
     const cutoffDate = getCutoffDate(incidentTimeRange);
     const incidentMarkers = allIncidents
@@ -158,7 +167,7 @@ export default function Map() {
             incidentTime: incident.incident_time,
             reportedTime: incident.reported_at,
             photos: incident.incident_photos?.map(photo => ({
-              url: photo.storage_path,
+              url: getPhotoUrl(photo.storage_path),
               alt: `Incident photo for ${incidentCategory}`,
             })) || [],
           },

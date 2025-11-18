@@ -99,23 +99,6 @@ export const IncidentMap = ({
       }));
   };
 
-  const handleMarkerClick = (marker: ReturnType<typeof getIncidentMarkers>[0]) => {
-    if (onIncidentClick && marker.details?.timestamp) {
-      // Find the incident by timestamp and coordinates
-      const incident = incidents?.find(
-        (inc: Incident) =>
-          inc.latitude === marker.position.lat &&
-          inc.longitude === marker.position.lng &&
-          (inc.incident_time === marker.details?.timestamp ||
-            inc.reported_at === marker.details?.timestamp)
-      );
-
-      if (incident) {
-        onIncidentClick(incident.id);
-      }
-    }
-  };
-
   if (error) {
     return (
       <Card className="bg-destructive/10 border-destructive/20">

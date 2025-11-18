@@ -26,6 +26,7 @@ interface Coordinates {
 
 export default function ReportIncident() {
   const [category, setCategory] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [anonymous, setAnonymous] = useState(false);
@@ -149,7 +150,7 @@ export default function ReportIncident() {
       const sanitizedData = {
         reportId,
         category: sanitizeInput(category, { maxLength: 50 }),
-        categoryCustom: category === 'other' ? sanitizeInput(description.substring(0, 100), { maxLength: 100 }) : null,
+        categoryCustom: category === 'other' ? sanitizeInput(customCategory, { maxLength: 100 }) : null,
         location: sanitizeInput(location, { maxLength: 200 }),
         description: sanitizeInput(description, { maxLength: 2000, allowLineBreaks: true }),
         anonymous,
@@ -343,7 +344,12 @@ export default function ReportIncident() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="category">Category of Incident *</Label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select value={category} onValueChange={(value) => {
+                  setCategory(value);
+                  if (value !== "other") {
+                    setCustomCategory("");
+                  }
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select incident type" />
                   </SelectTrigger>
@@ -360,6 +366,22 @@ export default function ReportIncident() {
                   <p className="text-sm text-destructive">{validationErrors.category}</p>
                 )}
               </div>
+
+              {category === "other" && (
+                <div className="space-y-2">
+                  <Label htmlFor="custom-category">Describe the incident type *</Label>
+                  <Input
+                    id="custom-category"
+                    placeholder="e.g., Noise complaint, Vandalism, etc."
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    maxLength={100}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {customCategory.length}/100 characters
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="location">Location of Incident</Label>
@@ -398,16 +420,15 @@ export default function ReportIncident() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="incident-time">When did this happen? *</Label>
+                <Label htmlFor="incident-time">When did this happen?</Label>
                 <Input
                   id="incident-time"
                   type="datetime-local"
                   value={incidentTime}
                   onChange={(e) => setIncidentTime(e.target.value)}
-                  required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Leave blank for current time
+                  Optional - leave blank for current time
                 </p>
               </div>
 
