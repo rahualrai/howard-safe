@@ -47,7 +47,7 @@ export function WeatherWidget() {
         longitude: String(activeCoords.lon),
         current: ["temperature_2m", "wind_speed_10m", "weather_code"].join(","),
         hourly: ["temperature_2m", "weather_code"].join(","),
-        forecast_days: "1",
+        forecast_days: "2",
         timezone: "auto",
         temperature_unit: temperatureUnit,
         wind_speed_unit: temperatureUnit === "fahrenheit" ? "mph" : "kmh",
@@ -162,18 +162,37 @@ export function WeatherWidget() {
               </div>
             </div>
             <div className="flex-1">
-              <div className="grid grid-cols-4 gap-2">
-                {data.hourly.time.slice(0, 4).map((t, i) => (
-                  <div key={t} className="text-center">
-                    <div className="text-[10px] text-muted-foreground">
-                      {new Date(t).toLocaleTimeString([], { hour: "numeric" })}
-                    </div>
-                    <div className="flex items-center justify-center gap-1 text-xs">
-                      {weatherIcon(data.hourly.weather_code[i])}
-                      {Math.round(data.hourly.temperature_2m[i])}°
-                    </div>
-                  </div>
-                ))}
+              <div className="grid grid-cols-6 gap-2">
+                {(() => {
+                  // Get current hour to find the starting index
+                  const now = new Date();
+                  const currentHour = now.getHours();
+                  
+                  // Find the index of the current hour in the hourly data
+                  const startIndex = data.hourly.time.findIndex(t => {
+                    const timeHour = new Date(t).getHours();
+                    return timeHour >= currentHour;
+                  });
+                  
+                  // If we can't find current hour, default to 0
+                  const fromIndex = startIndex !== -1 ? startIndex : 0;
+                  
+                  // Get 6 hours starting from current hour (current + next 5)
+                  return data.hourly.time.slice(fromIndex, fromIndex + 6).map((t, i) => {
+                    const actualIndex = fromIndex + i;
+                    return (
+                      <div key={t} className="text-center">
+                        <div className="text-[10px] text-muted-foreground">
+                          {new Date(t).toLocaleTimeString([], { hour: "numeric" })}
+                        </div>
+                        <div className="flex items-center justify-center gap-1 text-xs">
+                          {weatherIcon(data.hourly.weather_code[actualIndex])}
+                          {Math.round(data.hourly.temperature_2m[actualIndex])}°
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
