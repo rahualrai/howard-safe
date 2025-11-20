@@ -14,36 +14,6 @@ export type EventItem = {
   location: string;
 };
 
-const MOCK_EVENTS: EventItem[] = [
-  {
-    id: "1",
-    title: "Career Fair: Tech & Startups",
-    startsAt: new Date(Date.now() + 1000 * 60 * 60 * 4).toISOString(),
-    category: "career",
-    location: "Blackburn Ballroom",
-  },
-  {
-    id: "2",
-    title: "Homecoming Prep Meeting",
-    startsAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
-    category: "social",
-    location: "Student Center 201",
-  },
-  {
-    id: "3",
-    title: "Study Skills Workshop",
-    startsAt: new Date(Date.now() + 1000 * 60 * 60 * 30).toISOString(),
-    category: "academic",
-    location: "Founders Library",
-  },
-  {
-    id: "4",
-    title: "Cultural Night: Caribbean Showcase",
-    startsAt: new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString(),
-    category: "cultural",
-    location: "Cramton Auditorium",
-  },
-];
 
 const categoryBadge: Record<EventItem["category"], string> = {
   academic: "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
@@ -69,13 +39,10 @@ export function EventsCalendar() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Merge database events with hardcoded mock events
-  const dbEvents: EventItem[] = (data && data.length > 0)
+  // Convert database events to EventItem format
+  const allEvents: EventItem[] = (data && data.length > 0)
     ? data.map((e) => ({ id: e.id, title: e.title, startsAt: e.starts_at, category: e.category, location: e.location }))
     : [];
-  
-  // Combine database events with mock events (database events first, then mock events)
-  const allEvents: EventItem[] = [...dbEvents, ...MOCK_EVENTS];
 
   const events = useMemo(() => {
     return filter === "all" ? allEvents : allEvents.filter(e => e.category === filter);
@@ -103,14 +70,22 @@ export function EventsCalendar() {
         </div>
       </CardHeader>
       <CardContent className="pt-0 space-y-3">
-        {/* TODO: Replace with official campus events source if different */}
         {isLoading && (
           <div className="text-sm text-muted-foreground">Loading events…</div>
         )}
         {error && (
-          <div className="text-sm text-destructive">Unable to load events. Showing recent highlights.</div>
+          <div className="text-sm text-destructive">
+            Unable to load events. Please check your internet connection and try again.
+          </div>
         )}
-        {events.map(e => (
+        {!isLoading && !error && events.length === 0 && (
+          <div className="text-center py-6">
+            <CalendarDays className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+            <p className="text-sm text-muted-foreground">No upcoming events scheduled.</p>
+            <p className="text-xs text-muted-foreground mt-1">Check back later for campus events.</p>
+          </div>
+        )}
+        {events.length > 0 && events.map(e => (
           <div key={e.id} className="flex items-start justify-between rounded-lg border p-3 bg-card/60">
             <div>
               <div className="font-medium text-sm">{e.title}</div>
