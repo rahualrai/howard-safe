@@ -610,7 +610,7 @@ export default function Profile() {
               <Button 
                 size="default"
                 onClick={() => setShowIDForm(true)}
-                className="min-h-[44px] flex-shrink-0 px-4"
+                className="min-h-[44px] w-[110px] flex-shrink-0"
               >
                 {digitalID ? 'Edit' : 'Add'}
               </Button>
@@ -623,7 +623,7 @@ export default function Profile() {
               </div>
               <Button 
                 size="default" 
-                className="min-h-[44px] flex-shrink-0 px-4"
+                className="min-h-[44px] w-[110px] flex-shrink-0"
                 onClick={() => {
                   setDisplayName(currentDisplayName);
                   setShowDisplayNameDialog(true);
@@ -645,7 +645,7 @@ export default function Profile() {
               <Button 
                 size="default"
                 onClick={() => setShowEmergencyContacts(true)}
-                className="min-h-[44px] flex-shrink-0 px-4"
+                className="min-h-[44px] w-[110px] flex-shrink-0"
               >
                 Manage
               </Button>
@@ -656,7 +656,7 @@ export default function Profile() {
                 <p className="font-medium text-sm">Preferred Language</p>
                 <p className="text-xs text-muted-foreground">English (US)</p>
               </div>
-              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Change</Button>
+              <Button size="default" className="min-h-[44px] w-[110px] flex-shrink-0">Change</Button>
             </div>
           </CardContent>
         </Card>
@@ -696,7 +696,7 @@ export default function Profile() {
                   <Button
                     size="default"
                     onClick={stopSharingLocation}
-                    className="min-h-[44px] px-4"
+                    className="min-h-[44px] w-[110px]"
                   >
                     Stop
                   </Button>
@@ -785,7 +785,7 @@ export default function Profile() {
                 <p className="font-medium text-sm">Two-Factor Authentication</p>
                 <p className="text-xs text-muted-foreground">Add extra security to your account</p>
               </div>
-              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Setup</Button>
+              <Button size="default" className="min-h-[44px] w-[110px] flex-shrink-0">Setup</Button>
             </div>
             
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
@@ -793,7 +793,7 @@ export default function Profile() {
                 <p className="font-medium text-sm">Privacy Settings</p>
                 <p className="text-xs text-muted-foreground">Control who can see your information</p>
               </div>
-              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Manage</Button>
+              <Button size="default" className="min-h-[44px] w-[110px] flex-shrink-0">Manage</Button>
             </div>
             
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
@@ -801,7 +801,7 @@ export default function Profile() {
                 <p className="font-medium text-sm">Data Export</p>
                 <p className="text-xs text-muted-foreground">Download your account data</p>
               </div>
-              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Export</Button>
+              <Button size="default" className="min-h-[44px] w-[110px] flex-shrink-0">Export</Button>
             </div>
           </CardContent>
         </Card>
@@ -885,7 +885,7 @@ export default function Profile() {
                   setShowChangelog(true);
                   markAsSeen();
                 }}
-                className="min-h-[44px] flex-shrink-0 px-4"
+                className="min-h-[44px] w-[110px] flex-shrink-0"
               >
                 <Sparkles className="h-4 w-4 mr-1" />
                 View
@@ -897,7 +897,7 @@ export default function Profile() {
                 <p className="font-medium text-sm">Report a Bug</p>
                 <p className="text-xs text-muted-foreground">Found an issue? Let us know</p>
               </div>
-              <Button size="default" onClick={() => setShowBugReport(true)} className="min-h-[44px] flex-shrink-0 px-4">
+              <Button size="default" onClick={() => setShowBugReport(true)} className="min-h-[44px] w-[110px] flex-shrink-0">
                 <Bug className="h-4 w-4 mr-1" />
                 Report
               </Button>
@@ -908,7 +908,7 @@ export default function Profile() {
                 <p className="font-medium text-sm">Send Feedback</p>
                 <p className="text-xs text-muted-foreground">Share your thoughts and suggestions</p>
               </div>
-              <Button size="default" onClick={() => setShowFeedback(true)} className="min-h-[44px] flex-shrink-0 px-4">
+              <Button size="default" onClick={() => setShowFeedback(true)} className="min-h-[44px] w-[110px] flex-shrink-0">
                 <MessageSquare className="h-4 w-4 mr-1" />
                 Feedback
               </Button>
