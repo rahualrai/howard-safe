@@ -632,12 +632,13 @@ export function AdminPanel() {
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="links">Links</TabsTrigger>
           <TabsTrigger value="changelog">Changelog</TabsTrigger>
+          <TabsTrigger value="incidents">Incidents</TabsTrigger>
         </TabsList>
 
         {/* Emergency Contacts Tab */}
@@ -979,15 +980,13 @@ export function AdminPanel() {
             )}
           </div>
         </TabsContent>
-      </Tabs>
 
-      {/* Incidents View (Separate Section) */}
-      <Card>
-        <CardHeader>
+        {/* Incidents Tab */}
+        <TabsContent value="incidents" className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
-              <CardTitle>Incident Reports (View Only)</CardTitle>
+              <h3 className="text-lg font-semibold">Incident Reports (View Only)</h3>
             </div>
             <Select value={incidentFilter} onValueChange={(value: any) => setIncidentFilter(value)}>
               <SelectTrigger className="w-[180px]">
@@ -1001,8 +1000,7 @@ export function AdminPanel() {
               </SelectContent>
             </Select>
           </div>
-        </CardHeader>
-        <CardContent>
+
           <div className="space-y-2">
             {incidents.length === 0 ? (
               <p className="text-sm text-muted-foreground">No incidents found.</p>
@@ -1033,8 +1031,8 @@ export function AdminPanel() {
               ))
             )}
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Contact Dialog */}
       <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
