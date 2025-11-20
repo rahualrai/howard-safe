@@ -305,7 +305,7 @@ export default function Profile() {
         </div>
       </header>
       
-      <main className="p-4 max-w-md mx-auto space-y-6">
+      <main className="p-4 max-w-md mx-auto space-y-4 pb-24">
         {/* Profile Info */}
         <Card>
           <CardHeader className="flex flex-row items-center space-y-0 pb-2">
@@ -328,7 +328,7 @@ export default function Profile() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium">{user.email}</p>
+              <p className="font-medium break-all">{user.email}</p>
             </div>
             {profile?.username && profile.username !== (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]) && (
               <div>
@@ -366,7 +366,7 @@ export default function Profile() {
                   </div>
                   <Button
                     onClick={() => navigate('/admin')}
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                     size="default"
                   >
                     <Settings className="h-4 w-4 mr-2" />
@@ -424,14 +424,14 @@ export default function Profile() {
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Digital ID Management */}
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div className="flex-1">
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm flex items-center gap-2">
                   <IdCard size={16} />
                   Digital ID
                 </p>
                 {digitalID ? (
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
                     {digitalID.full_name} • {digitalID.student_id}
                   </p>
                 ) : (
@@ -441,24 +441,24 @@ export default function Profile() {
                 )}
               </div>
               <Button 
-                variant="outline" 
-                size="sm"
+                size="default"
                 onClick={() => setShowIDForm(true)}
+                className="min-h-[44px] flex-shrink-0 px-4"
               >
                 {digitalID ? 'Edit' : 'Add'}
               </Button>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Display Name</p>
                 <p className="text-xs text-muted-foreground">How your name appears in reports</p>
               </div>
-              <Button variant="outline" size="sm">Edit</Button>
+              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Edit</Button>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Emergency Contacts</p>
                 <p className="text-xs text-muted-foreground">
                   {personalContactsCount > 0 
@@ -467,20 +467,20 @@ export default function Profile() {
                 </p>
               </div>
               <Button 
-                variant="outline" 
-                size="sm"
+                size="default"
                 onClick={() => setShowEmergencyContacts(true)}
+                className="min-h-[44px] flex-shrink-0 px-4"
               >
                 Manage
               </Button>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Preferred Language</p>
                 <p className="text-xs text-muted-foreground">English (US)</p>
               </div>
-              <Button variant="outline" size="sm">Change</Button>
+              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Change</Button>
             </div>
           </CardContent>
         </Card>
@@ -518,10 +518,9 @@ export default function Profile() {
               <div className="flex items-center gap-2">
                 {isSharing ? (
                   <Button
-                    variant="outline"
-                    size="sm"
+                    size="default"
                     onClick={stopSharingLocation}
-                    className="h-8"
+                    className="min-h-[44px] px-4"
                   >
                     Stop
                   </Button>
@@ -605,28 +604,28 @@ export default function Profile() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Two-Factor Authentication</p>
                 <p className="text-xs text-muted-foreground">Add extra security to your account</p>
               </div>
-              <Button variant="outline" size="sm">Setup</Button>
+              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Setup</Button>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Privacy Settings</p>
                 <p className="text-xs text-muted-foreground">Control who can see your information</p>
               </div>
-              <Button variant="outline" size="sm">Manage</Button>
+              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Manage</Button>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Data Export</p>
                 <p className="text-xs text-muted-foreground">Download your account data</p>
               </div>
-              <Button variant="outline" size="sm">Export</Button>
+              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Export</Button>
             </div>
           </CardContent>
         </Card>
@@ -654,18 +653,19 @@ export default function Profile() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Button
                       variant="default"
-                      size="sm"
+                      size="default"
                       onClick={() => {
                         setShowChangelog(true);
                         markAsSeen();
                       }}
+                      className="min-h-[44px]"
                     >
                       View Updates
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-muted"
+                      size="default"
+                      className="min-h-[44px] min-w-[44px] p-0 hover:bg-muted"
                       onClick={() => {
                         markAsSeen();
                         toast({
@@ -683,56 +683,56 @@ export default function Profile() {
               </Alert>
             )}
 
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">App Version</p>
                 <p className="text-xs text-muted-foreground">Current version of the app</p>
               </div>
               <Badge variant="secondary">{appVersion}</Badge>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div className="flex items-center gap-2">
-                <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="min-w-0">
                   <p className="font-medium text-sm">What's New</p>
                   <p className="text-xs text-muted-foreground">See recent updates and changes</p>
                 </div>
                 {hasUpdate && (
-                  <Badge variant="destructive" className="ml-2">
+                  <Badge variant="destructive" className="ml-2 flex-shrink-0">
                     New
                   </Badge>
                 )}
               </div>
               <Button 
-                variant="outline" 
-                size="sm" 
+                size="default" 
                 onClick={() => {
                   setShowChangelog(true);
                   markAsSeen();
                 }}
+                className="min-h-[44px] flex-shrink-0 px-4"
               >
                 <Sparkles className="h-4 w-4 mr-1" />
                 View
               </Button>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Report a Bug</p>
                 <p className="text-xs text-muted-foreground">Found an issue? Let us know</p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setShowBugReport(true)}>
+              <Button size="default" onClick={() => setShowBugReport(true)} className="min-h-[44px] flex-shrink-0 px-4">
                 <Bug className="h-4 w-4 mr-1" />
                 Report
               </Button>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Send Feedback</p>
                 <p className="text-xs text-muted-foreground">Share your thoughts and suggestions</p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setShowFeedback(true)}>
+              <Button size="default" onClick={() => setShowFeedback(true)} className="min-h-[44px] flex-shrink-0 px-4">
                 <MessageSquare className="h-4 w-4 mr-1" />
                 Feedback
               </Button>
@@ -744,7 +744,8 @@ export default function Profile() {
         <Button 
           onClick={handleSignOut}
           variant="outline" 
-          className="w-full"
+          size="default"
+          className="w-full min-h-[44px] mb-4"
         >
           <LogOut className="h-4 w-4 mr-2" />
           Sign Out
