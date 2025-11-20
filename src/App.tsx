@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import CalendarPage from "@/pages/Calendar";
 import OAuth2Callback from "@/pages/OAuth2Callback";
 import GoogleCalendarCallback from "@/pages/GoogleCalendarCallback";
+import { DevicePreview } from "@/components/DevicePreview";
 
 // Lazy load all pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -121,10 +122,14 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="pb-20">
-            <AppRouter />
-          </div>
-          <BottomNavigation />
+          <DevicePreview>
+            <div className="flex min-h-[100dvh] flex-col">
+              <div className="flex-1 pb-6 md:pb-8">
+                <AppRouter />
+              </div>
+              <BottomNavigation />
+            </div>
+          </DevicePreview>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

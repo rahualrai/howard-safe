@@ -224,6 +224,7 @@ export default function Home() {
             </div>
           </motion.div>
 
+
           {/* Quick Actions (Navigation to dedicated pages) */}
           <motion.div 
             className="grid grid-cols-3 gap-3"

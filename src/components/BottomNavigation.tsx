@@ -17,59 +17,50 @@ export function BottomNavigation() {
   const { preloadRoute } = usePreloadRoute(location.pathname);
 
   return (
-    <motion.nav 
-      className="fixed bottom-0 left-0 right-0 bg-card/95 border-t border-border/50 shadow-soft z-[1000] backdrop-blur-xl"
+    <motion.nav
+      className="sticky bottom-0 left-0 right-0 z-[1000] bg-gradient-to-t from-background via-background/95 to-transparent pt-4 pb-6"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
     >
-      <div className="flex justify-around items-center px-2 py-3 max-w-md mx-auto">
-        {navItems.map(({ path, icon: Icon, label }) => {
-          const isActive = location.pathname === path;
-          
-          return (
-            <NavLink
-              key={path}
-              to={path}
-              onMouseEnter={() => preloadRoute(path)} // Preload on hover
-              onFocus={() => preloadRoute(path)} // Preload on focus for keyboard users
-              className={cn(
-                "flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all duration-300 min-w-0 flex-1 relative group",
-                isActive
-                  ? "text-primary bg-primary/15 shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-              )}
-            >
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="flex flex-col items-center"
+      <div className="max-w-md mx-auto w-full px-4">
+        <div className="flex items-end justify-between gap-3 rounded-[32px] bg-card/95 border border-border/60 shadow-soft backdrop-blur-sm px-4 py-3">
+          {navItems.map(({ path, icon: Icon, label }) => {
+            const isActive = location.pathname === path;
+
+            return (
+              <NavLink
+                key={path}
+                to={path}
+                onMouseEnter={() => preloadRoute(path)} // Preload on hover
+                onFocus={() => preloadRoute(path)} // Preload on focus for keyboard users
+                className="flex flex-col items-center gap-1 flex-1 text-[11px] font-medium"
               >
-                <Icon size={22} className="mb-1" />
-                <span className="text-xs font-medium truncate">{label}</span>
-              </motion.div>
-              
-              {/* Active indicator with animation */}
-              {isActive && (
-                <motion.div 
-                  className="absolute -top-1 left-1/2 w-1 h-1 bg-primary rounded-full"
-                  layoutId="activeIndicator"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  style={{ x: "-50%" }}
-                />
-              )}
-              
-              {/* Hover effect */}
-              <motion.div
-                className="absolute inset-0 bg-primary/10 rounded-xl opacity-0 group-hover:opacity-100"
-                transition={{ duration: 0.2 }}
-              />
-            </NavLink>
-          );
-        })}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className={cn(
+                    "w-12 h-12 rounded-full flex items-center justify-center shadow-sm transition-all",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-primary/40"
+                      : "bg-muted text-foreground/70 dark:text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  <Icon size={isActive ? 24 : 22} />
+                </motion.div>
+                <span
+                  className={cn(
+                    "tracking-tight",
+                    isActive ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {label}
+                </span>
+              </NavLink>
+            );
+          })}
+        </div>
       </div>
     </motion.nav>
   );
