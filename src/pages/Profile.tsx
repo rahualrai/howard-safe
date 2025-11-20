@@ -968,7 +968,7 @@ export default function Profile() {
           <AlertDialogHeader>
             <AlertDialogTitle>Sign Out</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to sign out? You'll need to sign in again to access your account.
+              Are you sure you want to sign out?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
