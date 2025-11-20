@@ -124,7 +124,7 @@ const App = () => (
         <BrowserRouter>
           <DevicePreview>
             <div className="flex min-h-[100dvh] flex-col">
-              <div className="flex-1 pb-6 md:pb-8">
+              <div className="flex-1 pb-20">
                 <AppRouter />
               </div>
               <BottomNavigation />
