@@ -23,10 +23,7 @@ export function DevicePreview({ children }: DevicePreviewProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const showFrame = useMemo(() => {
-    const isNative = Capacitor.isNativePlatform();
-    return !isNative && isDesktop;
-  }, [isDesktop]);
+  const showFrame = !Capacitor.isNativePlatform() && isDesktop;
 
   if (!showFrame) {
     return <>{children}</>;
