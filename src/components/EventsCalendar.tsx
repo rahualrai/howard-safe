@@ -94,7 +94,7 @@ export function EventsCalendar() {
                 {" • "}{e.location}
               </div>
             </div>
-            <Badge className={categoryBadge[e.category]}>{e.category}</Badge>
+            <Badge className={categoryBadge[e.category]}>{e.category.charAt(0).toUpperCase() + e.category.slice(1)}</Badge>
           </div>
         ))}
       </CardContent>
