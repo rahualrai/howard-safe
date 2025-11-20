@@ -494,18 +494,6 @@ export default function Tips() {
                 </Alert>
               )}
 
-              {/* Sync Status */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {hookIsOnline ? (
-                  <Wifi className="h-4 w-4 text-green-600" />
-                ) : (
-                  <WifiOff className="h-4 w-4 text-orange-600" />
-                )}
-                <span>
-                  {hookIsOnline ? 'Online' : 'Offline'} • 
-                  {lastSyncTime ? ` Last updated: ${lastSyncTime.toLocaleTimeString()}` : ' Never synced'}
-                </span>
-              </div>
             </div>
 
             {/* Search and Filter Section */}
