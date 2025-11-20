@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { User } from "@supabase/supabase-js";
-import { Bell, User as UserIcon, LogOut, Shield, AlertTriangle, IdCard } from "lucide-react";
+import { Bell, User as UserIcon, LogOut, Shield, AlertTriangle, IdCard, Camera, Upload, X as XIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
@@ -26,6 +26,27 @@ import { ChangelogDialog } from "@/components/ChangelogDialog";
 import { Info, Bug, MessageSquare, Sparkles, X, Settings } from "lucide-react";
 import { useAppUpdates } from "@/hooks/useAppUpdates";
 import { useAdmin } from "@/hooks/useAdmin";
+import { ProfileSkeleton } from "@/components/ProfileSkeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Type definitions
 interface Profile {
@@ -54,6 +75,8 @@ interface DigitalIDData {
 export default function Profile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [lastLoginInfo, setLastLoginInfo] = useState<LoginInfo | null>(null);
   const [digitalID, setDigitalID] = useState<DigitalIDData | null>(null);
@@ -62,6 +85,10 @@ export default function Profile() {
   const [showBugReport, setShowBugReport] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const [showDisplayNameDialog, setShowDisplayNameDialog] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [displayNameSaving, setDisplayNameSaving] = useState(false);
   const { toast } = useToast();
   
   // Get app version from package.json
@@ -110,7 +137,16 @@ export default function Profile() {
 
   // Get personal emergency contacts count (for Twilio notifications)
   const { contacts: emergencyContacts } = useUserEmergencyContacts();
-  const personalContactsCount = emergencyContacts.length;
+  const personalContactsCount = useMemo(() => emergencyContacts.length, [emergencyContacts.length]);
+
+  // Memoize display name
+  const currentDisplayName = useMemo(() => {
+    return profile?.username || 
+           user?.user_metadata?.full_name || 
+           user?.user_metadata?.name || 
+           user?.email?.split('@')[0] || 
+           'User';
+  }, [profile?.username, user?.user_metadata?.full_name, user?.user_metadata?.name, user?.email]);
 
   useEffect(() => {
     if (user && isValidSession) {
@@ -119,6 +155,13 @@ export default function Profile() {
       fetchDigitalID(user.id);
     }
   }, [user, isValidSession]);
+
+  // Initialize display name when profile loads
+  useEffect(() => {
+    if (profile && !displayName) {
+      setDisplayName(currentDisplayName);
+    }
+  }, [profile, currentDisplayName, displayName]);
   useEffect(() => {
     if (profile?.avatar_url) {
       const getAvatarUrl = async () => {
@@ -155,6 +198,9 @@ export default function Profile() {
       }
 
       setProfile(data);
+      if (data?.username) {
+        setDisplayName(data.username);
+      }
 
       // Log successful profile access
       await logSecurityEvent('profile_accessed', {
@@ -180,6 +226,8 @@ export default function Profile() {
       return;
     }
 
+    setAvatarUploading(true);
+
     // Build safe filename and bucket
     const fileExt = (file.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6);
     const safeUserId = String(user.id).replace(/[^a-z0-9-_.]/gi, '-');
@@ -187,7 +235,14 @@ export default function Profile() {
     const bucket = import.meta.env.VITE_SUPABASE_AVATAR_BUCKET || 'avatars';
 
     try {
-      toast({ title: 'Uploading avatar...' });
+      // Optimistic update: show preview immediately
+      if (!avatarPreview) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAvatarPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
 
       // upload to storage (private bucket expected)
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -195,6 +250,7 @@ export default function Profile() {
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) {
+        setAvatarPreview(null);
         const message = uploadError.message || String(uploadError);
         if (message.toLowerCase().includes('bucket') || message.toLowerCase().includes('not found')) {
           toast({ title: 'Upload failed: bucket not found', description: `Bucket "${bucket}" missing. Ask the project owner to create it.`, variant: 'destructive' });
@@ -209,11 +265,12 @@ export default function Profile() {
       const storagePath = fileName;
       const { data: upserted, error: upsertError } = await supabase
         .from('profiles')
-        .upsert([{ user_id: user.id, avatar_url: storagePath }], { onConflict: 'user_id' })
+        .upsert([{ user_id: user.id, avatar_url: storagePath, updated_at: new Date().toISOString() }], { onConflict: 'user_id' })
         .select('*')
         .single();
 
       if (upsertError) {
+        setAvatarPreview(null);
         console.error('upsertError', upsertError);
         toast({ title: 'Failed to update profile', description: upsertError.message || String(upsertError), variant: 'destructive' });
         return;
@@ -222,17 +279,95 @@ export default function Profile() {
       // Refresh profile locally from returned row if available
       if (upserted) {
         setProfile(upserted as Profile);
+        // Clear preview after successful upload
+        setAvatarPreview(null);
       } else {
         fetchProfile(user.id);
       }
 
-      toast({ title: 'Avatar uploaded' });
+      toast({ title: 'Avatar uploaded successfully', description: 'Your profile picture has been updated.' });
     } catch (err: unknown) {
+      setAvatarPreview(null);
       console.error(err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       toast({ title: 'Upload failed', description: errorMessage, variant: 'destructive' });
+    } finally {
+      setAvatarUploading(false);
     }
-  }, [user, toast, fetchProfile]);
+  }, [user, toast, avatarPreview, fetchProfile]);
+
+  // Handle avatar selection with preview
+  const handleAvatarSelect = useCallback(async () => {
+    if (!user) {
+      toast({ title: 'Not signed in', description: 'Please sign in before uploading.', variant: 'destructive' });
+      return;
+    }
+
+    // Create file input for web fallback
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        // Show preview immediately (optimistic update)
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAvatarPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+        
+        // Upload the file
+        await handleAvatarUpload(file);
+      }
+    };
+    input.click();
+  }, [user, toast, handleAvatarUpload]);
+
+  // Handle display name update with optimistic update
+  const handleDisplayNameUpdate = useCallback(async () => {
+    if (!user || !displayName.trim()) {
+      toast({ title: 'Invalid name', description: 'Please enter a valid display name.', variant: 'destructive' });
+      return;
+    }
+
+    setDisplayNameSaving(true);
+    const previousName = currentDisplayName;
+
+    try {
+      // Optimistic update
+      setProfile((prev) => prev ? { ...prev, username: displayName.trim() } : null);
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(
+          { 
+            user_id: user.id, 
+            username: displayName.trim(),
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'user_id' }
+        );
+
+      if (error) {
+        // Revert optimistic update on error
+        setProfile((prev) => prev ? { ...prev, username: previousName } : null);
+        throw error;
+      }
+
+      toast({ title: 'Display name updated', description: 'Your display name has been saved.' });
+      setShowDisplayNameDialog(false);
+    } catch (error: any) {
+      console.error('Error updating display name:', error);
+      toast({ 
+        title: 'Failed to update display name', 
+        description: error.message || 'Please try again.', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setDisplayNameSaving(false);
+    }
+  }, [user, displayName, currentDisplayName, toast]);
 
   const fetchLastLoginInfo = async (userId: string) => {
     try {
@@ -282,15 +417,12 @@ export default function Profile() {
   };
 
   const handleSignOut = async () => {
+    setShowSignOutDialog(false);
     await secureSignOut();
   };
 
   if (loading || profileLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (!user || !isValidSession) {
@@ -315,16 +447,43 @@ export default function Profile() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
+            {/* Avatar */}
+            <div className="flex items-center gap-4 pb-3 border-b border-border">
+              <div className="relative">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage 
+                    src={avatarPreview || avatarDisplayUrl || undefined} 
+                    alt="Profile picture" 
+                  />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                    {currentDisplayName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                {avatarUploading && (
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-lg">{currentDisplayName}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleAvatarSelect}
+                  disabled={avatarUploading}
+                  className="mt-1 h-8 text-xs"
+                >
+                  <Camera className="h-3 w-3 mr-1" />
+                  {avatarPreview ? 'Change' : 'Upload'} Photo
+                </Button>
+              </div>
+            </div>
+
             {/* Display Name - Show user's name prominently */}
             <div>
               <p className="text-sm text-muted-foreground">Name</p>
-              <p className="font-semibold text-lg">
-                {profile?.username || 
-                 user.user_metadata?.full_name || 
-                 user.user_metadata?.name || 
-                 user.email?.split('@')[0] || 
-                 'User'}
-              </p>
+              <p className="font-semibold text-lg">{currentDisplayName}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Email</p>
@@ -347,6 +506,14 @@ export default function Profile() {
                 <p className="text-sm text-muted-foreground">Last sign in</p>
                 <p className="font-medium text-sm">
                   {new Date(lastLoginInfo.created_at).toLocaleString()}
+                </p>
+              </div>
+            )}
+            {profile?.updated_at && (
+              <div>
+                <p className="text-sm text-muted-foreground">Last updated</p>
+                <p className="font-medium text-sm">
+                  {new Date(profile.updated_at).toLocaleString()}
                 </p>
               </div>
             )}
@@ -452,9 +619,18 @@ export default function Profile() {
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Display Name</p>
-                <p className="text-xs text-muted-foreground">How your name appears in reports</p>
+                <p className="text-xs text-muted-foreground truncate">{currentDisplayName}</p>
               </div>
-              <Button size="default" className="min-h-[44px] flex-shrink-0 px-4">Edit</Button>
+              <Button 
+                size="default" 
+                className="min-h-[44px] flex-shrink-0 px-4"
+                onClick={() => {
+                  setDisplayName(currentDisplayName);
+                  setShowDisplayNameDialog(true);
+                }}
+              >
+                Edit
+              </Button>
             </div>
             
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
@@ -742,7 +918,7 @@ export default function Profile() {
 
         {/* Sign Out */}
         <Button 
-          onClick={handleSignOut}
+          onClick={() => setShowSignOutDialog(true)}
           variant="outline" 
           size="default"
           className="w-full min-h-[44px] mb-4"
@@ -785,6 +961,67 @@ export default function Profile() {
         open={showChangelog}
         onOpenChange={setShowChangelog}
       />
+
+      {/* Sign Out Confirmation Dialog */}
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? You'll need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Display Name Edit Dialog */}
+      <Dialog open={showDisplayNameDialog} onOpenChange={setShowDisplayNameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Display Name</DialogTitle>
+            <DialogDescription>
+              This is how your name will appear in reports and throughout the app.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="display-name">Display Name</Label>
+              <Input
+                id="display-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Enter your display name"
+                className="mt-2"
+                maxLength={50}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {displayName.length}/50 characters
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDisplayNameDialog(false)}
+              disabled={displayNameSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDisplayNameUpdate}
+              disabled={displayNameSaving || !displayName.trim() || displayName === currentDisplayName}
+            >
+              {displayNameSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
