@@ -21,6 +21,7 @@ const Tips = lazy(() => import("./pages/Tips"));
 const ReportIncident = lazy(() => import("./pages/ReportIncident"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Profile = lazy(() => import("./pages/Profile"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 // Optimized React Query client for better performance
 const queryClient = new QueryClient({
@@ -98,6 +99,14 @@ function AppRouter() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
             </ProtectedRoute>
           }
         />

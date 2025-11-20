@@ -26,7 +26,6 @@ import { ChangelogDialog } from "@/components/ChangelogDialog";
 import { Info, Bug, MessageSquare, Sparkles, X, Settings } from "lucide-react";
 import { useAppUpdates } from "@/hooks/useAppUpdates";
 import { useAdmin } from "@/hooks/useAdmin";
-import { AdminPanel } from "@/components/AdminPanel";
 
 // Type definitions
 interface Profile {
@@ -350,6 +349,31 @@ export default function Profile() {
                   {new Date(lastLoginInfo.created_at).toLocaleString()}
                 </p>
               </div>
+            )}
+            
+            {/* Admin Status - Only visible to admins */}
+            {isAdmin && (
+              <>
+                <div className="pt-2 border-t border-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Account Type</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="font-semibold">Admin</p>
+                        <Badge variant="secondary" className="text-xs">Admin</Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => navigate('/admin')}
+                    className="w-full"
+                    size="default"
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Open Admin Panel
+                  </Button>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -715,22 +739,6 @@ export default function Profile() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Admin Panel - Only visible to admins */}
-        {isAdmin && (
-          <Card>
-            <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-              <div className="flex items-center space-x-2">
-                <Settings className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Admin Panel</CardTitle>
-                <Badge variant="secondary">Admin</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <AdminPanel />
-            </CardContent>
-          </Card>
-        )}
 
         {/* Sign Out */}
         <Button 
