@@ -23,8 +23,10 @@ import { useUserEmergencyContacts } from "@/hooks/useUserEmergencyContacts";
 import { BugReportDialog } from "@/components/BugReportDialog";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { ChangelogDialog } from "@/components/ChangelogDialog";
-import { Info, Bug, MessageSquare, Sparkles, X } from "lucide-react";
+import { Info, Bug, MessageSquare, Sparkles, X, Settings } from "lucide-react";
 import { useAppUpdates } from "@/hooks/useAppUpdates";
+import { useAdmin } from "@/hooks/useAdmin";
+import { AdminPanel } from "@/components/AdminPanel";
 
 // Type definitions
 interface Profile {
@@ -67,9 +69,6 @@ export default function Profile() {
   const appVersion = "1.1.1"; // Update this when releasing new versions
   const navigate = useNavigate();
   
-  // Check for app updates
-  const { hasUpdate, latestVersion, markAsSeen } = useAppUpdates(appVersion);
-  
   // Use enhanced security validation
   const { 
     user, 
@@ -81,6 +80,12 @@ export default function Profile() {
     requireAuth: true,
     redirectTo: '/auth'
   });
+
+  // Check for app updates
+  const { hasUpdate, latestVersion, markAsSeen } = useAppUpdates(appVersion);
+  
+  // Check admin status
+  const { isAdmin } = useAdmin(user?.id);
 
   // Friends and location sharing
   const {
@@ -266,7 +271,12 @@ export default function Profile() {
         return;
       }
 
-      setDigitalID(data);
+      const digitalIDData = data as unknown;
+      if (digitalIDData && typeof digitalIDData === 'object' && digitalIDData !== null && 'id' in digitalIDData && !('error' in digitalIDData)) {
+        setDigitalID(digitalIDData as DigitalIDData);
+      } else {
+        setDigitalID(null);
+      }
     } catch (error) {
       console.error('Digital ID fetch error:', error);
     }
@@ -705,6 +715,22 @@ export default function Profile() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Admin Panel - Only visible to admins */}
+        {isAdmin && (
+          <Card>
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+              <div className="flex items-center space-x-2">
+                <Settings className="h-5 w-5 text-primary" />
+                <CardTitle className="text-lg">Admin Panel</CardTitle>
+                <Badge variant="secondary">Admin</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <AdminPanel />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Sign Out */}
         <Button 
