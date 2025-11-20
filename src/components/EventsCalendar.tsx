@@ -69,9 +69,13 @@ export function EventsCalendar() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const allEvents: EventItem[] = (data && data.length > 0)
+  // Merge database events with hardcoded mock events
+  const dbEvents: EventItem[] = (data && data.length > 0)
     ? data.map((e) => ({ id: e.id, title: e.title, startsAt: e.starts_at, category: e.category, location: e.location }))
-    : MOCK_EVENTS;
+    : [];
+  
+  // Combine database events with mock events (database events first, then mock events)
+  const allEvents: EventItem[] = [...dbEvents, ...MOCK_EVENTS];
 
   const events = useMemo(() => {
     return filter === "all" ? allEvents : allEvents.filter(e => e.category === filter);
