@@ -41,22 +41,22 @@ export function BottomNavigation() {
                   whileTap={{ scale: 0.95 }}
                   transition={{ duration: 0.15 }}
                   className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center shadow-sm transition-all",
+                    "w-12 h-12 rounded-full flex flex-col items-center justify-center shadow-sm transition-all",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-primary/40"
                       : "bg-muted text-foreground/70 dark:text-muted-foreground hover:bg-muted/80"
                   )}
                 >
                   <Icon size={isActive ? 24 : 22} />
+                  <span
+                    className={cn(
+                      "tracking-tight text-[11px] font-medium mt-1",
+                      isActive ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {label}
+                  </span>
                 </motion.div>
-                <span
-                  className={cn(
-                    "tracking-tight",
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  )}
-                >
-                  {label}
-                </span>
               </NavLink>
             );
           })}
