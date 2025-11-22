@@ -3,9 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { GoogleMap } from "@/components/GoogleMapComponent";
+import { GoogleMap, type MapMarker } from "@/components/GoogleMapComponent";
 import { useState, useEffect, useMemo } from "react";
-import { Search, Navigation, MapIcon, MapPin, X, ChevronDown } from "lucide-react";
+import { Search, Navigation, MapIcon, MapPin, X, ChevronDown, Menu, Plus, Target } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { MapBottomSheet } from "@/components/Map/MapBottomSheet";
 import { HapticFeedback } from "@/utils/haptics";
 import { ImpactStyle } from "@capacitor/haptics";
 import { useLocationPermission } from "@/hooks/useLocationPermission";
@@ -48,6 +50,8 @@ export default function Map() {
   const [activeCategories, setActiveCategories] = useState<Set<BuildingCategory>>(new Set(['Administrative', 'Safety'] as BuildingCategory[]));
   const [activeCampuses, setActiveCampuses] = useState<Set<CampusName>>(new Set(['Main'] as CampusName[]));
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
+  const navigate = useNavigate();
 
   // Incident filters
   const [activeIncidentCategories, setActiveIncidentCategories] = useState<Set<IncidentCategory>>(new Set());
@@ -183,7 +187,7 @@ export default function Map() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row relative">
       {/* Location Permission Prompt */}
       {showLocationPrompt && (
         <LocationPermissionPrompt
@@ -194,208 +198,8 @@ export default function Map() {
         />
       )}
 
-      {/* MOBILE HEADER - Hidden on Desktop */}
-      <header className="md:hidden bg-card shadow-soft border-b border-border sticky top-0 z-40">
-        <div className="px-mobile-padding py-4">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-semibold text-foreground">Campus Map</h1>
-            
-            {/* Location Status Badge */}
-            <Badge 
-              variant={permission === 'granted' ? 'default' : 'secondary'}
-              className="flex items-center gap-1"
-            >
-              <MapPin className="w-3 h-3" />
-              {permission === 'granted' ? 'Location On' : 'Location Off'}
-            </Badge>
-          </div>
-          
-          {/* Search Bar with Autocomplete */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input
-              placeholder="Search buildings..."
-              className="pl-10 bg-muted/50 border-border"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setShowSearchDropdown(e.target.value.length > 0);
-              }}
-              onFocus={() => searchQuery.length > 0 && setShowSearchDropdown(true)}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setShowSearchDropdown(false);
-                }}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X size={18} />
-              </button>
-            )}
-
-            {/* Search Dropdown */}
-            {showSearchDropdown && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
-                {searchResults.slice(0, 8).map((building) => (
-                  <button
-                    key={building.id}
-                    className="w-full text-left px-4 py-2 hover:bg-muted border-b border-border last:border-b-0 transition-colors"
-                    onClick={() => {
-                      setMapCenter({ lat: building.latitude, lng: building.longitude });
-                      setSearchQuery('');
-                      setShowSearchDropdown(false);
-                    }}
-                  >
-                    <div className="font-medium text-sm">{building.name}</div>
-                    <div className="text-xs text-muted-foreground">{building.campus} • {building.category}</div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Location Prompt Button */}
-          {(permission === 'unknown' || permission === 'prompt' || permission === 'denied') && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full mt-3"
-              onClick={() => setShowLocationPrompt(true)}
-            >
-              <MapPin className="w-4 h-4 mr-2" />
-              Enable Location for Better Safety
-            </Button>
-          )}
-
-          {/* Category Filters */}
-          <div className="mt-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Building Types ({mapMarkers.length})</p>
-            <div className="flex flex-wrap gap-2">
-              {getAllCategories().map((category) => (
-                <Button
-                  key={category}
-                  variant={activeCategories.has(category) ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => {
-                    const newCategories = new Set(activeCategories);
-                    if (newCategories.has(category)) {
-                      newCategories.delete(category);
-                    } else {
-                      newCategories.add(category);
-                    }
-                    setActiveCategories(newCategories);
-                  }}
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Campus Filters */}
-          <div className="mt-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Campuses</p>
-            <div className="flex flex-wrap gap-2">
-              {getAllCampuses().map((campus) => (
-                <Button
-                  key={campus}
-                  variant={activeCampuses.has(campus) ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => {
-                    const newCampuses = new Set(activeCampuses);
-                    if (newCampuses.has(campus)) {
-                      newCampuses.delete(campus);
-                    } else {
-                      newCampuses.add(campus);
-                    }
-                    setActiveCampuses(newCampuses);
-                  }}
-                >
-                  {campus}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Incidents Filters */}
-          <div className="mt-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Incidents</p>
-
-            {/* Incident Categories */}
-            <p className="text-xs font-medium text-foreground mb-2">Categories</p>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {(Object.keys(INCIDENT_LABELS) as IncidentCategory[]).map((category) => (
-                <Button
-                  key={category}
-                  variant={activeIncidentCategories.has(category) ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs"
-                  style={{
-                    backgroundColor: activeIncidentCategories.has(category) ? INCIDENT_COLORS[category] : 'transparent',
-                    color: activeIncidentCategories.has(category) ? '#fff' : INCIDENT_COLORS[category],
-                    borderColor: INCIDENT_COLORS[category],
-                  }}
-                  onClick={() => {
-                    const newCategories = new Set(activeIncidentCategories);
-                    if (newCategories.has(category)) {
-                      newCategories.delete(category);
-                    } else {
-                      newCategories.add(category);
-                    }
-                    setActiveIncidentCategories(newCategories);
-                  }}
-                >
-                  {INCIDENT_LABELS[category]}
-                </Button>
-              ))}
-            </div>
-
-            {/* Incident Status */}
-            <p className="text-xs font-medium text-foreground mb-2">Status</p>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {(['pending', 'investigating', 'resolved'] as IncidentStatus[]).map((status) => (
-                <Button
-                  key={status}
-                  variant={activeIncidentStatuses.has(status) ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => {
-                    const newStatuses = new Set(activeIncidentStatuses);
-                    if (newStatuses.has(status)) {
-                      newStatuses.delete(status);
-                    } else {
-                      newStatuses.add(status);
-                    }
-                    setActiveIncidentStatuses(newStatuses);
-                  }}
-                >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </Button>
-              ))}
-            </div>
-
-            {/* Time Range */}
-            <p className="text-xs font-medium text-foreground mb-2">Time Range</p>
-            <select
-              value={incidentTimeRange}
-              onChange={(e) => setIncidentTimeRange(e.target.value as TimeRange)}
-              className="w-full px-3 py-2 bg-muted border border-border rounded-md text-sm text-foreground"
-            >
-              <option value="24h">Last 24 Hours</option>
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-              <option value="all">All Time</option>
-            </select>
-          </div>
-        </div>
-      </header>
-
       {/* DESKTOP SIDEBAR - Hidden on Mobile */}
-      <aside className="hidden md:flex md:flex-col md:w-80 md:border-r md:border-border md:bg-card md:overflow-y-auto md:shadow-soft">
+      <aside className="hidden md:flex md:flex-col md:w-80 md:border-r md:border-border md:bg-card md:overflow-y-auto md:shadow-soft z-20">
         <div className="p-6 space-y-6">
           {/* Title */}
           <div>
@@ -441,6 +245,9 @@ export default function Map() {
                       setMapCenter({ lat: building.latitude, lng: building.longitude });
                       setSearchQuery('');
                       setShowSearchDropdown(false);
+                      // Also select as marker
+                      const marker = mapMarkers.find(m => m.title === building.name);
+                      if (marker) setSelectedMarker(marker);
                     }}
                   >
                     <div className="font-medium text-sm">{building.name}</div>
@@ -596,18 +403,96 @@ export default function Map() {
       </aside>
 
       {/* Main Content */}
-      <main className="relative flex-1 flex flex-col md:h-screen">
-        {/* Google Maps - centered on The Yard */}
+      <main className="relative flex-1 flex flex-col h-screen">
+        {/* Floating Search Bar (Mobile) */}
+        <div className="md:hidden absolute top-4 left-4 right-4 z-10 flex gap-2">
+          <div className="flex-1 relative shadow-lg rounded-full">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+            <Input
+              placeholder="Search Howard..."
+              className="pl-12 pr-4 h-12 rounded-full bg-background border-0 shadow-none text-base"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchDropdown(e.target.value.length > 0);
+              }}
+              onFocus={() => searchQuery.length > 0 && setShowSearchDropdown(true)}
+            />
+          </div>
+          <Button size="icon" variant="secondary" className="h-12 w-12 rounded-full shadow-lg bg-background" onClick={() => {
+            // Toggle sidebar or show filters
+            // For now, maybe just a placeholder or open a filter modal
+          }}>
+            <Menu className="w-6 h-6" />
+          </Button>
+        </div>
+
+        {/* Search Dropdown (Mobile) */}
+        {showSearchDropdown && searchResults.length > 0 && (
+          <div className="md:hidden absolute top-20 left-4 right-4 bg-background rounded-xl shadow-xl z-20 max-h-[50vh] overflow-y-auto">
+            {searchResults.slice(0, 8).map((building) => (
+              <button
+                key={building.id}
+                className="w-full text-left px-4 py-3 hover:bg-muted border-b border-border last:border-b-0 transition-colors flex items-center gap-3"
+                onClick={() => {
+                  setMapCenter({ lat: building.latitude, lng: building.longitude });
+                  setSearchQuery('');
+                  setShowSearchDropdown(false);
+                  const marker = mapMarkers.find(m => m.title === building.name);
+                  if (marker) setSelectedMarker(marker);
+                }}
+              >
+                <div className="bg-muted p-2 rounded-full">
+                  <MapPin size={16} />
+                </div>
+                <div>
+                  <div className="font-medium text-sm">{building.name}</div>
+                  <div className="text-xs text-muted-foreground">{building.campus} • {building.category}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Google Maps */}
         <GoogleMap
           center={mapCenter}
           zoom={16}
           markers={mapMarkers}
+          onMarkerClick={setSelectedMarker}
         />
 
-        {/* Spacing for bottom navigation (mobile only) */}
-        <div className="md:hidden h-24" />
-      </main>
+        {/* Floating Action Buttons (Mobile) */}
+        <div className="md:hidden absolute bottom-8 right-4 z-10 flex flex-col gap-3 pb-safe">
+          <Button
+            size="icon"
+            className="h-12 w-12 rounded-full shadow-xl bg-background text-foreground hover:bg-muted"
+            onClick={() => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                  setMapCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                });
+              }
+            }}
+          >
+            <Target className="w-6 h-6" />
+          </Button>
 
+          <Button
+            size="icon"
+            className="h-14 w-14 rounded-full shadow-xl bg-primary text-primary-foreground"
+            onClick={() => navigate('/report')}
+          >
+            <Plus className="w-8 h-8" />
+          </Button>
+        </div>
+
+        {/* Bottom Sheet */}
+        <MapBottomSheet
+          marker={selectedMarker}
+          onClose={() => setSelectedMarker(null)}
+        />
+      </main>
     </div>
   );
 }
