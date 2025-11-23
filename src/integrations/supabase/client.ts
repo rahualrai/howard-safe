@@ -21,7 +21,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 if (import.meta.env.DEV) {
   try {
      
-    (window).supabase = supabase;
+    (window as typeof window & { supabase: typeof supabase }).supabase = supabase;
      
     console.debug('Supabase client exposed to window.supabase for debugging');
   } catch (e) {
