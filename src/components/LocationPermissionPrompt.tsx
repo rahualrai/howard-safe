@@ -71,7 +71,7 @@ export const LocationPermissionPrompt = ({
           <Button
             variant="ghost"
             size="sm"
-            className="absolute top-2 right-2 w-8 h-8 p-0 h-auto"
+            className="absolute top-2 right-2 w-8 h-8 p-0"
             onClick={onClose}
           >
             <X className="w-4 h-4" />
