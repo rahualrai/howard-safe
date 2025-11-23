@@ -17,7 +17,7 @@ export function BottomNavigation() {
   const { preloadRoute } = usePreloadRoute(location.pathname);
 
   return (
-    <motion.nav 
+    <motion.nav
       className="fixed bottom-0 left-0 right-0 bg-card/95 border-t border-border/50 shadow-soft z-[1000] backdrop-blur-xl"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
@@ -26,7 +26,7 @@ export function BottomNavigation() {
       <div className="flex justify-around items-center px-2 py-3 max-w-md mx-auto">
         {navItems.map(({ path, icon: Icon, label }) => {
           const isActive = location.pathname === path;
-          
+
           return (
             <NavLink
               key={path}
@@ -49,10 +49,10 @@ export function BottomNavigation() {
                 <Icon size={22} className="mb-1" />
                 <span className="text-xs font-medium truncate">{label}</span>
               </motion.div>
-              
+
               {/* Active indicator with animation */}
               {isActive && (
-                <motion.div 
+                <motion.div
                   className="absolute -top-1 left-1/2 w-1 h-1 bg-primary rounded-full"
                   layoutId="activeIndicator"
                   initial={{ scale: 0 }}
@@ -61,7 +61,7 @@ export function BottomNavigation() {
                   style={{ x: "-50%" }}
                 />
               )}
-              
+
               {/* Hover effect */}
               <motion.div
                 className="absolute inset-0 bg-primary/10 rounded-xl opacity-0 group-hover:opacity-100"

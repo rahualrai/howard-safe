@@ -207,7 +207,7 @@ export default function Map() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-background flex flex-col md:flex-row relative">
+    <div className="h-screen w-screen overflow-hidden bg-background flex flex-col md:flex-row relative pb-20 md:pb-0">
       {/* Location Permission Prompt */}
       {showLocationPrompt && (
         <LocationPermissionPrompt
@@ -235,7 +235,7 @@ export default function Map() {
           flex flex-col overflow-y-auto
         `}
       >
-        <div className={`p-6 space-y-6 ${!isSidebarOpen && 'hidden'}`}>
+        <div className={`p-6 pb-24 space-y-6 ${!isSidebarOpen && 'hidden'}`}>
           {/* Title & Header */}
           <div className="flex justify-between items-start">
             <div>
@@ -509,6 +509,8 @@ export default function Map() {
         </div>
       )}
 
+
+
       {/* Main Content */}
       <main className="relative flex-1 flex flex-col h-full overflow-hidden">
         {/* Floating Search Bar (Mobile) */}
@@ -567,7 +569,7 @@ export default function Map() {
         />
 
         {/* Floating Action Buttons (Mobile) */}
-        <div className="md:hidden absolute bottom-24 right-4 z-10 flex flex-col gap-3 pb-safe">
+        <div className="md:hidden absolute bottom-4 right-4 z-10 flex flex-col gap-3 pb-safe">
           <Button
             size="icon"
             className="h-12 w-12 rounded-full shadow-xl bg-background text-foreground hover:bg-muted"

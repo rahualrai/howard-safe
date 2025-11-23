@@ -380,188 +380,188 @@ export default function ReportIncident() {
                 </Label>
               </div>
               <div className="space-y-3">
-                  <Label className="text-base font-semibold">Category of Incident *</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: 'suspicious', label: 'Suspicious Activity' },
-                      { id: 'safety_hazard', label: 'Safety Hazard' },
-                      { id: 'medical', label: 'Medical Emergency' },
-                      { id: 'theft', label: 'Theft/Property' },
-                      { id: 'harassment', label: 'Harassment' },
-                      { id: 'other', label: 'Other' }
-                    ].map((type) => (
-                      <Button
-                        key={type.id}
-                        type="button"
-                        variant={category === type.id ? "default" : "outline"}
-                        className={`justify-start h-auto py-3 px-3 text-left text-sm whitespace-normal ${category === type.id ? 'border-primary ring-1 ring-primary' : ''}`}
-                        onClick={() => {
-                          setCategory(type.id);
-                          if (type.id !== "other") {
-                            setCustomCategory("");
-                          }
-                        }}
-                      >
-                        {category === type.id && <Check size={14} className="mr-2 shrink-0" />}
-                        {type.label}
-                      </Button>
-                    ))}
-                  </div>
-                  {validationErrors.category && (
-                    <p className="text-sm text-destructive font-medium">{validationErrors.category}</p>
-                  )}
+                <Label className="text-base font-semibold">Category of Incident *</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'suspicious', label: 'Suspicious Activity' },
+                    { id: 'safety_hazard', label: 'Safety Hazard' },
+                    { id: 'medical', label: 'Medical Emergency' },
+                    { id: 'theft', label: 'Theft/Property' },
+                    { id: 'harassment', label: 'Harassment' },
+                    { id: 'other', label: 'Other' }
+                  ].map((type) => (
+                    <Button
+                      key={type.id}
+                      type="button"
+                      variant={category === type.id ? "default" : "outline"}
+                      className={`justify-start h-auto py-3 px-3 text-left text-sm whitespace-normal ${category === type.id ? 'border-primary ring-1 ring-primary' : ''}`}
+                      onClick={() => {
+                        setCategory(type.id);
+                        if (type.id !== "other") {
+                          setCustomCategory("");
+                        }
+                      }}
+                    >
+                      {category === type.id && <Check size={14} className="mr-2 shrink-0" />}
+                      {type.label}
+                    </Button>
+                  ))}
                 </div>
-
-                {category === "other" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="custom-category">Describe the incident type *</Label>
-                    <Input
-                      id="custom-category"
-                      placeholder="e.g., Noise complaint, Vandalism, etc."
-                      value={customCategory}
-                      onChange={(e) => setCustomCategory(e.target.value)}
-                      maxLength={100}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {customCategory.length}/100 characters
-                    </p>
-                  </div>
+                {validationErrors.category && (
+                  <p className="text-sm text-destructive font-medium">{validationErrors.category}</p>
                 )}
+              </div>
+
+              {category === "other" && (
+                <div className="space-y-2">
+                  <Label htmlFor="custom-category">Describe the incident type *</Label>
+                  <Input
+                    id="custom-category"
+                    placeholder="e.g., Noise complaint, Vandalism, etc."
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    maxLength={100}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {customCategory.length}/100 characters
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
-                    <Label htmlFor="location">Location of Incident</Label>
-                    <div className="space-y-2">
-                      <Select
-                        value={location}
-                        onValueChange={(val) => {
-                          if (val === "current_location") {
-                            captureCurrentLocation();
-                          } else {
-                            setLocation(val);
-                            setUseCurrentLocation(false);
-                            setCoordinates(null);
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select a building or location" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px]">
-                          <SelectItem value="current_location" className="text-primary font-medium">
-                            <div className="flex items-center">
-                              <MapPin size={14} className="mr-2" />
-                              Use Current Location
-                            </div>
-                          </SelectItem>
-                          {HOWARD_BUILDINGS.map((building) => (
-                            <SelectItem key={building.id} value={building.name}>
-                              {building.name}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="other">Other / Not Listed</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {/* Show text input if "Other" is selected or if we have a custom location that isn't in the list (legacy support) */}
-                      {(location === "other" || (location && location !== "current_location" && !HOWARD_BUILDINGS.find(b => b.name === location))) && (
-                        <Input
-                          placeholder="Enter specific location details..."
-                          value={location === "other" ? "" : location}
-                          onChange={(e) => setLocation(e.target.value)}
-                          maxLength={200}
-                          className="mt-2"
-                        />
-                      )}
-
-                      {validationErrors.location && (
-                        <p className="text-sm text-destructive">{validationErrors.location}</p>
-                      )}
-
-                      {isGettingLocation && (
-                        <div className="flex items-center text-xs text-muted-foreground animate-pulse">
-                          <Loader size={12} className="mr-2 animate-spin" />
-                          Getting precise location...
+                <Label htmlFor="location">Location of Incident</Label>
+                <div className="space-y-2">
+                  <Select
+                    value={location}
+                    onValueChange={(val) => {
+                      if (val === "current_location") {
+                        captureCurrentLocation();
+                      } else {
+                        setLocation(val);
+                        setUseCurrentLocation(false);
+                        setCoordinates(null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a building or location" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[200px]">
+                      <SelectItem value="current_location" className="text-primary font-medium">
+                        <div className="flex items-center">
+                          <MapPin size={14} className="mr-2" />
+                          Use Current Location
                         </div>
-                      )}
-                    </div>
-                  </div>
+                      </SelectItem>
+                      {HOWARD_BUILDINGS.map((building) => (
+                        <SelectItem key={building.id} value={building.name}>
+                          {building.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="other">Other / Not Listed</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="incident-time">When did this happen?</Label>
+                  {/* Show text input if "Other" is selected or if we have a custom location that isn't in the list (legacy support) */}
+                  {(location === "other" || (location && location !== "current_location" && !HOWARD_BUILDINGS.find(b => b.name === location))) && (
                     <Input
-                      id="incident-time"
-                      type="datetime-local"
-                      value={incidentTime}
-                      onChange={(e) => setIncidentTime(e.target.value)}
+                      placeholder="Enter specific location details..."
+                      value={location === "other" ? "" : location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      maxLength={200}
+                      className="mt-2"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Optional - leave blank for current time
-                    </p>
-                  </div>
+                  )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Detailed Description *</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Please provide as much detail as possible about what happened... (10-2000 characters)"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      rows={4}
-                      maxLength={2000}
-                    />
-                    <div className="flex justify-between text-xs">
-                      <span>{validationErrors.description && <span className="text-destructive font-medium">{validationErrors.description}</span>}</span>
-                      <span className={`${description.length > 1800 ? 'text-destructive font-bold' : description.length > 1500 ? 'text-yellow-600 font-medium' : 'text-muted-foreground'}`}>
-                        {description.length}/2000 characters
-                      </span>
+                  {validationErrors.location && (
+                    <p className="text-sm text-destructive">{validationErrors.location}</p>
+                  )}
+
+                  {isGettingLocation && (
+                    <div className="flex items-center text-xs text-muted-foreground animate-pulse">
+                      <Loader size={12} className="mr-2 animate-spin" />
+                      Getting precise location...
                     </div>
-                  </div>
+                  )}
+                </div>
+              </div>
 
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Camera size={16} />
-                      Attach Photos/Videos
-                    </Label>
-                    <CameraCapture onPhotosChange={setPhotos} maxPhotos={3} />
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="incident-time">When did this happen?</Label>
+                <Input
+                  id="incident-time"
+                  type="datetime-local"
+                  value={incidentTime}
+                  onChange={(e) => setIncidentTime(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional - leave blank for current time
+                </p>
+              </div>
 
-                  {/* Anonymous Checkbox moved to top */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Detailed Description *</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Please provide as much detail as possible about what happened... (10-2000 characters)"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  maxLength={2000}
+                />
+                <div className="flex justify-between text-xs">
+                  <span>{validationErrors.description && <span className="text-destructive font-medium">{validationErrors.description}</span>}</span>
+                  <span className={`${description.length > 1800 ? 'text-destructive font-bold' : description.length > 1500 ? 'text-yellow-600 font-medium' : 'text-muted-foreground'}`}>
+                    {description.length}/2000 characters
+                  </span>
+                </div>
+              </div>
 
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={isSubmitting || !category || !description || description.length < 10}
-                      className="w-full h-12 bg-gradient-primary text-white text-lg font-semibold shadow-primary"
-                    >
-                      {isSubmitting ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Submitting...
-                        </div>
-                      ) : (
-                        <>
-                          <Send className="mr-2" size={20} />
-                          Submit Report
-                        </>
-                      )}
-                    </Button>
-                  </motion.div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Camera size={16} />
+                  Attach Photos/Videos
+                </Label>
+                <CameraCapture onPhotosChange={setPhotos} maxPhotos={3} />
+              </div>
 
-                  {/* Security Notice */}
-                  <Alert>
-                    <Shield className="h-4 w-4" />
-                    <AlertDescription className="text-xs">
-                      All incident reports are logged for security purposes.
-                      {user ? " Your identity is associated with this report." : " Anonymous reports are permitted but may limit follow-up."}
-                    </AlertDescription>
-                  </Alert>
+              {/* Anonymous Checkbox moved to top */}
 
-                  {/* Emergency disclaimer moved to top */}
-                </CardContent>
-              </Card>
-            </motion.div>
-          </main>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !category || !description || description.length < 10}
+                  className="w-full h-12 bg-gradient-primary text-white text-lg font-semibold shadow-primary"
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Submitting...
+                    </div>
+                  ) : (
+                    <>
+                      <Send className="mr-2" size={20} />
+                      Submit Report
+                    </>
+                  )}
+                </Button>
+              </motion.div>
 
-        </div>
-        );
+              {/* Security Notice */}
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  All incident reports are logged for security purposes.
+                  {user ? " Your identity is associated with this report." : " Anonymous reports are permitted but may limit follow-up."}
+                </AlertDescription>
+              </Alert>
+
+              {/* Emergency disclaimer moved to top */}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </main>
+
+    </div>
+  );
 }
