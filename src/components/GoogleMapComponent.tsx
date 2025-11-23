@@ -279,7 +279,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers, o
       <div ref={mapRef} className="absolute inset-0 md:rounded-none rounded-lg" />
 
       {/* Map Controls */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+      <div className="absolute top-20 right-4 flex flex-col gap-2 z-10">
         <Button
           variant="secondary"
           size="sm"
@@ -307,7 +307,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers, o
       </div>
 
       {/* Current Location Indicator */}
-      <div className="absolute bottom-4 left-4 z-10">
+      <div className="absolute bottom-24 left-4 z-10 md:bottom-4">
         <Badge variant="secondary" className="bg-card shadow-soft border-border">
           <div className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
           Current Location
