@@ -10,6 +10,7 @@ interface UploadResult {
 interface BatchUploadResult {
   success: boolean;
   urls: string[];
+  paths: string[];
   failedPhotos: number;
   error?: string;
 }
@@ -81,6 +82,7 @@ export const IncidentPhotoService = {
     userId?: string
   ): Promise<BatchUploadResult> {
     const urls: string[] = [];
+    const paths: string[] = [];
     let failedPhotos = 0;
 
     const uploadPromises = files.map((file) =>
@@ -90,8 +92,9 @@ export const IncidentPhotoService = {
     const results = await Promise.all(uploadPromises);
 
     results.forEach((result) => {
-      if (result.success && result.url) {
+      if (result.success && result.url && result.path) {
         urls.push(result.url);
+        paths.push(result.path);
       } else {
         failedPhotos++;
       }
@@ -100,6 +103,7 @@ export const IncidentPhotoService = {
     return {
       success: failedPhotos === 0,
       urls,
+      paths,
       failedPhotos,
       error:
         failedPhotos > 0
@@ -180,13 +184,45 @@ export const IncidentPhotoService = {
     expiresIn: number = 3600
   ): Promise<string[]> {
     try {
-      const { data } = await supabase.storage
-        .from(BUCKET_NAME)
-        .createSignedUrls(filePaths, expiresIn);
+      console.log(`[IncidentPhotoService] Creating signed URLs for ${filePaths.length} files...`);
+      filePaths.forEach((path, i) => {
+        console.log(`[IncidentPhotoService]   Path ${i + 1}: ${path.substring(0, 80)}${path.length > 80 ? '...' : ''}`);
+      });
 
-      return data?.map((item) => item.signedUrl) || [];
+      // Use Promise.all to fetch all signed URLs in parallel
+      const signedUrlPromises = filePaths.map(async (filePath, index) => {
+        try {
+          console.log(`[IncidentPhotoService] Fetching signed URL for path ${index + 1}...`);
+
+          const { data, error } = await supabase.storage
+            .from(BUCKET_NAME)
+            .createSignedUrl(filePath, expiresIn);
+
+          console.log(`[IncidentPhotoService] Response for path ${index + 1}: error=${!!error}, data=${!!data}, signedUrl=${!!data?.signedUrl}`);
+
+          if (error) {
+            console.warn(`[IncidentPhotoService] Error for path ${index + 1} (${filePath}):`, error.message);
+            return '';
+          }
+
+          if (data?.signedUrl) {
+            console.log(`[IncidentPhotoService] ✓ Signed URL ${index + 1}: ${data.signedUrl.substring(0, 80)}...`);
+            return data.signedUrl;
+          } else {
+            console.warn(`[IncidentPhotoService] No signedUrl for path ${index + 1}: data=${JSON.stringify(data)}`);
+            return '';
+          }
+        } catch (err) {
+          console.error(`[IncidentPhotoService] Exception for path ${index + 1}:`, err);
+          return '';
+        }
+      });
+
+      const signedUrls = await Promise.all(signedUrlPromises);
+      console.log(`[IncidentPhotoService] Successfully created ${signedUrls.filter(u => u).length}/${filePaths.length} signed URLs`);
+      return signedUrls;
     } catch (error) {
-      console.error('Error creating signed URLs:', error);
+      console.error('[IncidentPhotoService] Exception creating signed URLs:', error);
       return [];
     }
   },

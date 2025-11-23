@@ -1,3 +1,4 @@
+import { HOWARD_BUILDINGS } from "@/data/howardBuildingsComplete";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertTriangle, MapPin, Send, Camera, Shield, Loader } from "lucide-react";
+import { AlertTriangle, MapPin, Send, Camera, Shield, Loader, Check, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { CameraCapture } from "@/components/CameraCapture";
@@ -13,7 +14,7 @@ import { CapturedPhoto } from "@/utils/camera";
 import { HapticFeedback } from "@/utils/haptics";
 import { ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
 import { sanitizeInput, validateTextField, rateLimiter, getClientInfo, generateSecureId } from "@/utils/security";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,11 +37,20 @@ export default function ReportIncident() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [incidentTime, setIncidentTime] = useState<string>(
-    new Date().toISOString().slice(0, 16)
-  );
+  const [incidentTime, setIncidentTime] = useState<string>(() => {
+    const now = new Date();
+    // Convert to New York time
+    const nyTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+    // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+    const year = nyTime.getFullYear();
+    const month = String(nyTime.getMonth() + 1).padStart(2, '0');
+    const day = String(nyTime.getDate()).padStart(2, '0');
+    const hours = String(nyTime.getHours()).padStart(2, '0');
+    const minutes = String(nyTime.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  });
   const { toast } = useToast();
-  
+
   // Use security validation to ensure user is authenticated for reporting
   const { user, loading, isValidSession, logSecurityEvent } = useSecurityValidation({
     requireAuth: false, // Allow anonymous reports
@@ -50,23 +60,23 @@ export default function ReportIncident() {
   // Enhanced real-time validation
   const validateForm = () => {
     const errors: Record<string, string> = {};
-    
+
     if (!category) {
       errors.category = "Please select an incident category";
     }
-    
+
     const descValidation = validateTextField(description, "Description", 10, 2000);
     if (!descValidation.isValid) {
       errors.description = descValidation.error || "Description is invalid";
     }
-    
+
     if (location) {
       const locValidation = validateTextField(location, "Location", 2, 200);
       if (!locValidation.isValid) {
         errors.location = locValidation.error || "Location is invalid";
       }
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -247,16 +257,14 @@ export default function ReportIncident() {
           }
 
           // Link photos to incident in database
-          if (uploadResult.urls.length > 0) {
+          if (uploadResult.paths.length > 0) {
             console.log('Linking photos to incident in database...');
-            const photoRecords = uploadResult.urls.map((url) => {
-              // Extract path from signed URL
-              const pathMatch = url.match(/object\/public\/incident-photos\/([^?]+)/);
-              const path = pathMatch ? pathMatch[1] : null;
+            const photoRecords = uploadResult.paths.map((path, index) => {
+              console.log(`Photo ${index + 1} path:`, path);
               return {
                 incident_id: incidentData.id,
-                storage_path: path || url,
-                file_size: filesToUpload[0]?.size || 0
+                storage_path: path,
+                file_size: filesToUpload[index]?.size || 0
               };
             });
 
@@ -316,7 +324,7 @@ export default function ReportIncident() {
 
   return (
     <div className="min-h-screen bg-background">
-      <motion.header 
+      <motion.header
         className="bg-card shadow-soft border-b border-border"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -327,7 +335,7 @@ export default function ReportIncident() {
             <AlertTriangle className="text-destructive" size={24} />
             <h1 className="text-2xl font-bold text-primary">Report Incident</h1>
           </div>
-          <p className="text-sm text-muted-foreground text-center">Help keep our campus safe</p>
+          <p className="text-sm text-muted-foreground text-center">Estimated response time: &lt; 5 mins</p>
         </div>
       </motion.header>
 
@@ -342,28 +350,63 @@ export default function ReportIncident() {
               <CardTitle className="text-lg">Incident Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="category">Category of Incident *</Label>
-                <Select value={category} onValueChange={(value) => {
-                  setCategory(value);
-                  if (value !== "other") {
-                    setCustomCategory("");
-                  }
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select incident type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="suspicious">Suspicious Activity</SelectItem>
-                    <SelectItem value="safety_hazard">Safety Hazard</SelectItem>
-                    <SelectItem value="medical">Medical Emergency</SelectItem>
-                    <SelectItem value="theft">Theft/Property Crime</SelectItem>
-                    <SelectItem value="harassment">Harassment</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Emergency Disclaimer - Moved to Top */}
+              <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
+                <Phone className="h-4 w-4" />
+                <AlertTitle>Emergency</AlertTitle>
+                <AlertDescription className="text-xs font-medium">
+                  For immediate emergencies, call Campus Security at (202) 806-1100 or dial 911.
+                </AlertDescription>
+              </Alert>
+
+              {/* Anonymous Checkbox - Moved to Top */}
+              <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                <Checkbox
+                  id="anonymous"
+                  checked={anonymous}
+                  onCheckedChange={(checked) => {
+                    if (typeof checked === 'boolean') {
+                      setAnonymous(checked);
+                    }
+                  }}
+                />
+                <Label htmlFor="anonymous" className="text-sm font-medium cursor-pointer flex-1">
+                  Report Anonymously
+                  <span className="block text-xs text-muted-foreground font-normal mt-0.5">
+                    Your identity will be hidden from the report
+                  </span>
+                </Label>
+              </div>
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Category of Incident *</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'suspicious', label: 'Suspicious Activity' },
+                    { id: 'safety_hazard', label: 'Safety Hazard' },
+                    { id: 'medical', label: 'Medical Emergency' },
+                    { id: 'theft', label: 'Theft/Property' },
+                    { id: 'harassment', label: 'Harassment' },
+                    { id: 'other', label: 'Other' }
+                  ].map((type) => (
+                    <Button
+                      key={type.id}
+                      type="button"
+                      variant={category === type.id ? "default" : "outline"}
+                      className={`justify-start h-auto py-3 px-3 text-left text-sm whitespace-normal ${category === type.id ? 'border-primary ring-1 ring-primary' : ''}`}
+                      onClick={() => {
+                        setCategory(type.id);
+                        if (type.id !== "other") {
+                          setCustomCategory("");
+                        }
+                      }}
+                    >
+                      {category === type.id && <Check size={14} className="mr-2 shrink-0" />}
+                      {type.label}
+                    </Button>
+                  ))}
+                </div>
                 {validationErrors.category && (
-                  <p className="text-sm text-destructive">{validationErrors.category}</p>
+                  <p className="text-sm text-destructive font-medium">{validationErrors.category}</p>
                 )}
               </div>
 
@@ -386,36 +429,68 @@ export default function ReportIncident() {
               <div className="space-y-2">
                 <Label htmlFor="location">Location of Incident</Label>
                 <div className="space-y-2">
-                  <Input
-                    id="location"
-                    placeholder="Enter location or building name"
+                  <Select
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    maxLength={200}
-                  />
+                    onValueChange={(val) => {
+                      if (val === "current_location") {
+                        captureCurrentLocation();
+                      } else {
+                        setLocation(val);
+                        setUseCurrentLocation(false);
+
+                        // Look up building coordinates when a building is selected
+                        const selectedBuilding = HOWARD_BUILDINGS.find(b => b.name === val);
+                        if (selectedBuilding) {
+                          setCoordinates({
+                            latitude: selectedBuilding.latitude,
+                            longitude: selectedBuilding.longitude
+                          });
+                        } else {
+                          setCoordinates(null); // For "Other" option
+                        }
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a building or location" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[200px]">
+                      <SelectItem value="current_location" className="text-primary font-medium">
+                        <div className="flex items-center">
+                          <MapPin size={14} className="mr-2" />
+                          Use Current Location
+                        </div>
+                      </SelectItem>
+                      {HOWARD_BUILDINGS.map((building) => (
+                        <SelectItem key={building.id} value={building.name}>
+                          {building.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="other">Other / Not Listed</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Show text input if "Other" is selected or if we have a custom location that isn't in the list (legacy support) */}
+                  {(location === "other" || (location && location !== "current_location" && !HOWARD_BUILDINGS.find(b => b.name === location))) && (
+                    <Input
+                      placeholder="Enter specific location details..."
+                      value={location === "other" ? "" : location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      maxLength={200}
+                      className="mt-2"
+                    />
+                  )}
+
                   {validationErrors.location && (
                     <p className="text-sm text-destructive">{validationErrors.location}</p>
                   )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={captureCurrentLocation}
-                    disabled={isGettingLocation}
-                    className="w-full"
-                  >
-                    {isGettingLocation ? (
-                      <>
-                        <Loader size={16} className="mr-2 animate-spin" />
-                        Getting Location...
-                      </>
-                    ) : (
-                      <>
-                        <MapPin size={16} className="mr-2" />
-                        Capture Current Location
-                      </>
-                    )}
-                  </Button>
+
+                  {isGettingLocation && (
+                    <div className="flex items-center text-xs text-muted-foreground animate-pulse">
+                      <Loader size={12} className="mr-2 animate-spin" />
+                      Getting precise location...
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -434,18 +509,20 @@ export default function ReportIncident() {
 
               <div className="space-y-2">
                 <Label htmlFor="description">Detailed Description *</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Please provide as much detail as possible about what happened... (10-2000 characters)"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4}
-                    maxLength={2000}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{validationErrors.description && <span className="text-destructive">{validationErrors.description}</span>}</span>
-                    <span>{description.length}/2000 characters</span>
-                  </div>
+                <Textarea
+                  id="description"
+                  placeholder="Please provide as much detail as possible about what happened... (10-2000 characters)"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  maxLength={2000}
+                />
+                <div className="flex justify-between text-xs">
+                  <span>{validationErrors.description && <span className="text-destructive font-medium">{validationErrors.description}</span>}</span>
+                  <span className={`${description.length > 1800 ? 'text-destructive font-bold' : description.length > 1500 ? 'text-yellow-600 font-medium' : 'text-muted-foreground'}`}>
+                    {description.length}/2000 characters
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -456,23 +533,7 @@ export default function ReportIncident() {
                 <CameraCapture onPhotosChange={setPhotos} maxPhotos={3} />
               </div>
 
-              <div className="flex items-center space-x-2 p-4 bg-muted/50 rounded-lg">
-                <Checkbox
-                  id="anonymous"
-                  checked={anonymous}
-                  onCheckedChange={(checked) => {
-                    if (typeof checked === 'boolean') {
-                      setAnonymous(checked);
-                    }
-                  }}
-                />
-                <Label htmlFor="anonymous" className="text-sm">
-                  Report Anonymously
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Your contact information will not be shared with anyone
-                  </p>
-                </Label>
-              </div>
+              {/* Anonymous Checkbox moved to top */}
 
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
@@ -498,14 +559,12 @@ export default function ReportIncident() {
               <Alert>
                 <Shield className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  All incident reports are logged for security purposes. 
+                  All incident reports are logged for security purposes.
                   {user ? " Your identity is associated with this report." : " Anonymous reports are permitted but may limit follow-up."}
                 </AlertDescription>
               </Alert>
 
-              <p className="text-xs text-muted-foreground text-center">
-                For immediate emergencies, call Campus Security at (202) 806-1100 or dial 911
-              </p>
+              {/* Emergency disclaimer moved to top */}
             </CardContent>
           </Card>
         </motion.div>

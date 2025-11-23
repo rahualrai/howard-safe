@@ -1,7 +1,6 @@
 // This function runs in Supabase's Deno runtime. It returns a short-lived
 // signed URL for a path stored in a private storage bucket. The function is
 // designed to be deployed to Supabase Edge Functions.
-// @ts-nocheck
 
 import { serve } from "std/server";
 import { createClient } from "@supabase/supabase-js";
@@ -42,7 +41,7 @@ serve(async (req) => {
     }
 
     return jsonResponse({ signedUrl: data?.signedUrl ?? null });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return jsonResponse({ error: String(err) }, 500);
   }
 });

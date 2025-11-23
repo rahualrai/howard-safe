@@ -195,7 +195,7 @@ export function AdminPanel() {
 
       if (error) throw error;
       setContacts(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching contacts:", error);
       toast({
         title: "Error",
@@ -242,7 +242,7 @@ export function AdminPanel() {
       setEditingContact(null);
       setContactForm({ title: "", contact: "", description: "", category: "emergency-contacts", priority: 1 });
       fetchContacts();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to save emergency contact.",
@@ -263,7 +263,7 @@ export function AdminPanel() {
       if (error) throw error;
       toast({ title: "Success", description: "Emergency contact deleted." });
       fetchContacts();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to delete emergency contact.",
@@ -276,13 +276,13 @@ export function AdminPanel() {
   const fetchEvents = async () => {
     try {
       const { data, error } = await (supabase
-        .from("events" as any)
+        .from("events")
         .select("*")
-        .order("starts_at", { ascending: true })) as unknown as { data: Event[] | null; error: any };
+        .order("starts_at", { ascending: true })) as unknown as { data: Event[] | null; error: unknown };
 
       if (error) throw error;
       setEvents(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching events:", error);
     }
   };
@@ -291,26 +291,26 @@ export function AdminPanel() {
     try {
       if (editingEvent) {
         const { error } = await (supabase
-          .from("events" as any)
+          .from("events")
           .update({
             title: eventForm.title,
             starts_at: eventForm.starts_at,
             category: eventForm.category,
             location: eventForm.location,
           })
-          .eq("id", editingEvent.id)) as unknown as { error: any };
+          .eq("id", editingEvent.id)) as unknown as { error: unknown };
 
         if (error) throw error;
         toast({ title: "Success", description: "Event updated." });
       } else {
         const { error } = await (supabase
-          .from("events" as any)
+          .from("events")
           .insert({
             title: eventForm.title,
             starts_at: eventForm.starts_at,
             category: eventForm.category,
             location: eventForm.location,
-          })) as unknown as { error: any };
+          })) as unknown as { error: unknown };
 
         if (error) throw error;
         toast({ title: "Success", description: "Event added." });
@@ -320,7 +320,7 @@ export function AdminPanel() {
       setEditingEvent(null);
       setEventForm({ title: "", starts_at: new Date().toISOString().slice(0, 16), category: "academic", location: "" });
       fetchEvents();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to save event.",
@@ -334,14 +334,14 @@ export function AdminPanel() {
 
     try {
       const { error } = await (supabase
-        .from("events" as any)
+        .from("events")
         .delete()
-        .eq("id", id)) as unknown as { error: any };
+        .eq("id", id)) as unknown as { error: unknown };
 
       if (error) throw error;
       toast({ title: "Success", description: "Event deleted." });
       fetchEvents();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to delete event.",
@@ -354,13 +354,13 @@ export function AdminPanel() {
   const fetchServices = async () => {
     try {
       const { data, error } = await (supabase
-        .from("services" as any)
+        .from("services")
         .select("*")
-        .order("name", { ascending: true })) as unknown as { data: Service[] | null; error: any };
+        .order("name", { ascending: true })) as unknown as { error: unknown };
 
       if (error) throw error;
       setServices(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching services:", error);
     }
   };
@@ -369,7 +369,7 @@ export function AdminPanel() {
     try {
       if (editingService) {
         const { error } = await (supabase
-          .from("services" as any)
+          .from("services")
           .update({
             name: serviceForm.name,
             category: serviceForm.category,
@@ -380,13 +380,13 @@ export function AdminPanel() {
             days_open: serviceForm.days_open.length > 0 ? serviceForm.days_open : null,
             is_closed: serviceForm.is_closed,
           })
-          .eq("id", editingService.id)) as unknown as { error: any };
+          .eq("id", editingService.id)) as unknown as { error: unknown };
 
         if (error) throw error;
         toast({ title: "Success", description: "Service updated." });
       } else {
         const { error } = await (supabase
-          .from("services" as any)
+          .from("services")
           .insert({
             name: serviceForm.name,
             category: serviceForm.category,
@@ -396,7 +396,7 @@ export function AdminPanel() {
             close_time: serviceForm.close_time || null,
             days_open: serviceForm.days_open.length > 0 ? serviceForm.days_open : null,
             is_closed: serviceForm.is_closed,
-          })) as unknown as { error: any };
+          })) as unknown as { error: unknown };
 
         if (error) throw error;
         toast({ title: "Success", description: "Service added." });
@@ -406,7 +406,7 @@ export function AdminPanel() {
       setEditingService(null);
       setServiceForm({ name: "", category: "dining", hours: "", url: "", open_time: "", close_time: "", days_open: [], is_closed: false });
       fetchServices();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to save service.",
@@ -420,14 +420,14 @@ export function AdminPanel() {
 
     try {
       const { error } = await (supabase
-        .from("services" as any)
+        .from("services")
         .delete()
-        .eq("id", id)) as unknown as { error: any };
+        .eq("id", id)) as unknown as { error: unknown };
 
       if (error) throw error;
       toast({ title: "Success", description: "Service deleted." });
       fetchServices();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to delete service.",
@@ -440,13 +440,13 @@ export function AdminPanel() {
   const fetchDefaultLinks = async () => {
     try {
       const { data, error } = await (supabase
-        .from("default_quick_links" as any)
+        .from("default_quick_links")
         .select("*")
-        .order("order_index", { ascending: true })) as unknown as { data: DefaultQuickLink[] | null; error: any };
+        .order("order_index", { ascending: true })) as unknown as { data: DefaultQuickLink[] | null; error: unknown };
 
       if (error) throw error;
       setDefaultLinks(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching default links:", error);
     }
   };
@@ -455,25 +455,25 @@ export function AdminPanel() {
     try {
       if (editingLink) {
         const { error } = await (supabase
-          .from("default_quick_links" as any)
+          .from("default_quick_links")
           .update({
             label: linkForm.label,
             href: linkForm.href,
             order_index: linkForm.order_index,
           })
-          .eq("id", editingLink.id)) as unknown as { error: any };
+          .eq("id", editingLink.id)) as unknown as { error: unknown };
 
         if (error) throw error;
         toast({ title: "Success", description: "Default link updated." });
       } else {
         const { error } = await (supabase
-          .from("default_quick_links" as any)
+          .from("default_quick_links")
           .insert({
             label: linkForm.label,
             href: linkForm.href,
             order_index: linkForm.order_index,
             is_active: true,
-          })) as unknown as { error: any };
+          })) as unknown as { error: unknown };
 
         if (error) throw error;
         toast({ title: "Success", description: "Default link added." });
@@ -483,7 +483,7 @@ export function AdminPanel() {
       setEditingLink(null);
       setLinkForm({ label: "", href: "", order_index: 0 });
       fetchDefaultLinks();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to save default link.",
@@ -497,14 +497,14 @@ export function AdminPanel() {
 
     try {
       const { error } = await (supabase
-        .from("default_quick_links" as any)
+        .from("default_quick_links")
         .delete()
-        .eq("id", id)) as unknown as { error: any };
+        .eq("id", id)) as unknown as { error: unknown };
 
       if (error) throw error;
       toast({ title: "Success", description: "Default link deleted." });
       fetchDefaultLinks();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to delete default link.",
@@ -523,7 +523,7 @@ export function AdminPanel() {
 
       if (error) throw error;
       setChangelogEntries(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching changelog:", error);
     }
   };
@@ -561,7 +561,7 @@ export function AdminPanel() {
       setEditingChangelog(null);
       setChangelogForm({ version: "", title: "", description: "", release_date: new Date().toISOString().split("T")[0] });
       fetchChangelog();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to save changelog entry.",
@@ -582,7 +582,7 @@ export function AdminPanel() {
       if (error) throw error;
       toast({ title: "Success", description: "Changelog entry deleted." });
       fetchChangelog();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to delete changelog entry.",
@@ -595,7 +595,7 @@ export function AdminPanel() {
   const fetchIncidents = async () => {
     try {
       let query = supabase
-        .from("incident_reports" as any)
+        .from("incident_reports")
         .select("*")
         .order("reported_at", { ascending: false })
         .limit(50);
@@ -604,11 +604,11 @@ export function AdminPanel() {
         query = query.eq("status", incidentFilter);
       }
 
-      const { data, error } = await query as unknown as { data: Incident[] | null; error: any };
+      const { data, error } = await query as unknown as { data: Incident[] | null; error: unknown };
 
       if (error) throw error;
       setIncidents(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching incidents:", error);
     }
   };
@@ -988,7 +988,7 @@ export function AdminPanel() {
               <AlertTriangle className="h-5 w-5" />
               <h3 className="text-lg font-semibold">Incident Reports (View Only)</h3>
             </div>
-            <Select value={incidentFilter} onValueChange={(value: any) => setIncidentFilter(value)}>
+            <Select value={incidentFilter} onValueChange={(value: string) => setIncidentFilter(value as typeof incidentFilter)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
@@ -1124,7 +1124,7 @@ export function AdminPanel() {
             </div>
             <div>
               <Label htmlFor="event_category">Category</Label>
-              <Select value={eventForm.category} onValueChange={(value: any) => setEventForm({ ...eventForm, category: value })}>
+              <Select value={eventForm.category} onValueChange={(value: string) => setEventForm({ ...eventForm, category: value as Event['category'] })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1183,7 +1183,7 @@ export function AdminPanel() {
             </div>
             <div>
               <Label htmlFor="service_category">Category</Label>
-              <Select value={serviceForm.category} onValueChange={(value: any) => setServiceForm({ ...serviceForm, category: value })}>
+              <Select value={serviceForm.category} onValueChange={(value: string) => setServiceForm({ ...serviceForm, category: value as Service['category'] })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

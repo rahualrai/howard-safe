@@ -29,10 +29,10 @@ export function EventsCalendar() {
     queryFn: async () => {
       // Using any-cast because Supabase generated types don't yet include the new table
       const { data, error } = await (supabase
-        .from("events" as any)
+        .from("events")
         .select("id,title,starts_at,category,location")
         .order("starts_at", { ascending: true })
-        .limit(20)) as unknown as { data: { id: string; title: string; starts_at: string; category: EventItem["category"]; location: string }[] | null, error: any };
+        .limit(20)) as unknown as { data: { id: string; title: string; starts_at: string; category: EventItem["category"]; location: string }[] | null, error: unknown };
       if (error) throw error;
       return (data ?? []) as { id: string; title: string; starts_at: string; category: EventItem["category"]; location: string }[];
     },
@@ -55,7 +55,7 @@ export function EventsCalendar() {
           <CalendarDays size={18} /> Campus Events
         </CardTitle>
         <div className="w-36">
-          <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
+          <Select value={filter} onValueChange={(v) => setFilter(v)}>
             <SelectTrigger className="h-8">
               <SelectValue placeholder="Filter" />
             </SelectTrigger>

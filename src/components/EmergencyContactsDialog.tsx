@@ -65,7 +65,7 @@ export function EmergencyContactsDialog({ open, onOpenChange, userId }: Emergenc
     const trimmedContact = contact.trim();
     if (trimmedContact === '911') return true;
     const cleanedContact = trimmedContact.replace(/[A-Za-z]/g, '');
-    const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
+    const phoneRegex = /^\+?[\d\s\-()]+$/;
     const digitCount = (cleanedContact.match(/\d/g) || []).length;
     return phoneRegex.test(cleanedContact) && digitCount >= 7 && 
            !trimmedContact.toLowerCase().includes('download') && 

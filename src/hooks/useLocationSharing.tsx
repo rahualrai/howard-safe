@@ -110,7 +110,7 @@ export function useLocationSharing(userId: string | undefined) {
         description: 'Location sharing preferences have been updated',
       });
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating sharing preferences:', error);
       toast({
         title: 'Error',

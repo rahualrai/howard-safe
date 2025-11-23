@@ -146,7 +146,7 @@ export function CalendarSync() {
                   try {
                     localStorage.removeItem('google_access_token');
                     localStorage.removeItem('google_token_expires');
-                  } catch (e) {}
+                  } catch (e: unknown) { /* empty */ }
                   setConnected(false);
                   toast({ title: 'Disconnected', description: 'Google Calendar connection removed.' });
                 }}

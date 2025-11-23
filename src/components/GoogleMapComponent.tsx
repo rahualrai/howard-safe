@@ -1,10 +1,12 @@
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Wrapper, Status } from '@googlemaps/react-wrapper';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ZoomIn, ZoomOut, Navigation, MapIcon, Directions } from 'lucide-react';
+import { ZoomIn, ZoomOut, Navigation, MapIcon } from 'lucide-react';
+import { LandmarkCategory } from '@/data/howardLandmarks';
+import type { BuildingCategory } from '@/data/howardBuildingsComplete';
 import { supabase } from '@/integrations/supabase/client';
-import type { LandmarkCategory } from '@/data/howardLandmarks';
 
 declare global {
   interface Window {
@@ -12,37 +14,40 @@ declare global {
   }
 }
 
-type IncidentCategory = 'theft' | 'harassment' | 'suspicious_activity' | 'safety_hazard' | 'medical_emergency' | 'other';
-type MarkerType = 'safe' | 'incident' | 'welllit' | 'friend' | LandmarkCategory | IncidentCategory;
+export type IncidentCategory = 'theft' | 'harassment' | 'suspicious_activity' | 'safety_hazard' | 'medical_emergency' | 'other';
+export type MarkerType = 'safe' | 'incident' | 'welllit' | 'friend' | LandmarkCategory | IncidentCategory | BuildingCategory;
+
+export interface MapMarker {
+  position: { lat: number; lng: number };
+  title: string;
+  type: MarkerType;
+  description?: string;
+  details?: {
+    hours?: string;
+    phone?: string;
+    address?: string;
+    timestamp?: string;
+    friendId?: string;
+    // Incident-specific details
+    incidentCategory?: string;
+    incidentStatus?: string;
+    incidentTime?: string;
+    reportedTime?: string;
+    photos?: Array<{
+      url: string;
+      alt: string;
+    }>;
+  };
+}
 
 interface GoogleMapProps {
   center: { lat: number; lng: number };
   zoom: number;
-  markers: Array<{
-    position: { lat: number; lng: number };
-    title: string;
-    type: MarkerType;
-    description?: string;
-    details?: {
-      hours?: string;
-      phone?: string;
-      address?: string;
-      timestamp?: string;
-      friendId?: string;
-      // Incident-specific details
-      incidentCategory?: string;
-      incidentStatus?: string;
-      incidentTime?: string;
-      reportedTime?: string;
-      photos?: Array<{
-        url: string;
-        alt: string;
-      }>;
-    };
-  }>;
+  markers: MapMarker[];
+  onMarkerClick?: (marker: MapMarker) => void;
 }
 
-const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers }) => {
+const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers, onMarkerClick }) => {
   const [map, setMap] = useState<google.maps.Map>();
   const mapRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
@@ -63,6 +68,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
+        zoomControl: false, // Disable default zoom control
       });
       setMap(googleMap);
     }
@@ -97,336 +103,44 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           zIndex: (m.type === 'incident' || ['theft', 'harassment', 'suspicious_activity', 'safety_hazard', 'medical_emergency', 'other'].includes(m.type)) ? 100 : m.type === 'friend' ? 50 : 10,
         });
 
-        // Build info window content - Minimalist & Modern Design
-        const createInfoWindowContent = () => {
-          // Incident marker info window
-          if (m.details?.incidentCategory) {
-            const incidentTime = m.details.incidentTime
-              ? new Date(m.details.incidentTime).toLocaleString()
-              : 'Time unknown';
-            const reportedTime = m.details.reportedTime
-              ? new Date(m.details.reportedTime).toLocaleString()
-              : 'Unknown';
-            const timeAgo = m.details.reportedTime
-              ? (() => {
-                  const diff = Math.floor((Date.now() - new Date(m.details.reportedTime).getTime()) / 1000 / 60);
-                  if (diff < 1) return 'Just now';
-                  if (diff < 60) return `${diff}m ago`;
-                  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
-                  return `${Math.floor(diff / 1440)}d ago`;
-                })()
-              : '';
-
-            const statusColor = m.details.incidentStatus === 'resolved' ? '#22c55e' :
-                               m.details.incidentStatus === 'investigating' ? '#f59e0b' : '#ef4444';
-            const statusLabel = m.details.incidentStatus ? m.details.incidentStatus.charAt(0).toUpperCase() + m.details.incidentStatus.slice(1) : 'Pending';
-
-            const photos = m.details.photos || [];
-            const photosHtml = photos.length > 0 ? `
-              <div style="margin: 16px 0; border-radius: 6px; overflow: hidden; background: #f3f4f6;">
-                <img src="${photos[0].url}" alt="${photos[0].alt}" style="width: 100%; height: auto; display: block;" />
-                ${photos.length > 1 ? `<div style="font-size: 12px; color: #6b7280; padding: 8px; text-align: center;">+ ${photos.length - 1} more photo${photos.length > 2 ? 's' : ''}</div>` : ''}
-              </div>
-            ` : '';
-
-            return `
-              <style>
-                * { box-sizing: border-box; }
-                .incident-card {
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-                  width: 300px;
-                  background: #ffffff;
-                  padding: 20px;
-                  border-radius: 8px;
-                  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-                  padding-top: 36px;
-                  position: relative;
-                }
-                .incident-card h3 {
-                  margin: 0 0 8px 0;
-                  color: #1a1a1a;
-                  font-size: 18px;
-                  font-weight: 600;
-                }
-                .incident-card p {
-                  margin: 0 0 12px 0;
-                  color: #6b7280;
-                  font-size: 14px;
-                  line-height: 1.5;
-                }
-                .incident-badge {
-                  display: inline-block;
-                  padding: 6px 12px;
-                  background-color: ${color}20;
-                  color: ${color};
-                  border-radius: 20px;
-                  font-size: 12px;
-                  font-weight: 600;
-                  margin-right: 8px;
-                }
-                .status-badge {
-                  display: inline-block;
-                  padding: 6px 12px;
-                  background-color: ${statusColor}20;
-                  color: ${statusColor};
-                  border-radius: 20px;
-                  font-size: 12px;
-                  font-weight: 600;
-                }
-                .incident-times {
-                  margin: 12px 0;
-                  padding: 12px;
-                  background: #f9fafb;
-                  border-radius: 6px;
-                  font-size: 13px;
-                  color: #6b7280;
-                }
-                .incident-times-label {
-                  font-weight: 600;
-                  color: #374151;
-                  margin-bottom: 4px;
-                }
-              </style>
-              <div class="incident-card">
-                <h3>${m.title}</h3>
-                ${m.description ? `<p>${m.description}</p>` : ''}
-                ${photosHtml}
-                <div class="incident-badge">${m.details.incidentCategory}</div>
-                <div class="status-badge">${statusLabel}</div>
-                <div class="incident-times">
-                  <div class="incident-times-label">Incident Occurred</div>
-                  <div>${incidentTime}</div>
-                  <div style="margin-top: 8px; border-top: 1px solid #e5e7eb; padding-top: 8px;">
-                    <div class="incident-times-label">Reported</div>
-                    <div>${timeAgo} • ${reportedTime}</div>
-                  </div>
-                </div>
-              </div>
-            `;
-          }
-
-          // Friend marker info window
-          if (m.type === 'friend') {
-            const timestamp = m.details?.timestamp
-              ? new Date(m.details.timestamp).toLocaleString()
-              : 'Unknown';
-            const timeAgo = m.details?.timestamp
-              ? (() => {
-                  const diff = Math.floor((Date.now() - new Date(m.details.timestamp).getTime()) / 1000 / 60);
-                  if (diff < 1) return 'Just now';
-                  if (diff < 60) return `${diff}m ago`;
-                  return `${Math.floor(diff / 60)}h ago`;
-                })()
-              : '';
-
-            return `
-              <style>
-                * { box-sizing: border-box; }
-                .friend-card {
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-                  width: 280px;
-                  background: #ffffff;
-                  padding: 20px;
-                  border-radius: 8px;
-                  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-                  padding-top: 36px;
-                  position: relative;
-                }
-                .friend-card h3 {
-                  margin: 0 0 8px 0;
-                  color: #1a1a1a;
-                  font-size: 18px;
-                  font-weight: 600;
-                }
-                .friend-card p {
-                  margin: 0;
-                  color: #6b7280;
-                  font-size: 14px;
-                }
-                .friend-badge {
-                  display: inline-block;
-                  padding: 6px 12px;
-                  background-color: #10b98120;
-                  color: #10b981;
-                  border-radius: 20px;
-                  font-size: 12px;
-                  font-weight: 600;
-                  margin-top: 12px;
-                }
-              </style>
-              <div class="friend-card">
-                <h3>👤 ${m.title}</h3>
-                <p>📍 Location shared</p>
-                <p style="margin-top: 8px; font-size: 12px; color: #9ca3af;">${timeAgo} • ${timestamp}</p>
-                <div class="friend-badge">Friend Location</div>
-              </div>
-            `;
-          }
-
-          // Building marker info window
-          const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${m.position.lat},${m.position.lng}`;
-
-          return `
-            <style>
-              * { box-sizing: border-box; }
-              .building-card {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-                width: 320px;
-                background: #ffffff;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-                padding-top: 36px;
-                position: relative;
-              }
-              .gm-ui-hover-effect {
-                background-color: #f3f4f6 !important;
-                border-radius: 4px !important;
-                opacity: 0.9 !important;
-              }
-              button[aria-label="Close"] {
-                color: #374151 !important;
-                filter: invert(0.8) !important;
-              }
-              .building-card h3 {
-                margin: 0 0 12px 0;
-                color: #1a1a1a;
-                font-size: 18px;
-                font-weight: 600;
-                line-height: 1.3;
-              }
-              .building-card p {
-                margin: 0 0 12px 0;
-                color: #6b7280;
-                font-size: 14px;
-                line-height: 1.5;
-              }
-              .building-details {
-                margin: 16px 0;
-                padding-top: 16px;
-                border-top: 1px solid #e5e7eb;
-              }
-              .detail-row {
-                margin-bottom: 10px;
-                font-size: 13px;
-                color: #4b5563;
-              }
-              .detail-label {
-                font-weight: 600;
-                color: #1a1a1a;
-                display: block;
-                margin-bottom: 2px;
-              }
-              .detail-value {
-                color: #6b7280;
-                word-break: break-word;
-              }
-              .detail-value a {
-                color: #3b82f6;
-                text-decoration: none;
-              }
-              .detail-value a:hover {
-                text-decoration: underline;
-              }
-              .button-group {
-                margin-top: 16px;
-                display: flex;
-                gap: 8px;
-              }
-              .directions-btn {
-                flex: 1;
-                padding: 10px 14px;
-                background: #3b82f6;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 13px;
-                font-weight: 500;
-                text-decoration: none;
-                display: inline-block;
-                text-align: center;
-                cursor: pointer;
-                transition: background-color 0.2s;
-              }
-              .directions-btn:hover {
-                background: #2563eb;
-              }
-              .category-badge {
-                display: inline-block;
-                padding: 6px 12px;
-                background-color: ${color}20;
-                color: ${color};
-                border-radius: 20px;
-                font-size: 12px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-top: 12px;
-              }
-            </style>
-            <div class="building-card">
-              <h3>${m.title}</h3>
-              ${m.description ? `<p>${m.description}</p>` : ''}
-
-              ${m.details ? `
-                <div class="building-details">
-                  ${m.details.address ? `
-                    <div class="detail-row">
-                      <span class="detail-label">📍 Address</span>
-                      <span class="detail-value">${m.details.address}</span>
-                    </div>
-                  ` : ''}
-                  ${m.details.hours ? `
-                    <div class="detail-row">
-                      <span class="detail-label">🕐 Hours</span>
-                      <span class="detail-value">${m.details.hours}</span>
-                    </div>
-                  ` : ''}
-                  ${m.details.phone ? `
-                    <div class="detail-row">
-                      <span class="detail-label">📞 Phone</span>
-                      <span class="detail-value"><a href="tel:${m.details.phone}">${m.details.phone}</a></span>
-                    </div>
-                  ` : ''}
-                </div>
-              ` : ''}
-
-              <div class="button-group">
-                <a href="${directionsUrl}" target="_blank" class="directions-btn">Get Directions</a>
-              </div>
-
-              <div class="category-badge">${getMarkerDescription(m.type)}</div>
-            </div>
-          `;
-        };
-
-        // Add info window
-        const infoWindow = new google.maps.InfoWindow({
-          content: createInfoWindowContent(),
-        });
-
         marker.addListener('click', () => {
-          infoWindow.open(map, marker);
+          if (onMarkerClick) {
+            onMarkerClick(m);
+          }
+          // Center map on marker when clicked
+          map.panTo(marker.getPosition() as google.maps.LatLng);
         });
 
         markersRef.current.push(marker);
       });
     }
-  }, [map, markers]);
+  }, [map, markers, onMarkerClick]);
 
   // Helper functions for marker styling
   const getMarkerColor = (type: string) => {
     const colors: Record<string, string> = {
-      // Legacy types
       safe: '#22c55e',
       incident: '#ef4444',
-      welllit: '#3b82f6',
-      friend: '#10b981',         // green for friends
-      // Landmark types
-      academic: '#3b82f6',      // blue
-      dining: '#f59e0b',         // amber
-      safety: '#ef4444',         // red
-      residential: '#8b5cf6',    // purple
+      welllit: '#f59e0b',
+      friend: '#3b82f6',
+      // Landmark categories (lowercase)
+      academic: '#3b82f6',
+      dining: '#f59e0b',
+      safety: '#ef4444',
+      residential: '#8b5cf6',
+      // Building categories (Capitalized)
+      Academic: '#3b82f6',
+      Residential: '#8b5cf6',
+      Dining: '#f59e0b',
+      Administrative: '#10b981',
+      Athletic: '#ef4444',
+      Medical: '#ec4899',
+      Safety: '#f59e0b',
+      Parking: '#6b7280',
+      Utility: '#8b5cf6',
+      Research: '#06b6d4',
+      Library: '#0ea5e9',
+      Other: '#6b7280',
       // Incident category types
       theft: '#ef4444',           // red
       harassment: '#a855f7',      // purple
@@ -489,7 +203,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
           };
           map.setCenter(userLocation);
           map.setZoom(18);
-          
+
           // Add or update user location marker
           if (userLocationMarkerRef.current) {
             userLocationMarkerRef.current.setPosition(userLocation);
@@ -523,7 +237,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
     if (map) {
       map.setCenter(center);
       map.setZoom(zoom);
-      
+
       // Auto-add user location marker if we have location permission
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -532,7 +246,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
               lat: position.coords.latitude,
               lng: position.coords.longitude,
             };
-            
+
             // Only add user marker if it doesn't exist
             if (!userLocationMarkerRef.current) {
               userLocationMarkerRef.current = new google.maps.Marker({
@@ -553,7 +267,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
               userLocationMarkerRef.current.setPosition(userLocation);
             }
           },
-          () => {}, // Silently fail if no permission
+          () => { }, // Silently fail if no permission
           { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
         );
       }
@@ -563,9 +277,9 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
   return (
     <div className="relative w-full flex-1 md:h-full md:rounded-none">
       <div ref={mapRef} className="absolute inset-0 md:rounded-none rounded-lg" />
-      
+
       {/* Map Controls */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+      <div className="absolute top-20 right-4 flex flex-col gap-2 z-10">
         <Button
           variant="secondary"
           size="sm"
@@ -593,7 +307,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers })
       </div>
 
       {/* Current Location Indicator */}
-      <div className="absolute bottom-4 left-4 z-10">
+      <div className="absolute bottom-24 left-4 z-10 md:bottom-4">
         <Badge variant="secondary" className="bg-card shadow-soft border-border">
           <div className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
           Current Location
@@ -635,10 +349,10 @@ export const GoogleMap: React.FC<Omit<GoogleMapProps, 'apiKey'>> = (props) => {
     const fetchApiKey = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('get-google-maps-key');
-        
+
         if (error) throw error;
         if (!data?.apiKey) throw new Error('No API key received');
-        
+
         setApiKey(data.apiKey);
       } catch (err) {
         console.error('Error fetching Google Maps API key:', err);

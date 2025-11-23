@@ -44,7 +44,7 @@ export function DigitalID() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('digital_ids' as any)
+        .from('digital_ids')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -109,13 +109,13 @@ export function DigitalID() {
           window.location.href = fallbackUrl;
         }
       }
-      try { document.body.removeChild(iframe); } catch (e) {}
+      try { document.body.removeChild(iframe); } catch (e: unknown) { /* empty */ }
     }, 1200);
 
     const onVisibility = () => {
       if (document.hidden) {
         window.clearTimeout(timeout);
-        try { document.body.removeChild(iframe); } catch (e) {}
+        try { document.body.removeChild(iframe); } catch (e: unknown) { /* empty */ }
       }
     };
     document.addEventListener('visibilitychange', onVisibility, { once: true });

@@ -27,7 +27,7 @@ export const LocationPermissionPrompt = ({
     setIsRequesting(true);
     const granted = await requestPermission();
     setIsRequesting(false);
-    
+
     if (granted && location && onPermissionGranted) {
       onPermissionGranted(location);
     }
@@ -65,8 +65,8 @@ export const LocationPermissionPrompt = ({
   };
 
   const content = (
-    <Card className="w-full max-w-md mx-auto shadow-lg border-border">
-      <CardHeader className="text-center space-y-2">
+    <Card className="w-full max-w-md mx-auto shadow-lg border-border max-h-[85vh] overflow-y-auto">
+      <CardHeader className="text-center space-y-2 relative">
         {showCloseButton && (
           <Button
             variant="ghost"
@@ -77,11 +77,11 @@ export const LocationPermissionPrompt = ({
             <X className="w-4 h-4" />
           </Button>
         )}
-        
+
         <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
           <MapPin className="w-8 h-8 text-primary" />
         </div>
-        
+
         <div className="space-y-1">
           <CardTitle className="text-xl">Enable Location Access</CardTitle>
           <div className="flex items-center justify-center gap-2">
@@ -89,7 +89,7 @@ export const LocationPermissionPrompt = ({
             {getPermissionBadge()}
           </div>
         </div>
-        
+
         <CardDescription className="text-center">
           Your location helps us provide better safety features and emergency response.
         </CardDescription>
@@ -114,7 +114,7 @@ export const LocationPermissionPrompt = ({
             <Info className="w-4 h-4" />
             What you'll get with location access:
           </h4>
-          
+
           {features.map((feature, index) => (
             <motion.div
               key={index}
@@ -160,7 +160,7 @@ export const LocationPermissionPrompt = ({
               </div>
             )}
           </Button>
-          
+
           {showCloseButton && (
             <Button
               variant="outline"
