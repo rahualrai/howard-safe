@@ -45,76 +45,83 @@ function AppRouter() {
   const location = useLocation();
   usePreloadRoute(location.pathname);
 
+  const isMapPage = location.pathname === '/map';
+
   return (
-    <RouteTransition>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/oauth2callback" element={<OAuth2Callback />} />
-        <Route path="/google-calendar-callback" element={<GoogleCalendarCallback />} />
-        
-        {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/map"
-          element={
-            <ProtectedRoute>
-              <Map />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/calendar"
-          element={
-            <ProtectedRoute>
-              <CalendarPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/tips"
-          element={
-            <ProtectedRoute>
-              <Tips />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/report"
-          element={
-            <ProtectedRoute>
-              <ReportIncident />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <Admin />
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* Catch-all route */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </RouteTransition>
+    <>
+      <div className={isMapPage ? "" : "pb-20"}>
+        <RouteTransition>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/oauth2callback" element={<OAuth2Callback />} />
+            <Route path="/google-calendar-callback" element={<GoogleCalendarCallback />} />
+
+            {/* Protected routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/map"
+              element={
+                <ProtectedRoute>
+                  <Map />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute>
+                  <CalendarPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tips"
+              element={
+                <ProtectedRoute>
+                  <Tips />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/report"
+              element={
+                <ProtectedRoute>
+                  <ReportIncident />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch-all route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </RouteTransition>
+      </div>
+      <BottomNavigation />
+    </>
   );
 }
 
@@ -130,10 +137,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="pb-20">
-            <AppRouter />
-          </div>
-          <BottomNavigation />
+          <AppRouter />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
