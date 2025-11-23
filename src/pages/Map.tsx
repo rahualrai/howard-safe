@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { GoogleMap, type MapMarker } from "@/components/GoogleMapComponent";
 import { useState, useEffect, useMemo } from "react";
-import { Search, Navigation, MapIcon, MapPin, X, ChevronDown, Menu, Plus, Target, Check, ChevronLeft } from "lucide-react";
+import { Search, MapPin, X, Menu, Plus, Target, Check, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MapBottomSheet } from "@/components/Map/MapBottomSheet";
 import { HapticFeedback } from "@/utils/haptics";
