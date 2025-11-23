@@ -442,7 +442,7 @@ export function AdminPanel() {
       const { data, error } = await (supabase
         .from("default_quick_links")
         .select("*")
-        .order("order_index", { ascending: true })) as unknown as { error: unknown };
+        .order("order_index", { ascending: true })) as unknown as { data: DefaultQuickLink[] | null; error: unknown };
 
       if (error) throw error;
       setDefaultLinks(data || []);
