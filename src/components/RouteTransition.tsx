@@ -10,24 +10,18 @@ interface RouteTransitionProps {
 const pageTransitionVariants = {
   initial: {
     opacity: 0,
-    y: 20,
-    scale: 0.99, // Reduced scale to minimize overflow
   },
   in: {
     opacity: 1,
-    y: 0,
-    scale: 1,
   },
   out: {
     opacity: 0,
-    y: -20,
-    scale: 1.01, // Reduced scale to minimize overflow
   },
 };
 
 const pageTransition = {
-  ease: [0.4, 0, 0.2, 1] as const, // Custom easing for smooth feel
-  duration: 0.3,
+  ease: "linear",
+  duration: 0.2,
 };
 
 // Determine skeleton type based on route
@@ -40,7 +34,7 @@ function getSkeletonType(pathname: string) {
 
 export function RouteTransition({ children }: RouteTransitionProps) {
   const location = useLocation();
-  
+
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
@@ -49,9 +43,9 @@ export function RouteTransition({ children }: RouteTransitionProps) {
         animate="in"
         exit="out"
         variants={pageTransitionVariants}
-        transition={pageTransition}
+        transition={pageTransition as any}
         className="w-full overflow-x-hidden"
-        style={{ 
+        style={{
           // Ensure the transition doesn't affect the bottom navigation
           position: 'relative',
           zIndex: 1,
