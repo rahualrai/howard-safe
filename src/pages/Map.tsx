@@ -20,6 +20,28 @@ import { IncidentPhotoService } from "@/services/incidentPhotoService";
 import { MarkerDetails } from "@/components/Map/MarkerDetails";
 
 const THE_YARD_CENTER = { lat: 38.9230, lng: -77.0200 };
+const SUPABASE_URL = "https://cgccjvoedbbsjqzchtmo.supabase.co";
+
+// Helper to extract relative path from storage path
+const extractRelativePath = (storagePath: string): string => {
+  if (!storagePath) return '';
+
+  // If it's a full URL, extract just the relative path
+  if (storagePath.startsWith('http')) {
+    const match = storagePath.match(/\/incident-photos\/(.+?)(?:\?|$)/);
+    return match ? match[1] : '';
+  }
+
+  // Otherwise it's already a relative path
+  return storagePath;
+};
+
+// Helper to construct public URL from relative path
+const getPublicPhotoUrl = (storagePath: string): string => {
+  const relativePath = extractRelativePath(storagePath);
+  if (!relativePath) return '';
+  return `${SUPABASE_URL}/storage/v1/object/public/incident-photos/${relativePath}`;
+};
 
 type IncidentCategory = 'theft' | 'harassment' | 'suspicious_activity' | 'safety_hazard' | 'medical_emergency' | 'other';
 type IncidentStatus = 'pending' | 'investigating' | 'resolved';
@@ -90,39 +112,26 @@ export default function Map() {
   // Cache for signed photo URLs
   const [photoUrlCache, setPhotoUrlCache] = useState<Record<string, string>>({});
 
-  // Generate signed URLs for all incident photos
+  // Generate public URLs for all incident photos
   useEffect(() => {
-    const generateSignedUrls = async () => {
-      const allPhotoPaths: string[] = [];
-      const photoPathToIncident: Record<string, string> = {};
+    const generatePhotoUrls = () => {
+      const newCache: Record<string, string> = {};
 
-      // Collect all unique photo paths
       allIncidents.forEach(incident => {
         incident.incident_photos?.forEach(photo => {
-          if (photo.storage_path && !photoPathToIncident[photo.storage_path]) {
-            allPhotoPaths.push(photo.storage_path);
-            photoPathToIncident[photo.storage_path] = incident.id;
+          if (photo.storage_path && !newCache[photo.storage_path]) {
+            newCache[photo.storage_path] = getPublicPhotoUrl(photo.storage_path);
           }
         });
       });
 
-      if (allPhotoPaths.length > 0) {
-        console.log(`[Map] Generating signed URLs for ${allPhotoPaths.length} incident photos...`);
-        const signedUrls = await IncidentPhotoService.getSignedUrls(allPhotoPaths);
-
-        const newCache: Record<string, string> = {};
-        allPhotoPaths.forEach((path, index) => {
-          if (signedUrls[index]) {
-            newCache[path] = signedUrls[index];
-          }
-        });
-
+      if (Object.keys(newCache).length > 0) {
+        console.log(`[Map] Generated ${Object.keys(newCache).length} public photo URLs`);
         setPhotoUrlCache(newCache);
-        console.log(`[Map] Cached ${Object.keys(newCache).length} signed URLs`);
       }
     };
 
-    generateSignedUrls();
+    generatePhotoUrls();
   }, [allIncidents]);
 
   // Check location permission on mount and hide prompt when granted
