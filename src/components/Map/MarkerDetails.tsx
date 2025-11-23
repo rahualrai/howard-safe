@@ -9,6 +9,13 @@ interface MarkerDetailsProps {
 }
 
 export const MarkerDetails: React.FC<MarkerDetailsProps> = ({ marker }) => {
+    const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+    // Reset photo index when marker changes
+    React.useEffect(() => {
+        setCurrentPhotoIndex(0);
+    }, [marker.details?.photos]);
+
     const getCategoryColor = (type: string) => {
         const colors: Record<string, string> = {
             safe: 'bg-green-500',
@@ -54,7 +61,6 @@ export const MarkerDetails: React.FC<MarkerDetailsProps> = ({ marker }) => {
         const statusColor = marker.details.incidentStatus === 'resolved' ? 'text-green-600 bg-green-100' :
             marker.details.incidentStatus === 'investigating' ? 'text-amber-600 bg-amber-100' : 'text-red-600 bg-red-100';
 
-        const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
         const photos = marker.details.photos || [];
         const currentPhoto = photos[currentPhotoIndex];
         const hasMultiplePhotos = photos.length > 1;
