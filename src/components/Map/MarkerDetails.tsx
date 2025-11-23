@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Clock, Phone, Navigation, User } from 'lucide-react';
+import { MapPin, Clock, Phone, Navigation, User, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import type { MapMarker } from '@/components/GoogleMapComponent';
 
 interface MarkerDetailsProps {
@@ -54,6 +54,19 @@ export const MarkerDetails: React.FC<MarkerDetailsProps> = ({ marker }) => {
         const statusColor = marker.details.incidentStatus === 'resolved' ? 'text-green-600 bg-green-100' :
             marker.details.incidentStatus === 'investigating' ? 'text-amber-600 bg-amber-100' : 'text-red-600 bg-red-100';
 
+        const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+        const photos = marker.details.photos || [];
+        const currentPhoto = photos[currentPhotoIndex];
+        const hasMultiplePhotos = photos.length > 1;
+
+        const goToPrevious = () => {
+            setCurrentPhotoIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
+        };
+
+        const goToNext = () => {
+            setCurrentPhotoIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
+        };
+
         return (
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -70,13 +83,59 @@ export const MarkerDetails: React.FC<MarkerDetailsProps> = ({ marker }) => {
                     <p className="text-muted-foreground text-sm">{marker.description}</p>
                 </div>
 
-                {marker.details.photos && marker.details.photos.length > 0 && (
-                    <div className="rounded-lg overflow-hidden bg-muted">
-                        <img
-                            src={marker.details.photos[0].url}
-                            alt={marker.details.photos[0].alt}
-                            className="w-full h-48 object-cover"
-                        />
+                {photos.length > 0 && currentPhoto && (
+                    <div className="space-y-2">
+                        <div className="relative rounded-lg overflow-hidden bg-muted">
+                            <img
+                                src={currentPhoto.url}
+                                alt={currentPhoto.alt}
+                                className="w-full h-64 object-cover"
+                            />
+
+                            {hasMultiplePhotos && (
+                                <>
+                                    {/* Navigation Buttons */}
+                                    <button
+                                        onClick={goToPrevious}
+                                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all"
+                                        aria-label="Previous photo"
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    <button
+                                        onClick={goToNext}
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all"
+                                        aria-label="Next photo"
+                                    >
+                                        <ChevronRight size={20} />
+                                    </button>
+
+                                    {/* Photo Counter */}
+                                    <div className="absolute top-2 right-2 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                                        <ImageIcon size={12} />
+                                        {currentPhotoIndex + 1} / {photos.length}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Thumbnail Dots Navigation */}
+                        {hasMultiplePhotos && (
+                            <div className="flex justify-center gap-2">
+                                {photos.map((_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => setCurrentPhotoIndex(index)}
+                                        className={`w-2 h-2 rounded-full transition-all ${
+                                            index === currentPhotoIndex
+                                                ? 'bg-primary w-6'
+                                                : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                                        }`}
+                                        aria-label={`Go to photo ${index + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
