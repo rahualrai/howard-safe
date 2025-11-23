@@ -4,7 +4,7 @@ import { Wrapper, Status } from '@googlemaps/react-wrapper';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ZoomIn, ZoomOut, Navigation, MapIcon } from 'lucide-react';
-import { LandmarkCategory, getCategoryColor as getLandmarkColor } from '@/data/howardLandmarks';
+import { LandmarkCategory } from '@/data/howardLandmarks';
 import type { BuildingCategory } from '@/data/howardBuildingsComplete';
 import { supabase } from '@/integrations/supabase/client';
 
