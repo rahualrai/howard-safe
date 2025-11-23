@@ -10,6 +10,7 @@ interface UploadResult {
 interface BatchUploadResult {
   success: boolean;
   urls: string[];
+  paths: string[];
   failedPhotos: number;
   error?: string;
 }
@@ -81,6 +82,7 @@ export const IncidentPhotoService = {
     userId?: string
   ): Promise<BatchUploadResult> {
     const urls: string[] = [];
+    const paths: string[] = [];
     let failedPhotos = 0;
 
     const uploadPromises = files.map((file) =>
@@ -90,8 +92,9 @@ export const IncidentPhotoService = {
     const results = await Promise.all(uploadPromises);
 
     results.forEach((result) => {
-      if (result.success && result.url) {
+      if (result.success && result.url && result.path) {
         urls.push(result.url);
+        paths.push(result.path);
       } else {
         failedPhotos++;
       }
@@ -100,6 +103,7 @@ export const IncidentPhotoService = {
     return {
       success: failedPhotos === 0,
       urls,
+      paths,
       failedPhotos,
       error:
         failedPhotos > 0

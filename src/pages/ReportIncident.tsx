@@ -257,17 +257,14 @@ export default function ReportIncident() {
           }
 
           // Link photos to incident in database
-          if (uploadResult.urls.length > 0) {
+          if (uploadResult.paths.length > 0) {
             console.log('Linking photos to incident in database...');
-            const photoRecords = uploadResult.urls.map((url) => {
-              // Extract path from signed URL (format: /storage/v1/object/sign/incident-photos/{path}?token=...)
-              const pathMatch = url.match(/\/incident-photos\/(.+?)\?/);
-              const path = pathMatch ? pathMatch[1] : null;
-              console.log('Extracted photo path:', path, 'from URL:', url.substring(0, 100) + '...');
+            const photoRecords = uploadResult.paths.map((path, index) => {
+              console.log(`Photo ${index + 1} path:`, path);
               return {
                 incident_id: incidentData.id,
-                storage_path: path || url,
-                file_size: filesToUpload[0]?.size || 0
+                storage_path: path,
+                file_size: filesToUpload[index]?.size || 0
               };
             });
 
