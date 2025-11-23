@@ -278,7 +278,7 @@ export function AdminPanel() {
       const { data, error } = await (supabase
         .from("events")
         .select("*")
-        .order("starts_at", { ascending: true })) as unknown as { error: unknown };
+        .order("starts_at", { ascending: true })) as unknown as { data: Event[] | null; error: unknown };
 
       if (error) throw error;
       setEvents(data || []);
