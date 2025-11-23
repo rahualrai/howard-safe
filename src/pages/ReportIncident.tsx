@@ -439,7 +439,17 @@ export default function ReportIncident() {
                       } else {
                         setLocation(val);
                         setUseCurrentLocation(false);
-                        setCoordinates(null);
+
+                        // Look up building coordinates when a building is selected
+                        const selectedBuilding = HOWARD_BUILDINGS.find(b => b.name === val);
+                        if (selectedBuilding) {
+                          setCoordinates({
+                            latitude: selectedBuilding.latitude,
+                            longitude: selectedBuilding.longitude
+                          });
+                        } else {
+                          setCoordinates(null); // For "Other" option
+                        }
                       }
                     }}
                   >
