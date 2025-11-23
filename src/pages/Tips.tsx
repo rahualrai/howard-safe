@@ -184,7 +184,7 @@ export default function Tips() {
     
     // Check if it contains phone-like patterns (digits, spaces, dashes, parentheses, plus)
     // This allows formats like: (202) 806-HELP (4357), +1-202-555-1234, etc.
-    const phoneLikePattern = /^[\d\s\-\(\)\+A-Za-z]+$/;
+    const phoneLikePattern = /^[\d\s\-()+A-Za-z]+$/;
     if (!phoneLikePattern.test(trimmedContact)) {
       return false;
     }

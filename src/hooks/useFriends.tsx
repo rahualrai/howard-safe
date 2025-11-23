@@ -60,9 +60,9 @@ export function useFriends(userId: string | undefined) {
         return;
       }
 
-      const friendIds = friendships.map((friendship: any) => friendship.friend_id);
+      const friendIds = friendships.map((friendship: unknown) => friendship.friend_id);
 
-      const profilesMap = new Map<string, any>();
+      const profilesMap = new Map<string, unknown>();
 
       if (friendIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
@@ -72,13 +72,13 @@ export function useFriends(userId: string | undefined) {
 
         if (profilesError) throw profilesError;
 
-        profiles?.forEach((profile: any) => {
+        profiles?.forEach((profile: unknown) => {
           profilesMap.set(profile.user_id, profile);
         });
       }
 
       // Map friends data from fetched profiles
-      const friendsWithProfiles = friendships.map((friendship: any) => {
+      const friendsWithProfiles = friendships.map((friendship: unknown) => {
         const profile = profilesMap.get(friendship.friend_id);
         return {
           id: friendship.id,
@@ -122,11 +122,11 @@ export function useFriends(userId: string | undefined) {
 
       const userIds = Array.from(
         new Set(
-          requests.flatMap((request: any) => [request.requester_id, request.addressee_id])
+          requests.flatMap((request: unknown) => [request.requester_id, request.addressee_id])
         )
       );
 
-      const profilesMap = new Map<string, any>();
+      const profilesMap = new Map<string, unknown>();
 
       if (userIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
@@ -136,12 +136,12 @@ export function useFriends(userId: string | undefined) {
 
         if (profilesError) throw profilesError;
 
-        profiles?.forEach((profile: any) => {
+        profiles?.forEach((profile: unknown) => {
           profilesMap.set(profile.user_id, profile);
         });
       }
 
-      const enrichedRequests: FriendRequest[] = requests.map((request: any) => ({
+      const enrichedRequests: FriendRequest[] = requests.map((request: unknown) => ({
         ...request,
         requester: profilesMap.get(request.requester_id) || undefined,
         addressee: profilesMap.get(request.addressee_id) || undefined,
@@ -173,7 +173,7 @@ export function useFriends(userId: string | undefined) {
 
       // For each profile, try to get email (we'll use a workaround since we can't directly query auth.users)
       // We'll show username and let users search by email too
-      const results: UserSearchResult[] = (profiles || []).map((profile: any) => ({
+      const results: UserSearchResult[] = (profiles || []).map((profile: unknown) => ({
         user_id: profile.user_id,
         username: profile.username,
         email: '', // We'll populate this if needed
@@ -248,7 +248,7 @@ export function useFriends(userId: string | undefined) {
 
       await fetchFriendRequests();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending friend request:', error);
       toast({
         title: 'Error',
@@ -279,7 +279,7 @@ export function useFriends(userId: string | undefined) {
 
       await Promise.all([fetchFriends(), fetchFriendRequests()]);
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error accepting friend request:', error);
       toast({
         title: 'Error',
@@ -309,7 +309,7 @@ export function useFriends(userId: string | undefined) {
 
       await fetchFriendRequests();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error rejecting friend request:', error);
       toast({
         title: 'Error',
@@ -339,7 +339,7 @@ export function useFriends(userId: string | undefined) {
 
       await fetchFriendRequests();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error cancelling friend request:', error);
       toast({
         title: 'Error',
@@ -370,7 +370,7 @@ export function useFriends(userId: string | undefined) {
 
       await fetchFriends();
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error removing friend:', error);
       toast({
         title: 'Error',

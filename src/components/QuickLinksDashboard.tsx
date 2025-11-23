@@ -33,10 +33,10 @@ export function QuickLinksDashboard() {
       if (!userId) return [] as QuickLink[];
       // any-cast since generated types don't yet include quick_links
       const { data, error } = await (supabase
-        .from("quick_links" as any)
+        .from("quick_links")
         .select("id,label,href,order_index")
         .eq("user_id", userId)
-        .order("order_index", { ascending: true })) as unknown as { data: { id: string; label: string; href: string; order_index: number }[] | null, error: any };
+        .order("order_index", { ascending: true })) as unknown as { data: { id: string; label: string; href: string; order_index: number }[] | null, error: unknown };
       if (error) throw error;
       return (data ?? []).map((r) => ({ id: r.id, label: r.label, href: r.href })) as QuickLink[];
     },
@@ -54,8 +54,8 @@ export function QuickLinksDashboard() {
       // compute next order_index
       const nextIndex = (data?.length ?? 0);
       const { error } = await (supabase
-        .from("quick_links" as any)
-        .insert([{ user_id: userId, label, href, order_index: nextIndex }])) as unknown as { error: any };
+        .from("quick_links")
+        .insert([{ user_id: userId, label, href, order_index: nextIndex }])) as unknown as { error: unknown };
       if (error) throw error;
     },
     onSuccess: () => {
@@ -69,10 +69,10 @@ export function QuickLinksDashboard() {
     mutationFn: async ({ id }: { id: string }) => {
       if (!userId) throw new Error("Not authenticated");
       const { error } = await (supabase
-        .from("quick_links" as any)
+        .from("quick_links")
         .delete()
         .eq("id", id)
-        .eq("user_id", userId)) as unknown as { error: any };
+        .eq("user_id", userId)) as unknown as { error: unknown };
       if (error) throw error;
     },
     onSuccess: () => {

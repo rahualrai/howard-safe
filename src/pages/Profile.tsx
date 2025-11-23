@@ -357,7 +357,7 @@ export default function Profile() {
 
       toast({ title: 'Display name updated', description: 'Your display name has been saved.' });
       setShowDisplayNameDialog(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating display name:', error);
       toast({
         title: 'Failed to update display name',
@@ -395,7 +395,7 @@ export default function Profile() {
   const fetchDigitalID = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('digital_ids' as any)
+        .from('digital_ids')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();

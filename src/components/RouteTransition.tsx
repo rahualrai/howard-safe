@@ -43,7 +43,7 @@ export function RouteTransition({ children }: RouteTransitionProps) {
         animate="in"
         exit="out"
         variants={pageTransitionVariants}
-        transition={pageTransition as any}
+        transition={pageTransition}
         className="w-full overflow-x-hidden"
         style={{
           // Ensure the transition doesn't affect the bottom navigation

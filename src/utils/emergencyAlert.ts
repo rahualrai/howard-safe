@@ -91,7 +91,7 @@ export async function sendEmergencyAlert(
 
     // Get user's emergency contacts
     const { data: contacts, error: contactsError } = await supabase
-      .from('user_emergency_contacts' as any)
+      .from('user_emergency_contacts')
       .select('*')
       .eq('user_id', user.id)
       .eq('is_active', true)
@@ -110,7 +110,7 @@ export async function sendEmergencyAlert(
     }
 
     // Get current location
-    let locationData = {
+    const locationData = {
       lat: data?.locationLat,
       lng: data?.locationLng,
       address: data?.locationAddress
@@ -131,7 +131,7 @@ export async function sendEmergencyAlert(
 
     // Create the emergency alert record
     const { data: alert, error: alertError } = await supabase
-      .from('emergency_alerts' as any)
+      .from('emergency_alerts')
       .insert([{
         user_id: user.id,
         alert_type: data?.alertType || 'quick_help',
@@ -193,7 +193,7 @@ export async function sendEmergencyAlert(
 /**
  * Gets the user's emergency alert history
  */
-export async function getEmergencyAlertHistory(limit = 20): Promise<any[]> {
+export async function getEmergencyAlertHistory(limit = 20): Promise<unknown[]> {
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
@@ -202,7 +202,7 @@ export async function getEmergencyAlertHistory(limit = 20): Promise<any[]> {
     }
 
     const { data, error } = await supabase
-      .from('emergency_alerts' as any)
+      .from('emergency_alerts')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })

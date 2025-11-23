@@ -39,7 +39,7 @@ export const useSecurityValidation = (options: SecurityValidationOptions = {}) =
   };
 
   // Security audit logging - simplified to avoid database errors
-  const logSecurityEvent = async (eventType: string, details: any) => {
+  const logSecurityEvent = async (eventType: string, details: unknown) => {
     // Only log to console for debugging
     console.debug('Security event:', eventType, details);
   };

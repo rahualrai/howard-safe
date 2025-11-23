@@ -9,7 +9,7 @@ export type EmergencyContact = Tables<'emergency_contacts'> & {
 
 export interface EmergencyContactCategory {
   category: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   items: EmergencyContact[];
 }
 

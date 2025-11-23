@@ -20,7 +20,7 @@ export function DiningServices() {
     queryKey: ["services"],
     queryFn: async () => {
       const { data, error } = await (supabase
-        .from("services" as any)
+        .from("services")
         .select("name,category,hours,url,open_time,close_time,days_open,is_closed")) as unknown as {
           data: { 
             name: string; 
@@ -32,7 +32,7 @@ export function DiningServices() {
             days_open: string[] | null;
             is_closed: boolean;
           }[] | null;
-          error: any;
+          error: unknown;
         };
       if (error) throw error;
       
@@ -123,7 +123,7 @@ export function DiningServices() {
             <div className="grid grid-cols-1 gap-2">
               {dining.map((d) => {
                 // Determine status text
-                let statusText = d.isOpen ? "Open" : "Closed";
+                const statusText = d.isOpen ? "Open" : "Closed";
                 let statusDetail = d.hours;
                 
                 if (!d.isOpen && d.openTime && !d.isClosed) {
@@ -237,7 +237,7 @@ export function DiningServices() {
             <div className="grid grid-cols-1 gap-2">
               {otherServices.map((s) => {
                 // Determine status text
-                let statusText = s.isOpen ? "Open" : "Closed";
+                const statusText = s.isOpen ? "Open" : "Closed";
                 let statusDetail = s.hours;
                 
                 if (!s.isOpen && s.openTime && !s.isClosed) {

@@ -52,7 +52,7 @@ export function BisonChat() {
       // Always add top 2 sources as clickable links for transparency
       if (data.sources && data.sources.length > 0) {
         reply += "\n\nSources:";
-        data.sources.slice(0, 2).forEach((source: any, idx: number) => {
+        data.sources.slice(0, 2).forEach((source: { url: string }, idx: number) => {
           reply += `\n• [${new URL(source.url).hostname}](${source.url})`;
         });
       }

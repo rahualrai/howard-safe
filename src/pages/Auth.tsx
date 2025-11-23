@@ -122,7 +122,7 @@ export default function Auth() {
       if (data.user) {
         try {
           const { data: twoFactorData } = await supabase
-            .from('user_2fa_secrets' as any)
+            .from('user_2fa_secrets')
             .select('is_enabled')
             .eq('user_id', data.user.id)
             .single();
@@ -143,7 +143,7 @@ export default function Auth() {
       // Ensure profile exists for friend system
       if (data.user) {
         try {
-          await supabase.rpc('ensure_profile_exists' as any, { user_uuid: data.user.id });
+          await supabase.rpc('ensure_profile_exists', { user_uuid: data.user.id });
         } catch (error) {
           // If function doesn't exist yet, try to create profile directly
           console.debug('Profile ensure function not available, creating profile directly:', error);
@@ -196,7 +196,7 @@ export default function Auth() {
     try {
       // Get the 2FA secret for the user
       const { data: twoFactorData, error: fetchError } = await supabase
-        .from('user_2fa_secrets' as any)
+        .from('user_2fa_secrets')
         .select('secret')
         .eq('user_id', pendingSession.user.id)
         .single();
