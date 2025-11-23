@@ -90,18 +90,18 @@ export default function Profile() {
   const [displayName, setDisplayName] = useState("");
   const [displayNameSaving, setDisplayNameSaving] = useState(false);
   const { toast } = useToast();
-  
+
   // Get app version from package.json
   const appVersion = "1.1.1"; // Update this when releasing new versions
   const navigate = useNavigate();
-  
+
   // Use enhanced security validation
-  const { 
-    user, 
-    loading, 
-    isValidSession, 
-    secureSignOut, 
-    logSecurityEvent 
+  const {
+    user,
+    loading,
+    isValidSession,
+    secureSignOut,
+    logSecurityEvent
   } = useSecurityValidation({
     requireAuth: true,
     redirectTo: '/auth'
@@ -109,7 +109,7 @@ export default function Profile() {
 
   // Check for app updates
   const { hasUpdate, latestVersion, markAsSeen } = useAppUpdates(appVersion);
-  
+
   // Check admin status
   const { isAdmin } = useAdmin(user?.id);
 
@@ -141,11 +141,11 @@ export default function Profile() {
 
   // Memoize display name
   const currentDisplayName = useMemo(() => {
-    return profile?.username || 
-           user?.user_metadata?.full_name || 
-           user?.user_metadata?.name || 
-           user?.email?.split('@')[0] || 
-           'User';
+    return profile?.username ||
+      user?.user_metadata?.full_name ||
+      user?.user_metadata?.name ||
+      user?.email?.split('@')[0] ||
+      'User';
   }, [profile?.username, user?.user_metadata?.full_name, user?.user_metadata?.name, user?.email]);
 
   useEffect(() => {
@@ -168,7 +168,7 @@ export default function Profile() {
         const { data, error } = await supabase.storage
           .from('avatars')
           .createSignedUrl(profile.avatar_url, 3600); // URL is valid for 1 hour (3600 seconds)
-        
+
         if (error) {
           console.warn("Could not create signed avatar URL:", error);
         } else {
@@ -316,7 +316,7 @@ export default function Profile() {
           setAvatarPreview(reader.result as string);
         };
         reader.readAsDataURL(file);
-        
+
         // Upload the file
         await handleAvatarUpload(file);
       }
@@ -341,8 +341,8 @@ export default function Profile() {
       const { error } = await supabase
         .from('profiles')
         .upsert(
-          { 
-            user_id: user.id, 
+          {
+            user_id: user.id,
             username: displayName.trim(),
             updated_at: new Date().toISOString()
           },
@@ -359,10 +359,10 @@ export default function Profile() {
       setShowDisplayNameDialog(false);
     } catch (error: any) {
       console.error('Error updating display name:', error);
-      toast({ 
-        title: 'Failed to update display name', 
-        description: error.message || 'Please try again.', 
-        variant: 'destructive' 
+      toast({
+        title: 'Failed to update display name',
+        description: error.message || 'Please try again.',
+        variant: 'destructive'
       });
     } finally {
       setDisplayNameSaving(false);
@@ -436,7 +436,7 @@ export default function Profile() {
           <h1 className="text-2xl font-bold text-foreground">Profile</h1>
         </div>
       </header>
-      
+
       <main className="p-4 max-w-md mx-auto space-y-4 pb-24">
         {/* Profile Info */}
         <Card>
@@ -451,9 +451,9 @@ export default function Profile() {
             <div className="flex items-center gap-4 pb-3 border-b border-border">
               <div className="relative">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage 
-                    src={avatarPreview || avatarDisplayUrl || undefined} 
-                    alt="Profile picture" 
+                  <AvatarImage
+                    src={avatarPreview || avatarDisplayUrl || undefined}
+                    alt="Profile picture"
                   />
                   <AvatarFallback className="bg-primary text-primary-foreground text-lg">
                     {currentDisplayName.charAt(0).toUpperCase()}
@@ -517,7 +517,7 @@ export default function Profile() {
                 </p>
               </div>
             )}
-            
+
             {/* Admin Status - Only visible to admins */}
             {isAdmin && (
               <>
@@ -561,7 +561,7 @@ export default function Profile() {
               </div>
               <Badge variant="secondary" className="bg-success/20 text-success">Active</Badge>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div>
                 <p className="font-medium text-sm">Email Verified</p>
@@ -571,7 +571,7 @@ export default function Profile() {
                 {user.email_confirmed_at ? "Verified" : "Pending"}
               </Badge>
             </div>
-            
+
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className="text-xs">
@@ -591,7 +591,7 @@ export default function Profile() {
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Digital ID Management */}
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm flex items-center gap-2">
                   <IdCard size={16} />
@@ -607,23 +607,23 @@ export default function Profile() {
                   </p>
                 )}
               </div>
-              <Button 
-                size="default"
+              <Button
+                size="touch"
                 onClick={() => setShowIDForm(true)}
-                className="min-h-[44px] w-[110px] flex-shrink-0"
+                className="w-full sm:w-[110px] flex-shrink-0"
               >
                 {digitalID ? 'Edit' : 'Add'}
               </Button>
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Display Name</p>
                 <p className="text-xs text-muted-foreground truncate">{currentDisplayName}</p>
               </div>
-              <Button 
-                size="default" 
-                className="min-h-[44px] w-[110px] flex-shrink-0"
+              <Button
+                size="touch"
+                className="w-full sm:w-[110px] flex-shrink-0"
                 onClick={() => {
                   setDisplayName(currentDisplayName);
                   setShowDisplayNameDialog(true);
@@ -632,31 +632,31 @@ export default function Profile() {
                 Edit
               </Button>
             </div>
-            
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Emergency Contacts</p>
                 <p className="text-xs text-muted-foreground">
-                  {personalContactsCount > 0 
+                  {personalContactsCount > 0
                     ? `${personalContactsCount} personal contact${personalContactsCount !== 1 ? 's' : ''}`
                     : 'People to notify in emergencies'}
                 </p>
               </div>
-              <Button 
-                size="default"
+              <Button
+                size="touch"
                 onClick={() => setShowEmergencyContacts(true)}
-                className="min-h-[44px] w-[110px] flex-shrink-0"
+                className="w-full sm:w-[110px] flex-shrink-0"
               >
                 Manage
               </Button>
             </div>
-            
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Preferred Language</p>
                 <p className="text-xs text-muted-foreground">English (US)</p>
               </div>
-              <Button size="default" className="min-h-[44px] w-[110px] flex-shrink-0">Change</Button>
+              <Button size="touch" className="w-full sm:w-[110px] flex-shrink-0">Change</Button>
             </div>
           </CardContent>
         </Card>
@@ -752,7 +752,7 @@ export default function Profile() {
               </div>
               <Badge variant="secondary">Active</Badge>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div>
                 <p className="font-medium text-sm">Safety Updates</p>
@@ -760,7 +760,7 @@ export default function Profile() {
               </div>
               <Badge variant="secondary">Active</Badge>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div>
                 <p className="font-medium text-sm">Incident Reports</p>
@@ -780,23 +780,23 @@ export default function Profile() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Two-Factor Authentication</p>
                 <p className="text-xs text-muted-foreground">Add extra security to your account</p>
               </div>
-              <Button size="default" className="min-h-[44px] w-[110px] flex-shrink-0">Setup</Button>
+              <Button size="touch" className="w-full sm:w-[110px] flex-shrink-0">Setup</Button>
             </div>
-            
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Privacy Settings</p>
                 <p className="text-xs text-muted-foreground">Control who can see your information</p>
               </div>
-              <Button size="default" className="min-h-[44px] w-[110px] flex-shrink-0">Manage</Button>
+              <Button size="touch" className="w-full sm:w-[110px] flex-shrink-0">Manage</Button>
             </div>
-            
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Data Export</p>
                 <p className="text-xs text-muted-foreground">Download your account data</p>
@@ -866,7 +866,7 @@ export default function Profile() {
               </div>
               <Badge variant="secondary">{appVersion}</Badge>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div className="min-w-0">
@@ -879,8 +879,8 @@ export default function Profile() {
                   </Badge>
                 )}
               </div>
-              <Button 
-                size="default" 
+              <Button
+                size="default"
                 onClick={() => {
                   setShowChangelog(true);
                   markAsSeen();
@@ -891,7 +891,7 @@ export default function Profile() {
                 View
               </Button>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Report a Bug</p>
@@ -902,7 +902,7 @@ export default function Profile() {
                 Report
               </Button>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">Send Feedback</p>
@@ -917,9 +917,9 @@ export default function Profile() {
         </Card>
 
         {/* Sign Out */}
-        <Button 
+        <Button
           onClick={() => setShowSignOutDialog(true)}
-          variant="outline" 
+          variant="outline"
           size="default"
           className="w-full min-h-[44px] mb-4"
         >
