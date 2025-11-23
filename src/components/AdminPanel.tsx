@@ -604,7 +604,7 @@ export function AdminPanel() {
         query = query.eq("status", incidentFilter);
       }
 
-      const { data, error } = await query as unknown as { error: unknown };
+      const { data, error } = await query as unknown as { data: Incident[] | null; error: unknown };
 
       if (error) throw error;
       setIncidents(data || []);
