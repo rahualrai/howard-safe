@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { GoogleMap, type MapMarker } from "@/components/GoogleMapComponent";
 import { useState, useEffect, useMemo } from "react";
-import { Search, Navigation, MapIcon, MapPin, X, ChevronDown, Menu, Plus, Target } from "lucide-react";
+import { Search, Navigation, MapIcon, MapPin, X, ChevronDown, Menu, Plus, Target, Check, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MapBottomSheet } from "@/components/Map/MapBottomSheet";
 import { HapticFeedback } from "@/utils/haptics";
@@ -17,6 +17,7 @@ import { useLocationSharing } from "@/hooks/useLocationSharing";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
 import { useIncidents } from "@/hooks/useIncidents";
 import { IncidentPhotoService } from "@/services/incidentPhotoService";
+import { MarkerDetails } from "@/components/Map/MarkerDetails";
 
 const THE_YARD_CENTER = { lat: 38.9230, lng: -77.0200 };
 
@@ -51,7 +52,26 @@ export default function Map() {
   const [activeCampuses, setActiveCampuses] = useState<Set<CampusName>>(new Set(['Main'] as CampusName[]));
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Set initial sidebar state based on screen width
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    // Optional: Listen for resize if we want dynamic updates
+    // window.addEventListener('resize', handleResize);
+    // return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Incident filters
   const [activeIncidentCategories, setActiveIncidentCategories] = useState<Set<IncidentCategory>>(new Set());
@@ -187,7 +207,7 @@ export default function Map() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row relative">
+    <div className="h-screen w-screen overflow-hidden bg-background flex flex-col md:flex-row relative">
       {/* Location Permission Prompt */}
       {showLocationPrompt && (
         <LocationPermissionPrompt
@@ -198,15 +218,71 @@ export default function Map() {
         />
       )}
 
-      {/* DESKTOP SIDEBAR - Hidden on Mobile */}
-      <aside className="hidden md:flex md:flex-col md:w-80 md:border-r md:border-border md:bg-card md:overflow-y-auto md:shadow-soft z-20">
-        <div className="p-6 space-y-6">
-          {/* Title */}
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* SIDEBAR (Desktop & Mobile) */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 bg-card shadow-xl transition-all duration-300 ease-in-out
+          md:relative md:shadow-soft md:z-20 md:border-r md:border-border
+          ${isSidebarOpen ? 'translate-x-0 w-80' : '-translate-x-full w-80 md:translate-x-0 md:w-0'}
+          flex flex-col overflow-y-auto
+        `}
+      >
+        <div className={`p-6 space-y-6 ${!isSidebarOpen && 'hidden'}`}>
+          {/* Title & Header */}
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Campus Map</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {mapMarkers.filter(m => m.type !== 'friend').length} buildings, {friendsLocations.filter(loc => loc.is_sharing && loc.latitude && loc.longitude).length} Contacts
+              </p>
+            </div>
+            {/* Close Sidebar Button (Desktop) */}
+            <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(false)} className="h-8 w-8">
+              <ChevronLeft size={18} />
+            </Button>
+          </div>
+
+          {/* Selected Marker Details (Desktop) */}
+          {selectedMarker && (
+            <div className="bg-muted/30 rounded-lg border border-border p-4 animate-in fade-in slide-in-from-left-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-sm">Selected Location</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0"
+                  onClick={() => setSelectedMarker(null)}
+                >
+                  <X size={14} />
+                </Button>
+              </div>
+              <MarkerDetails marker={selectedMarker} />
+            </div>
+          )}
+
+          {/* Time Range - Moved to Top */}
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Campus Map</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {mapMarkers.filter(m => m.type !== 'friend').length} buildings, {friendsLocations.filter(loc => loc.is_sharing && loc.latitude && loc.longitude).length} friends
-            </p>
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-xs font-medium text-muted-foreground">Time Range</p>
+            </div>
+            <select
+              value={incidentTimeRange}
+              onChange={(e) => setIncidentTimeRange(e.target.value as TimeRange)}
+              className="w-full px-3 py-2 bg-muted border border-border rounded-md text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="24h">Last 24 Hours</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="30d">Last 30 Days</option>
+              <option value="all">All Time</option>
+            </select>
           </div>
 
           {/* Search Bar with Autocomplete */}
@@ -271,90 +347,122 @@ export default function Map() {
             </Button>
           )}
 
+          {/* Filters Header with Clear All */}
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-foreground">Filters</p>
+            {(activeCategories.size > 0 || activeCampuses.size > 0 || activeIncidentCategories.size > 0) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setActiveCategories(new Set());
+                  setActiveCampuses(new Set());
+                  setActiveIncidentCategories(new Set());
+                  setActiveIncidentStatuses(new Set(['pending', 'investigating']));
+                }}
+              >
+                Clear All
+              </Button>
+            )}
+          </div>
+
           {/* Category Filters */}
           <div>
-            <p className="text-sm font-semibold text-foreground mb-3">Building Types</p>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Building Types</p>
             <div className="flex flex-wrap gap-2">
-              {getAllCategories().map((category) => (
-                <Button
-                  key={category}
-                  variant={activeCategories.has(category) ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => {
-                    const newCategories = new Set(activeCategories);
-                    if (newCategories.has(category)) {
-                      newCategories.delete(category);
-                    } else {
-                      newCategories.add(category);
-                    }
-                    setActiveCategories(newCategories);
-                  }}
-                >
-                  {category}
-                </Button>
-              ))}
+              {getAllCategories().map((category) => {
+                const isActive = activeCategories.has(category);
+                return (
+                  <Button
+                    key={category}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className={`text-xs ${isActive ? 'border-primary' : 'border-border'}`}
+                    onClick={() => {
+                      const newCategories = new Set(activeCategories);
+                      if (newCategories.has(category)) {
+                        newCategories.delete(category);
+                      } else {
+                        newCategories.add(category);
+                      }
+                      setActiveCategories(newCategories);
+                    }}
+                  >
+                    {isActive && <Check size={12} className="mr-1" />}
+                    {category}
+                  </Button>
+                );
+              })}
             </div>
           </div>
 
           {/* Campus Filters */}
           <div>
-            <p className="text-sm font-semibold text-foreground mb-3">Campuses</p>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Campuses</p>
             <div className="flex flex-wrap gap-2">
-              {getAllCampuses().map((campus) => (
-                <Button
-                  key={campus}
-                  variant={activeCampuses.has(campus) ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => {
-                    const newCampuses = new Set(activeCampuses);
-                    if (newCampuses.has(campus)) {
-                      newCampuses.delete(campus);
-                    } else {
-                      newCampuses.add(campus);
-                    }
-                    setActiveCampuses(newCampuses);
-                  }}
-                >
-                  {campus}
-                </Button>
-              ))}
+              {getAllCampuses().map((campus) => {
+                const isActive = activeCampuses.has(campus);
+                return (
+                  <Button
+                    key={campus}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className={`text-xs ${isActive ? 'border-primary' : 'border-border'}`}
+                    onClick={() => {
+                      const newCampuses = new Set(activeCampuses);
+                      if (newCampuses.has(campus)) {
+                        newCampuses.delete(campus);
+                      } else {
+                        newCampuses.add(campus);
+                      }
+                      setActiveCampuses(newCampuses);
+                    }}
+                  >
+                    {isActive && <Check size={12} className="mr-1" />}
+                    {campus}
+                  </Button>
+                );
+              })}
             </div>
           </div>
 
           {/* Incidents Section */}
-          <div className="pt-6 border-t border-border">
+          <div className="pt-4 border-t border-border">
             <p className="text-sm font-semibold text-foreground mb-3">Incidents</p>
 
             {/* Incident Categories */}
             <div className="mb-4">
               <p className="text-xs font-medium text-muted-foreground mb-2">Categories</p>
               <div className="flex flex-wrap gap-2">
-                {(Object.keys(INCIDENT_LABELS) as IncidentCategory[]).map((category) => (
-                  <Button
-                    key={category}
-                    variant={activeIncidentCategories.has(category) ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
-                    style={{
-                      backgroundColor: activeIncidentCategories.has(category) ? INCIDENT_COLORS[category] : 'transparent',
-                      color: activeIncidentCategories.has(category) ? '#fff' : INCIDENT_COLORS[category],
-                      borderColor: INCIDENT_COLORS[category],
-                    }}
-                    onClick={() => {
-                      const newCategories = new Set(activeIncidentCategories);
-                      if (newCategories.has(category)) {
-                        newCategories.delete(category);
-                      } else {
-                        newCategories.add(category);
-                      }
-                      setActiveIncidentCategories(newCategories);
-                    }}
-                  >
-                    {INCIDENT_LABELS[category]}
-                  </Button>
-                ))}
+                {(Object.keys(INCIDENT_LABELS) as IncidentCategory[]).map((category) => {
+                  const isActive = activeIncidentCategories.has(category);
+                  return (
+                    <Button
+                      key={category}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      className="text-xs"
+                      style={{
+                        backgroundColor: isActive ? INCIDENT_COLORS[category] : 'transparent',
+                        color: isActive ? '#fff' : INCIDENT_COLORS[category],
+                        borderColor: INCIDENT_COLORS[category],
+                      }}
+                      onClick={() => {
+                        const newCategories = new Set(activeIncidentCategories);
+                        if (newCategories.has(category)) {
+                          newCategories.delete(category);
+                        } else {
+                          newCategories.add(category);
+                        }
+                        setActiveIncidentCategories(newCategories);
+                      }}
+                    >
+                      {isActive && <Check size={12} className="mr-1" />}
+                      {INCIDENT_LABELS[category]}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
@@ -362,48 +470,47 @@ export default function Map() {
             <div className="mb-4">
               <p className="text-xs font-medium text-muted-foreground mb-2">Status</p>
               <div className="flex flex-wrap gap-2">
-                {(['pending', 'investigating', 'resolved'] as IncidentStatus[]).map((status) => (
-                  <Button
-                    key={status}
-                    variant={activeIncidentStatuses.has(status) ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => {
-                      const newStatuses = new Set(activeIncidentStatuses);
-                      if (newStatuses.has(status)) {
-                        newStatuses.delete(status);
-                      } else {
-                        newStatuses.add(status);
-                      }
-                      setActiveIncidentStatuses(newStatuses);
-                    }}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </Button>
-                ))}
+                {(['pending', 'investigating', 'resolved'] as IncidentStatus[]).map((status) => {
+                  const isActive = activeIncidentStatuses.has(status);
+                  return (
+                    <Button
+                      key={status}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      className={`text-xs ${isActive ? 'border-primary' : 'border-border'}`}
+                      onClick={() => {
+                        const newStatuses = new Set(activeIncidentStatuses);
+                        if (newStatuses.has(status)) {
+                          newStatuses.delete(status);
+                        } else {
+                          newStatuses.add(status);
+                        }
+                        setActiveIncidentStatuses(newStatuses);
+                      }}
+                    >
+                      {isActive && <Check size={12} className="mr-1" />}
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </Button>
+                  );
+                })}
               </div>
-            </div>
-
-            {/* Time Range */}
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Time Range</p>
-              <select
-                value={incidentTimeRange}
-                onChange={(e) => setIncidentTimeRange(e.target.value as TimeRange)}
-                className="w-full px-3 py-2 bg-muted border border-border rounded-md text-sm text-foreground"
-              >
-                <option value="24h">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="all">All Time</option>
-              </select>
             </div>
           </div>
         </div>
+
       </aside>
 
+      {/* Expand Sidebar Button (Desktop only, when collapsed) */}
+      {!isSidebarOpen && (
+        <div className="absolute top-4 left-4 z-30 hidden md:block">
+          <Button variant="secondary" size="icon" onClick={() => setIsSidebarOpen(true)} className="shadow-md">
+            <Menu size={20} />
+          </Button>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="relative flex-1 flex flex-col h-screen">
+      <main className="relative flex-1 flex flex-col h-full overflow-hidden">
         {/* Floating Search Bar (Mobile) */}
         <div className="md:hidden absolute top-4 left-4 right-4 z-10 flex gap-2">
           <div className="flex-1 relative shadow-lg rounded-full">
@@ -419,10 +526,7 @@ export default function Map() {
               onFocus={() => searchQuery.length > 0 && setShowSearchDropdown(true)}
             />
           </div>
-          <Button size="icon" variant="secondary" className="h-12 w-12 rounded-full shadow-lg bg-background" onClick={() => {
-            // Toggle sidebar or show filters
-            // For now, maybe just a placeholder or open a filter modal
-          }}>
+          <Button size="icon" variant="secondary" className="h-12 w-12 rounded-full shadow-lg bg-background" onClick={() => setIsSidebarOpen(true)}>
             <Menu className="w-6 h-6" />
           </Button>
         </div>
@@ -463,7 +567,7 @@ export default function Map() {
         />
 
         {/* Floating Action Buttons (Mobile) */}
-        <div className="md:hidden absolute bottom-8 right-4 z-10 flex flex-col gap-3 pb-safe">
+        <div className="md:hidden absolute bottom-24 right-4 z-10 flex flex-col gap-3 pb-safe">
           <Button
             size="icon"
             className="h-12 w-12 rounded-full shadow-xl bg-background text-foreground hover:bg-muted"
@@ -487,11 +591,13 @@ export default function Map() {
           </Button>
         </div>
 
-        {/* Bottom Sheet */}
-        <MapBottomSheet
-          marker={selectedMarker}
-          onClose={() => setSelectedMarker(null)}
-        />
+        {/* Bottom Sheet - Mobile Only */}
+        <div className="md:hidden">
+          <MapBottomSheet
+            marker={selectedMarker}
+            onClose={() => setSelectedMarker(null)}
+          />
+        </div>
       </main>
     </div>
   );
