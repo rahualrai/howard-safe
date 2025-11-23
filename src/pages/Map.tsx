@@ -20,13 +20,6 @@ import { IncidentPhotoService } from "@/services/incidentPhotoService";
 import { MarkerDetails } from "@/components/Map/MarkerDetails";
 
 const THE_YARD_CENTER = { lat: 38.9230, lng: -77.0200 };
-const SUPABASE_URL = "https://cgccjvoedbbsjqzchtmo.supabase.co";
-
-// Helper function to construct public URLs from storage paths
-const getPublicPhotoUrl = (storagePath: string): string => {
-  if (!storagePath) return '';
-  return `${SUPABASE_URL}/storage/v1/object/public/incident-photos/${storagePath}`;
-};
 
 type IncidentCategory = 'theft' | 'harassment' | 'suspicious_activity' | 'safety_hazard' | 'medical_emergency' | 'other';
 type IncidentStatus = 'pending' | 'investigating' | 'resolved';
@@ -93,6 +86,44 @@ export default function Map() {
 
   // Fetch incidents
   const { data: allIncidents = [] } = useIncidents({ includePhotos: true });
+
+  // Cache for signed photo URLs
+  const [photoUrlCache, setPhotoUrlCache] = useState<Record<string, string>>({});
+
+  // Generate signed URLs for all incident photos
+  useEffect(() => {
+    const generateSignedUrls = async () => {
+      const allPhotoPaths: string[] = [];
+      const photoPathToIncident: Record<string, string> = {};
+
+      // Collect all unique photo paths
+      allIncidents.forEach(incident => {
+        incident.incident_photos?.forEach(photo => {
+          if (photo.storage_path && !photoPathToIncident[photo.storage_path]) {
+            allPhotoPaths.push(photo.storage_path);
+            photoPathToIncident[photo.storage_path] = incident.id;
+          }
+        });
+      });
+
+      if (allPhotoPaths.length > 0) {
+        console.log(`[Map] Generating signed URLs for ${allPhotoPaths.length} incident photos...`);
+        const signedUrls = await IncidentPhotoService.getSignedUrls(allPhotoPaths);
+
+        const newCache: Record<string, string> = {};
+        allPhotoPaths.forEach((path, index) => {
+          if (signedUrls[index]) {
+            newCache[path] = signedUrls[index];
+          }
+        });
+
+        setPhotoUrlCache(newCache);
+        console.log(`[Map] Cached ${Object.keys(newCache).length} signed URLs`);
+      }
+    };
+
+    generateSignedUrls();
+  }, [allIncidents]);
 
   // Check location permission on mount and hide prompt when granted
   useEffect(() => {
@@ -190,7 +221,7 @@ export default function Map() {
             incidentTime: incident.incident_time,
             reportedTime: incident.reported_at,
             photos: incident.incident_photos?.map(photo => ({
-              url: getPublicPhotoUrl(photo.storage_path),
+              url: photoUrlCache[photo.storage_path] || '',
               alt: `Incident photo for ${incidentCategory}`,
             })) || [],
           },
@@ -198,7 +229,7 @@ export default function Map() {
       });
 
     return [...buildingMarkers, ...friendMarkers, ...incidentMarkers];
-  }, [activeCategories, activeCampuses, friendsLocations, allIncidents, activeIncidentCategories, activeIncidentStatuses, incidentTimeRange]);
+  }, [activeCategories, activeCampuses, friendsLocations, allIncidents, activeIncidentCategories, activeIncidentStatuses, incidentTimeRange, photoUrlCache]);
 
   const handleLocationGranted = (position: GeolocationPosition) => {
     setShowLocationPrompt(false);
