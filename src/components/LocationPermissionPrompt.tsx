@@ -66,12 +66,12 @@ export const LocationPermissionPrompt = ({
 
   const content = (
     <Card className="w-full max-w-md mx-auto shadow-lg border-border max-h-[85vh] overflow-y-auto">
-      <CardHeader className="text-center space-y-2">
+      <CardHeader className="text-center space-y-2 relative">
         {showCloseButton && (
           <Button
             variant="ghost"
             size="sm"
-            className="absolute top-2 right-2 w-8 h-8 p-0"
+            className="absolute top-2 right-2 w-8 h-8 p-0 h-auto"
             onClick={onClose}
           >
             <X className="w-4 h-4" />
