@@ -307,7 +307,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers, o
       </div>
 
       {/* Current Location Indicator */}
-      <div className="absolute bottom-4 left-4 z-10">
+      <div className="absolute bottom-24 left-4 z-10 md:bottom-4">
         <Badge variant="secondary" className="bg-card shadow-soft border-border">
           <div className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse" />
           Current Location

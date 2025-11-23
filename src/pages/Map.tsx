@@ -207,7 +207,7 @@ export default function Map() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-background flex flex-col md:flex-row relative pb-20 md:pb-0">
+    <div className="h-screen w-screen overflow-hidden bg-background flex flex-col md:flex-row relative">
       {/* Location Permission Prompt */}
       {showLocationPrompt && (
         <LocationPermissionPrompt
@@ -231,8 +231,7 @@ export default function Map() {
         className={`
           fixed inset-y-0 left-0 z-50 bg-card shadow-xl transition-all duration-300 ease-in-out
           md:relative md:shadow-soft md:z-20 md:border-r md:border-border
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          w-80 md:w-80 lg:w-96 max-w-[85vw]
+          ${isSidebarOpen ? 'translate-x-0 w-80' : '-translate-x-full w-80 md:translate-x-0 md:w-0'}
           flex flex-col overflow-y-auto
         `}
       >
@@ -570,7 +569,7 @@ export default function Map() {
         />
 
         {/* Floating Action Buttons (Mobile) */}
-        <div className="md:hidden absolute bottom-4 right-4 z-10 flex flex-col gap-3 pb-safe">
+        <div className="md:hidden absolute bottom-24 right-4 z-10 flex flex-col gap-3 pb-safe">
           <Button
             size="icon"
             className="h-12 w-12 rounded-full shadow-xl bg-background text-foreground hover:bg-muted"
