@@ -20,6 +20,13 @@ import { IncidentPhotoService } from "@/services/incidentPhotoService";
 import { MarkerDetails } from "@/components/Map/MarkerDetails";
 
 const THE_YARD_CENTER = { lat: 38.9230, lng: -77.0200 };
+const SUPABASE_URL = "https://cgccjvoedbbsjqzchtmo.supabase.co";
+
+// Helper function to construct public URLs from storage paths
+const getPublicPhotoUrl = (storagePath: string): string => {
+  if (!storagePath) return '';
+  return `${SUPABASE_URL}/storage/v1/object/public/incident-photos/${storagePath}`;
+};
 
 type IncidentCategory = 'theft' | 'harassment' | 'suspicious_activity' | 'safety_hazard' | 'medical_emergency' | 'other';
 type IncidentStatus = 'pending' | 'investigating' | 'resolved';
@@ -77,7 +84,6 @@ export default function Map() {
   const [activeIncidentCategories, setActiveIncidentCategories] = useState<Set<IncidentCategory>>(new Set());
   const [activeIncidentStatuses, setActiveIncidentStatuses] = useState<Set<IncidentStatus>>(new Set(['pending', 'investigating']));
   const [incidentTimeRange, setIncidentTimeRange] = useState<TimeRange>('7d');
-  const [photoUrlCache, setPhotoUrlCache] = useState<Record<string, string>>({});
 
   const { permission, getCurrentLocation, location } = useLocationPermission();
 
@@ -107,52 +113,6 @@ export default function Map() {
       setSearchResults([]);
     }
   }, [searchQuery]);
-
-  // Generate signed URLs for all incident photos
-  useEffect(() => {
-    const generateSignedUrls = async (currentCache: Record<string, string>) => {
-      const photoStoragePaths = allIncidents
-        .flatMap(incident => incident.incident_photos?.map(photo => photo.storage_path) || []);
-
-      // Get unique paths
-      const uniquePaths = Array.from(new Set(photoStoragePaths));
-
-      if (uniquePaths.length === 0) {
-        console.log('No incident photos found');
-        return;
-      }
-
-      console.log(`Found ${uniquePaths.length} unique photo paths:`, uniquePaths);
-
-      // Generate signed URLs for paths not already cached
-      const pathsToFetch = uniquePaths.filter(path => !currentCache[path]);
-
-      if (pathsToFetch.length === 0) {
-        console.log('All photo URLs already cached');
-        return;
-      }
-
-      console.log(`Generating signed URLs for ${pathsToFetch.length} photos...`);
-
-      try {
-        const signedUrls = await IncidentPhotoService.getSignedUrls(pathsToFetch, 3600);
-
-        console.log(`Received ${signedUrls.length} signed URLs`, signedUrls);
-
-        const newCache = { ...currentCache };
-        pathsToFetch.forEach((path, index) => {
-          newCache[path] = signedUrls[index] || '';
-        });
-
-        setPhotoUrlCache(newCache);
-        console.log('Photo cache updated:', newCache);
-      } catch (error) {
-        console.error('Error generating signed URLs:', error);
-      }
-    };
-
-    generateSignedUrls(photoUrlCache);
-  }, [allIncidents]);
 
   // Helper function to get cutoff date based on time range
   const getCutoffDate = (range: TimeRange): Date => {
@@ -230,7 +190,7 @@ export default function Map() {
             incidentTime: incident.incident_time,
             reportedTime: incident.reported_at,
             photos: incident.incident_photos?.map(photo => ({
-              url: photoUrlCache[photo.storage_path] || '',
+              url: getPublicPhotoUrl(photo.storage_path),
               alt: `Incident photo for ${incidentCategory}`,
             })) || [],
           },
@@ -238,7 +198,7 @@ export default function Map() {
       });
 
     return [...buildingMarkers, ...friendMarkers, ...incidentMarkers];
-  }, [activeCategories, activeCampuses, friendsLocations, allIncidents, activeIncidentCategories, activeIncidentStatuses, incidentTimeRange, photoUrlCache]);
+  }, [activeCategories, activeCampuses, friendsLocations, allIncidents, activeIncidentCategories, activeIncidentStatuses, incidentTimeRange]);
 
   const handleLocationGranted = (position: GeolocationPosition) => {
     setShowLocationPrompt(false);

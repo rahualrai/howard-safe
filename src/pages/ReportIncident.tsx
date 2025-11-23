@@ -260,9 +260,10 @@ export default function ReportIncident() {
           if (uploadResult.urls.length > 0) {
             console.log('Linking photos to incident in database...');
             const photoRecords = uploadResult.urls.map((url) => {
-              // Extract path from signed URL
-              const pathMatch = url.match(/object\/public\/incident-photos\/([^?]+)/);
+              // Extract path from signed URL (format: /storage/v1/object/sign/incident-photos/{path}?token=...)
+              const pathMatch = url.match(/\/incident-photos\/(.+?)\?/);
               const path = pathMatch ? pathMatch[1] : null;
+              console.log('Extracted photo path:', path, 'from URL:', url.substring(0, 100) + '...');
               return {
                 incident_id: incidentData.id,
                 storage_path: path || url,
