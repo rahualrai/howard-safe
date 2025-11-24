@@ -170,6 +170,8 @@ export default function Map() {
     }
   };
 
+  const [hiddenFriendIds, setHiddenFriendIds] = useState<Set<string>>(new Set());
+
   // Compute markers: filtered buildings + friends locations + incidents
   const mapMarkers = useMemo(() => {
     // Filter buildings by active categories and campuses
@@ -187,7 +189,7 @@ export default function Map() {
 
     // Add friends location markers
     const friendMarkers = friendsLocations
-      .filter(loc => loc.is_sharing && loc.latitude && loc.longitude)
+      .filter(loc => loc.is_sharing && loc.latitude && loc.longitude && !hiddenFriendIds.has(loc.friend_id))
       .map(loc => ({
         position: { lat: loc.latitude, lng: loc.longitude },
         title: loc.friend_username || 'Friend',
@@ -238,7 +240,7 @@ export default function Map() {
       });
 
     return [...buildingMarkers, ...friendMarkers, ...incidentMarkers];
-  }, [activeCategories, activeCampuses, friendsLocations, allIncidents, activeIncidentCategories, activeIncidentStatuses, incidentTimeRange, photoUrlCache]);
+  }, [activeCategories, activeCampuses, friendsLocations, allIncidents, activeIncidentCategories, activeIncidentStatuses, incidentTimeRange, photoUrlCache, hiddenFriendIds]);
 
   const handleLocationGranted = (position: GeolocationPosition) => {
     setShowLocationPrompt(false);
@@ -389,7 +391,7 @@ export default function Map() {
           {/* Filters Header with Clear All */}
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-foreground">Filters</p>
-            {(activeCategories.size > 0 || activeCampuses.size > 0 || activeIncidentCategories.size > 0) && (
+            {(activeCategories.size > 0 || activeCampuses.size > 0 || activeIncidentCategories.size > 0 || hiddenFriendIds.size > 0) && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -399,12 +401,53 @@ export default function Map() {
                   setActiveCampuses(new Set());
                   setActiveIncidentCategories(new Set());
                   setActiveIncidentStatuses(new Set(['pending', 'investigating']));
+                  setHiddenFriendIds(new Set());
                 }}
               >
                 Clear All
               </Button>
             )}
           </div>
+
+          {/* Friends List Toggle */}
+          {friendsLocations.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Friends</p>
+              <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                {friendsLocations.map((friend) => {
+                  const isVisible = !hiddenFriendIds.has(friend.friend_id);
+                  const isSharing = friend.is_sharing && friend.latitude && friend.longitude;
+
+                  return (
+                    <div key={friend.friend_id} className="flex items-center justify-between p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isSharing ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                        <span className="text-sm truncate">{friend.friend_username || 'Friend'}</span>
+                      </div>
+                      <Button
+                        variant={isVisible ? "default" : "outline"}
+                        size="sm"
+                        className={`h-7 w-7 p-0 rounded-full ${isVisible ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                        onClick={() => {
+                          const newHidden = new Set(hiddenFriendIds);
+                          if (isVisible) {
+                            newHidden.add(friend.friend_id);
+                          } else {
+                            newHidden.delete(friend.friend_id);
+                          }
+                          setHiddenFriendIds(newHidden);
+                        }}
+                        disabled={!isSharing}
+                        title={!isSharing ? "Location not available" : isVisible ? "Hide from map" : "Show on map"}
+                      >
+                        {isVisible ? <Check size={12} /> : <div className="w-2 h-2 rounded-full border border-current opacity-50" />}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Category Filters */}
           <div>

@@ -222,6 +222,13 @@ export function useLocationSharing(userId: string | undefined) {
     }
   }, [userId, fetchFriendsLocations, fetchSharingPreferences]);
 
+  // Auto-start sharing if enabled in preferences
+  useEffect(() => {
+    if (!loading && sharingPreferences?.share_with_friends && !isSharing && permission === 'granted') {
+      startSharingLocation();
+    }
+  }, [loading, sharingPreferences, isSharing, permission, startSharingLocation]);
+
   // Set up real-time subscription for friends' locations
   useEffect(() => {
     if (!userId) return;

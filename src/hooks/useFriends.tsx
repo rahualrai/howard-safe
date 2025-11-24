@@ -214,14 +214,14 @@ export function useFriends(userId: string | undefined) {
       }
 
       // Check if request already exists
-      const { data: existingRequest } = await supabase
+      const { data: existingRequests } = await supabase
         .from('friend_requests')
         .select('id, status')
-        .or(`and(requester_id.eq.${userId},addressee_id.eq.${addresseeId}),and(requester_id.eq.${addresseeId},addressee_id.eq.${userId})`)
-        .maybeSingle();
+        .or(`and(requester_id.eq.${userId},addressee_id.eq.${addresseeId}),and(requester_id.eq.${addresseeId},addressee_id.eq.${userId})`);
 
-      if (existingRequest) {
-        if (existingRequest.status === 'pending') {
+      if (existingRequests && existingRequests.length > 0) {
+        const pendingRequest = existingRequests.find(r => r.status === 'pending');
+        if (pendingRequest) {
           toast({
             title: 'Request pending',
             description: 'A friend request already exists',
@@ -229,6 +229,16 @@ export function useFriends(userId: string | undefined) {
           });
           return false;
         }
+
+        // If requests exist but are not pending (e.g. accepted/rejected/cancelled), 
+        // delete them so we can send a new one
+        const idsToDelete = existingRequests.map(r => r.id);
+        const { error: deleteError } = await supabase
+          .from('friend_requests')
+          .delete()
+          .in('id', idsToDelete);
+
+        if (deleteError) throw deleteError;
       }
 
       const { error } = await supabase
@@ -239,7 +249,18 @@ export function useFriends(userId: string | undefined) {
           status: 'pending',
         });
 
-      if (error) throw error;
+      if (error) {
+        // Handle duplicate key error (race condition)
+        if (error.code === '23505') {
+          toast({
+            title: 'Friend request sent',
+            description: 'Your friend request has been sent',
+          });
+          await fetchFriendRequests();
+          return true;
+        }
+        throw error;
+      }
 
       toast({
         title: 'Friend request sent',
@@ -248,7 +269,7 @@ export function useFriends(userId: string | undefined) {
 
       await fetchFriendRequests();
       return true;
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Error sending friend request:', error);
       toast({
         title: 'Error',
