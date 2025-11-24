@@ -92,13 +92,16 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ center, zoom, markers, o
           map,
           title: m.title,
           icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: isFriend ? 8 : 6,
+            path: isFriend
+              ? "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" // SVG path for a pin
+              : google.maps.SymbolPath.CIRCLE,
+            scale: isFriend ? 1.5 : 6, // Adjusted scale for the pin path
             fillColor: isFriend ? '#4285F4' : color, // Use Google blue for friend marker
             fillOpacity: 1,
             strokeColor: '#fff',
-            strokeWeight: 3,
+            strokeWeight: isFriend ? 1 : 3,
             rotation: 0,
+            anchor: isFriend ? new google.maps.Point(12, 22) : undefined, // Anchor at the bottom tip
           },
           zIndex: (m.type === 'incident' || ['theft', 'harassment', 'suspicious_activity', 'safety_hazard', 'medical_emergency', 'other'].includes(m.type)) ? 100 : m.type === 'friend' ? 50 : 10,
         });
