@@ -34,7 +34,7 @@ export function BisonChat() {
     setLoading(true);
     try {
       // Call RAG server
-      const response = await fetch('https://essayistic-roberto-nonionizing.ngrok-free.dev/ask', {
+      const response = await fetch('http://localhost:8000/ask', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export function BisonChat() {
 
       const data = await response.json();
       let reply = data.answer || "I couldn't find information about that. Please try rephrasing your question.";
-      
+
       // Always add top 2 sources as clickable links for transparency
       if (data.sources && data.sources.length > 0) {
         reply += "\n\nSources:";
@@ -61,10 +61,10 @@ export function BisonChat() {
       setMessages(prev => [...prev, assistantMsg]);
     } catch (error) {
       console.error('RAG server error:', error);
-      const errorMsg: ChatMessage = { 
-        id: crypto.randomUUID(), 
-        role: "assistant", 
-        content: "Sorry, I'm having trouble connecting to the knowledge base. Please make sure the RAG server is running on localhost:8000." 
+      const errorMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "Sorry, I'm having trouble connecting to the knowledge base. Please make sure the RAG server is running on localhost:8000."
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
