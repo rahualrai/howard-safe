@@ -33,6 +33,7 @@ export function WeatherWidget() {
   const [useCurrentLocation, setUseCurrentLocation] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [temperatureUnit, setTemperatureUnit] = useState<"fahrenheit" | "celsius">("fahrenheit");
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const { getCurrentLocation, permission } = useLocationPermission();
 
   // Determine which coordinates to use
@@ -62,13 +63,23 @@ export function WeatherWidget() {
 
   // Handle switching to current location
   const handleUseCurrentLocation = async () => {
+    if (permission === 'denied') {
+      return; // Button is already disabled, but double-check
+    }
+    
+    setIsGettingLocation(true);
     const position = await getCurrentLocation();
+    setIsGettingLocation(false);
+    
     if (position) {
       setUserCoords({
         lat: position.coords.latitude,
         lon: position.coords.longitude,
       });
       setUseCurrentLocation(true);
+    } else {
+      // If location fetch failed, don't switch to current location mode
+      setUseCurrentLocation(false);
     }
   };
 
@@ -95,10 +106,10 @@ export function WeatherWidget() {
           size="sm"
           className="flex-1 gap-2"
           onClick={handleUseCurrentLocation}
-          disabled={permission === 'denied'}
+          disabled={permission === 'denied' || isGettingLocation}
         >
           <MapPin size={16} />
-          My Location
+          {isGettingLocation ? "Getting Location..." : "My Location"}
         </Button>
       </div>
 

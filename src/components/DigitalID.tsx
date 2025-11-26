@@ -37,6 +37,27 @@ export function DigitalID() {
     }
   }, [digitalID]);
 
+  // Listen for digital ID updates from other components
+  useEffect(() => {
+    const handleDigitalIDUpdate = () => {
+      console.log('Digital ID update event received');
+      fetchDigitalID();
+    };
+
+    window.addEventListener('digital-id-updated', handleDigitalIDUpdate);
+
+    return () => {
+      window.removeEventListener('digital-id-updated', handleDigitalIDUpdate);
+    };
+  }, [user]);
+
+  // Also refetch when dialog is opened (in case data was updated elsewhere)
+  useEffect(() => {
+    if (open && user) {
+      fetchDigitalID();
+    }
+  }, [open, user]);
+
 
   const fetchDigitalID = async () => {
     if (!user) return;
