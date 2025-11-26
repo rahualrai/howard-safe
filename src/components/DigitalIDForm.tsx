@@ -195,6 +195,9 @@ export function DigitalIDForm({ open, onOpenChange, existingData, onSuccess }: D
         description: existingData ? "Your digital ID has been updated" : "Your digital ID has been created",
       });
 
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('digital-id-updated'));
+
       onSuccess();
       onOpenChange(false);
     } catch (error) {
@@ -211,15 +214,16 @@ export function DigitalIDForm({ open, onOpenChange, existingData, onSuccess }: D
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{existingData ? "Edit" : "Add"} Digital ID</DialogTitle>
           <DialogDescription>
             Enter your student information to create or update your digital ID card
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="overflow-y-auto flex-1 -mx-6 px-6">
+          <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {/* Photo Upload with Drag & Drop */}
           <div className="space-y-2">
             <Label>ID Photo *</Label>
@@ -346,7 +350,8 @@ export function DigitalIDForm({ open, onOpenChange, existingData, onSuccess }: D
               {loading ? "Saving..." : existingData ? "Update" : "Create"} ID
             </Button>
           </div>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

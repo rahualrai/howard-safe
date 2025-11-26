@@ -27,8 +27,8 @@ export function TitleIXHub() {
             </a>
           </Button>
           <Button size="sm" asChild>
-            <a href="https://www2.howard.edu/title-ix/report" target="_blank" rel="noreferrer">
-              File a Report
+            <a href="https://howard.edu/report-concern" target="_blank" rel="noreferrer">
+              Report Concern
             </a>
           </Button>
         </div>

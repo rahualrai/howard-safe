@@ -194,6 +194,45 @@ export type Database = {
         }
         Relationships: []
       }
+      digital_ids: {
+        Row: {
+          id: string
+          user_id: string
+          full_name: string
+          student_id: string
+          program: string
+          class_year: string
+          photo_url: string | null
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          full_name: string
+          student_id: string
+          program: string
+          class_year: string
+          photo_url?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          full_name?: string
+          student_id?: string
+          program?: string
+          class_year?: string
+          photo_url?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
