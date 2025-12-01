@@ -84,3 +84,43 @@ We utilize a "Backend-as-a-Service" architecture to speed up development and red
 ### Quality Assurance
 *   **ESLint 9**: Static code analysis to catch errors and enforce code quality.
 *   **Prettier**: Opinionated code formatter to ensure consistent style.
+
+---
+
+## AI Tools & Development Workflow
+
+We leverage cutting-edge AI tools to accelerate development, ensure code quality, and modernize our deployment strategy.
+
+### Rapid Prototyping
+*   **[Lovable](https://lovable.dev/)**: Used for rapid application prototyping and initial codebase generation, allowing us to visualize features quickly.
+
+### AI-Assisted Coding
+*   **AntiGravity & Claude Code**: Advanced agentic coding assistants used for "vibe coding"—iterative, conversational development that handles complex refactoring, feature implementation, and architectural decisions.
+*   **GitHub Copilot**: Integrated into the IDE for real-time code completion, error detection, and generating unit tests.
+
+### Collaboration & CI/CD
+*   **GitHub**: The central hub for version control and collaboration.
+*   **GitHub Actions**: Automated CI/CD pipelines for deployment.
+
+### Self-Hosted Infrastructure
+*   **Docker**: The core of our deployment strategy. By containerizing the application and its dependencies (database, vector store, etc.), we deploy to our own self-hosted servers, ensuring data sovereignty, reducing cloud costs, and simplifying environment management.
+
+---
+
+## RAG Server (Knowledge Base)
+
+The **Retrieval-Augmented Generation (RAG)** server powers the intelligent chatbot features, allowing users to query university policies and safety procedures using natural language.
+
+### Core Stack
+*   **Language**: [Python 3.11](https://www.python.org/) - Chosen for its rich ecosystem of AI and data science libraries.
+*   **Framework**: [Flask](https://flask.palletsprojects.com/) - A lightweight WSGI web application framework used to expose the RAG endpoints.
+
+### AI & NLP
+*   **LLM Provider**: [Google Gemini](https://deepmind.google/technologies/gemini/) (via `google-generativeai`) - State-of-the-art multimodal model used for generating human-like responses based on retrieved context.
+*   **Embeddings**: [Sentence Transformers](https://www.sbert.net/) - Used to convert text documents into vector embeddings for semantic search.
+*   **Vector Search**: [NumPy](https://numpy.org/) - Currently used for efficient in-memory vector similarity calculations (cosine similarity) for the knowledge base.
+
+### Infrastructure
+*   **Container**: Dockerized using a slim Python image to minimize footprint.
+*   **API**: Exposes RESTful endpoints consumed by the main application's backend or directly by the frontend.
+
