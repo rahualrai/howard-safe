@@ -267,6 +267,14 @@ export default function Profile() {
         .select('*')
         .single();
 
+      if (upsertError) {
+        setAvatarPreview(null);
+        console.error('upsertError', upsertError);
+        toast({ title: 'Failed to update profile', description: upsertError.message || String(upsertError), variant: 'destructive' });
+        return;
+      }
+
+      // Refresh profile locally from returned row if available
       if (upserted) {
         setProfile(upserted as Profile);
         // Clear preview after successful upload
