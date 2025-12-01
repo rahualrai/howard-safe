@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ReactNode, useState } from "react";
+import { motion } from "framer-motion";
 
 type AppTileProps = {
   title: string;
@@ -17,27 +18,43 @@ export function AppTile({ title, icon, children, fullPagePath }: AppTileProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Card className="cursor-pointer transition-all hover:shadow-md">
-          <CardContent className="p-4 flex flex-col items-center justify-center gap-2">
-            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-foreground/80">
-              {icon}
-            </div>
-            <div className="text-xs font-medium text-center truncate max-w-[8rem]">{title}</div>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.02, translateY: -5 }}
+          whileTap={{ scale: 0.98 }}
+          className="h-full"
+        >
+          <Card className="h-full aspect-square md:aspect-auto cursor-pointer transition-all duration-300 border-none shadow-soft hover:shadow-hover bg-[#F4E6FF] rounded-[2rem] overflow-hidden group relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-4 flex flex-col items-center justify-center gap-3 h-full relative z-10">
+              <div className="w-16 h-16 rounded-2xl bg-white/60 backdrop-blur-sm shadow-inner flex items-center justify-center text-ui-charcoal transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+                <div className="text-ui-charcoal drop-shadow-sm">
+                  {icon}
+                </div>
+              </div>
+              <div className="text-sm font-bold text-center text-ui-charcoal group-hover:text-black transition-colors">
+                {title}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg rounded-[2.5rem] border-none shadow-2xl bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl p-6">
+        <DialogHeader className="mb-4">
           <div className="flex items-center justify-between">
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-foreground flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                {icon}
+              </div>
+              {title}
+            </DialogTitle>
             {fullPagePath && (
-              <Button asChild size="sm" variant="outline">
+              <Button asChild size="sm" variant="secondary" className="rounded-full px-4">
                 <Link to={fullPagePath}>Open full page</Link>
               </Button>
             )}
           </div>
         </DialogHeader>
-        <div className="mt-2 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="mt-2 space-y-4 max-h-[70vh] overflow-y-auto p-1 custom-scrollbar text-foreground">
           {children}
         </div>
       </DialogContent>

@@ -28,7 +28,7 @@ export function CameraCapture({ onPhotosChange, maxPhotos = 3 }: CameraCapturePr
     }
 
     await HapticFeedback.impact(ImpactStyle.Light);
-    
+
     const hasPermissions = await CameraService.requestPermissions();
     if (!hasPermissions) {
       toast({
@@ -63,7 +63,7 @@ export function CameraCapture({ onPhotosChange, maxPhotos = 3 }: CameraCapturePr
     }
 
     await HapticFeedback.impact(ImpactStyle.Light);
-    
+
     const photo = await CameraService.selectFromGallery();
     if (photo) {
       const newPhotos = [...photos, photo];
@@ -92,19 +92,19 @@ export function CameraCapture({ onPhotosChange, maxPhotos = 3 }: CameraCapturePr
           variant="outline"
           size="sm"
           onClick={handleTakePhoto}
-          className="flex-1"
+          className="flex-1 rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
           disabled={photos.length >= maxPhotos}
         >
           <Camera size={16} className="mr-2" />
           Take Photo
         </Button>
-        
+
         <Button
           type="button"
-          variant="outline" 
+          variant="outline"
           size="sm"
           onClick={handleSelectFromGallery}
-          className="flex-1"
+          className="flex-1 rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
           disabled={photos.length >= maxPhotos}
         >
           <Image size={16} className="mr-2" />
@@ -142,14 +142,14 @@ export function CameraCapture({ onPhotosChange, maxPhotos = 3 }: CameraCapturePr
               </Card>
             </motion.div>
           ))}
-          
+
           {photos.length < maxPhotos && (
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1 }}
             >
-              <Card 
+              <Card
                 className="border-dashed border-2 cursor-pointer hover:border-primary transition-colors"
                 onClick={handleTakePhoto}
               >
@@ -161,7 +161,7 @@ export function CameraCapture({ onPhotosChange, maxPhotos = 3 }: CameraCapturePr
           )}
         </div>
       )}
-      
+
       <p className="text-xs text-muted-foreground text-center">
         {photos.length}/{maxPhotos} photos attached
       </p>

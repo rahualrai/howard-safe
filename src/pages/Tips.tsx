@@ -34,13 +34,9 @@ export default function Tips() {
   }, []);
 
   // Use the new emergency contacts hook with user ID
-  const { 
-    contacts, 
-    groupedContacts, 
-    loading, 
-    error, 
-    lastSyncTime, 
-    refetch, 
+  const {
+    contacts,
+    error,
     isOnline: hookIsOnline,
     isUserContact,
   } = useEmergencyContacts(user?.id);
@@ -52,18 +48,18 @@ export default function Tips() {
   const extractPhoneNumber = (contact: string): string => {
     // Remove all non-digit characters except + for international numbers
     const cleaned = contact.replace(/[^\d+]/g, '');
-    
+
     // If it starts with +, keep it as is
     if (cleaned.startsWith('+')) {
       return cleaned;
     }
-    
+
     // For numbers without country code, warn user and return as-is
     // Let the device handle the number format
     if (cleaned.length >= 10) {
       return cleaned;
     }
-    
+
     // For very short numbers, return as-is (might be extension or special number)
     return cleaned;
   };
@@ -72,10 +68,10 @@ export default function Tips() {
   const handleCall = (contact: string, title: string) => {
     const phoneNumber = extractPhoneNumber(contact);
     const telUrl = `tel:${phoneNumber}`;
-    
+
     // Check if we're on a mobile device or if tel: protocol is supported
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
+
     if (isMobile) {
       // On mobile devices, try to open the dialer
       window.location.href = telUrl;
@@ -104,10 +100,10 @@ export default function Tips() {
   const handleText = (contact: string, title: string) => {
     const phoneNumber = extractPhoneNumber(contact);
     const smsUrl = `sms:${phoneNumber}`;
-    
+
     // Check if we're on a mobile device or if sms: protocol is supported
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
+
     if (isMobile) {
       // On mobile devices, try to open the SMS app
       window.location.href = smsUrl;
@@ -146,23 +142,23 @@ export default function Tips() {
    */
   const isPhoneNumber = (contact: string): boolean => {
     const trimmedContact = contact.trim();
-    
+
     // Special emergency numbers - always show buttons
     const emergencyNumbers = ['911', '112', '999', '000'];
     if (emergencyNumbers.includes(trimmedContact)) {
       return true;
     }
-    
+
     // Remove all non-digit characters (including letters) to check digit count
     const digitsOnly = trimmedContact.replace(/\D/g, '');
     const digitCount = digitsOnly.length;
-    
+
     // Must have at least 7 digits for a valid phone number
     // (allows for international numbers, extensions, etc.)
     if (digitCount < 7) {
       return false;
     }
-    
+
     // Exclude obvious non-phone contacts
     const lowerContact = trimmedContact.toLowerCase();
     const excludePatterns = [
@@ -177,18 +173,18 @@ export default function Tips() {
       '.edu',
       '.gov',
     ];
-    
+
     if (excludePatterns.some(pattern => lowerContact.includes(pattern))) {
       return false;
     }
-    
+
     // Check if it contains phone-like patterns (digits, spaces, dashes, parentheses, plus)
     // This allows formats like: (202) 806-HELP (4357), +1-202-555-1234, etc.
     const phoneLikePattern = /^[\d\s\-()+A-Za-z]+$/;
     if (!phoneLikePattern.test(trimmedContact)) {
       return false;
     }
-    
+
     // If we have enough digits and it looks like a phone number, show buttons
     return true;
   };
@@ -198,44 +194,50 @@ export default function Tips() {
       title: "Walk in Well-Lit Areas",
       category: "Night Safety Tips",
       icon: Eye,
-      description: "Always use well-lit pathways when walking on campus at night. Avoid shortcuts through dark or isolated areas."
+      description: "Always use well-lit pathways when walking on campus at night. Avoid shortcuts through dark or isolated areas.",
+      color: "bg-pastel-purple"
     },
     {
       title: "Travel in Groups",
       category: "Personal Safety",
       icon: Users,
-      description: "When possible, walk with friends or classmates, especially during late hours. There's safety in numbers."
+      description: "When possible, walk with friends or classmates, especially during late hours. There's safety in numbers.",
+      color: "bg-pastel-pink"
     },
     {
       title: "Keep Valuables Secure",
       category: "Personal Security",
       icon: Lock,
-      description: "Never leave personal belongings unattended. Lock your dorm room and use secure storage for valuables."
+      description: "Never leave personal belongings unattended. Lock your dorm room and use secure storage for valuables.",
+      color: "bg-pastel-yellow"
     },
     {
       title: "Know Emergency Locations",
       category: "Emergency Preparedness",
       icon: MapPin,
-      description: "Familiarize yourself with the locations of emergency phones and safe buildings on campus."
+      description: "Familiarize yourself with the locations of emergency phones and safe buildings on campus.",
+      color: "bg-pastel-sky"
     },
     {
       title: "Trust Your Instincts",
       category: "Personal Safety",
       icon: AlertTriangle,
-      description: "If a situation feels unsafe, remove yourself immediately. Trust your gut feelings about people and places."
+      description: "If a situation feels unsafe, remove yourself immediately. Trust your gut feelings about people and places.",
+      color: "bg-pastel-pink"
     },
     {
       title: "Stay Connected",
       category: "Communication",
       icon: Phone,
-      description: "Keep your phone charged and let someone know your whereabouts when going out alone."
+      description: "Keep your phone charged and let someone know your whereabouts when going out alone.",
+      color: "bg-pastel-green"
     }
   ];
 
   // Separate global contacts from user-saved contacts
   const globalContacts: typeof contacts = [];
   const personalContacts: typeof contacts = [];
-  
+
   contacts.forEach(contact => {
     if (isUserContact(contact)) {
       personalContacts.push(contact);
@@ -247,14 +249,15 @@ export default function Tips() {
   // Map database categories to display names and icons
   // Dynamic category labels based on whether user has personal contacts
   const hasPersonalContacts = personalContacts.length > 0;
-  
+
   const categoryConfig = {
-    'emergency-contacts': { 
-      label: hasPersonalContacts ? 'Other Emergency Contacts' : 'Emergency Contacts', 
-      icon: Phone 
+    'emergency-contacts': {
+      label: hasPersonalContacts ? 'Other Emergency Contacts' : 'Emergency Contacts',
+      icon: Phone,
+      color: 'bg-pastel-pink'
     },
-    'support-services': { label: 'Support Services', icon: Users },
-    'safety-resources': { label: 'Safety Resources', icon: Shield },
+    'support-services': { label: 'Support Services', icon: Users, color: 'bg-pastel-blue' },
+    'safety-resources': { label: 'Safety Resources', icon: Shield, color: 'bg-pastel-green' },
   };
 
   // Group global contacts by category
@@ -271,6 +274,7 @@ export default function Tips() {
   const globalResources = Object.entries(globalGrouped).map(([categoryKey, items]) => ({
     category: categoryConfig[categoryKey as keyof typeof categoryConfig]?.label || categoryKey,
     icon: categoryConfig[categoryKey as keyof typeof categoryConfig]?.icon || Shield,
+    color: categoryConfig[categoryKey as keyof typeof categoryConfig]?.color || 'bg-white',
     items: items.map(item => ({
       title: item.title,
       contact: item.contact,
@@ -284,6 +288,7 @@ export default function Tips() {
   const personalResources = personalContacts.length > 0 ? [{
     category: 'Emergency Contacts',
     icon: Heart,
+    color: 'bg-pastel-red', // Distinct color for personal contacts
     items: personalContacts.map(item => ({
       title: item.title,
       contact: item.contact,
@@ -380,9 +385,9 @@ export default function Tips() {
   const filteredResources = useMemo(() => {
     return resources.map(category => {
       // Filter by category
-      const categoryMatches = selectedCategory === 'all' || 
+      const categoryMatches = selectedCategory === 'all' ||
         category.category.toLowerCase().replace(/\s+/g, '-') === selectedCategory;
-      
+
       if (!categoryMatches) {
         return { ...category, items: [] };
       }
@@ -391,15 +396,15 @@ export default function Tips() {
       const filteredItems = category.items.filter(item => {
         const contactId = getContactId(category.category, item.title);
         const isFavorite = favorites.has(contactId);
-        
+
         // If showing favorites only, filter by favorite status
         if (showFavoritesOnly && !isFavorite) {
           return false;
         }
-        
+
         // Filter by search query
         if (!searchQuery.trim()) return true;
-        
+
         const query = searchQuery.toLowerCase();
         return (
           item.title.toLowerCase().includes(query) ||
@@ -420,21 +425,28 @@ export default function Tips() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-primary text-primary-foreground px-4 py-6">
-        <div className="max-w-md mx-auto">
-          <h1 className="text-2xl font-bold">Safety Tips & Resources</h1>
-          <p className="text-primary-foreground/80 mt-1">Stay informed and prepared</p>
-        </div>
-      </header>
+    <div className="min-h-screen bg-mint-50 pb-24">
+      {/* Curved Header Section */}
+      <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-10 overflow-hidden">
+        {/* Decorative Circles */}
+        <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-mint-400/30 blur-3xl" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 rounded-full bg-mint-300/20 blur-2xl" />
 
-      <div className="p-4 max-w-md mx-auto">
+        <div className="px-6 relative z-10 text-center">
+          <h1 className="text-3xl font-friendly font-bold text-white tracking-tight mb-1">
+            Safety Tips & Resources
+          </h1>
+          <p className="text-mint-100 font-medium text-lg">Stay informed and prepared</p>
+        </div>
+      </div>
+
+      <div className="px-6 -mt-8 relative z-10 w-full max-w-md md:max-w-5xl lg:max-w-7xl mx-auto">
         {/* Tab Navigation */}
-        <div className="flex mb-6 bg-muted rounded-lg p-1">
+        <div className="flex mb-6 bg-white rounded-full p-1 shadow-soft max-w-md mx-auto">
           <Button
             variant={activeTab === 'tips' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('tips')}
-            className="flex-1 rounded-md"
+            className={`flex-1 rounded-full transition-all duration-300 ${activeTab === 'tips' ? 'shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <Shield className="h-4 w-4 mr-2" />
             Tips
@@ -442,7 +454,7 @@ export default function Tips() {
           <Button
             variant={activeTab === 'resources' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('resources')}
-            className="flex-1 rounded-md"
+            className={`flex-1 rounded-full transition-all duration-300 ${activeTab === 'resources' ? 'shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <Book className="h-4 w-4 mr-2" />
             Resources
@@ -450,22 +462,22 @@ export default function Tips() {
         </div>
 
         {activeTab === 'tips' ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {safetyTips.map((tip, index) => (
-              <Card key={index} className="border-l-4 border-l-primary">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start space-x-3">
-                    <div className="bg-primary/10 p-2 rounded-lg">
-                      <tip.icon className="h-5 w-5 text-primary" />
+              <Card key={index} className={`border-none shadow-soft rounded-[32px] overflow-hidden hover:shadow-hover transition-all duration-300 ${tip.color}`}>
+                <CardHeader className="pb-2 border-none">
+                  <div className="flex items-start justify-between">
+                    <div className="bg-white/60 p-3 rounded-full backdrop-blur-sm">
+                      <tip.icon className="h-6 w-6 text-ui-charcoal" />
                     </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{tip.title}</CardTitle>
-                      <Badge variant="outline" className="mt-1">{tip.category}</Badge>
-                    </div>
+                    <Badge variant="secondary" className="bg-white/60 text-ui-charcoal hover:bg-white/80 border-none rounded-full px-3 py-1 font-bold">
+                      {tip.category}
+                    </Badge>
                   </div>
+                  <CardTitle className="text-xl font-bold text-ui-charcoal mt-4">{tip.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{tip.description}</p>
+                  <p className="text-ui-charcoal/80 font-medium leading-relaxed">{tip.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -476,7 +488,7 @@ export default function Tips() {
             <div className="space-y-3">
               {/* Offline Alert */}
               {!hookIsOnline && (
-                <Alert className="border-orange-200 bg-orange-50">
+                <Alert className="border-orange-200 bg-orange-50 rounded-2xl">
                   <WifiOff className="h-4 w-4 text-orange-600" />
                   <AlertDescription className="text-orange-800">
                     You're offline. Showing cached emergency contacts. Some features may be limited.
@@ -486,7 +498,7 @@ export default function Tips() {
 
               {/* Error Alert */}
               {error && (
-                <Alert className="border-red-200 bg-red-50">
+                <Alert className="border-red-200 bg-red-50 rounded-2xl">
                   <AlertTriangle className="h-4 w-4 text-red-600" />
                   <AlertDescription className="text-red-800">
                     {error}
@@ -497,7 +509,7 @@ export default function Tips() {
             </div>
 
             {/* Search and Filter Section */}
-            <div className="space-y-4">
+            <div className="space-y-4 bg-white p-4 rounded-[24px] shadow-soft">
               {/* Search Bar */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
@@ -505,14 +517,14 @@ export default function Tips() {
                   placeholder="Search emergency contacts..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10"
+                  className="pl-10 pr-10 rounded-xl bg-mint-50 border-transparent focus:bg-white transition-all"
                 />
                 {searchQuery && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-transparent"
                   >
                     <X size={14} />
                   </Button>
@@ -525,9 +537,9 @@ export default function Tips() {
                   variant={showFavoritesOnly ? "default" : "outline"}
                   size="sm"
                   onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                  className="text-xs"
+                  className="text-xs rounded-full"
                 >
-                  <Heart size={12} className="mr-1" />
+                  <Heart size={12} className={`mr-1 ${showFavoritesOnly ? 'fill-white' : ''}`} />
                   Favorites ({favorites.size})
                 </Button>
               </div>
@@ -540,7 +552,7 @@ export default function Tips() {
                     variant={selectedCategory === category.value ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedCategory(category.value)}
-                    className="text-xs"
+                    className="text-xs rounded-full"
                   >
                     <Filter size={12} className="mr-1" />
                     {category.label}
@@ -554,7 +566,7 @@ export default function Tips() {
                   variant="ghost"
                   size="sm"
                   onClick={clearFilters}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground w-full"
                 >
                   <X size={14} className="mr-1" />
                   Clear all filters
@@ -563,14 +575,15 @@ export default function Tips() {
 
               {/* Note: Personal contacts are managed from Profile Settings */}
               {user && (
-                <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                  💡 Manage your personal emergency contacts from <strong>Profile Settings</strong>
+                <div className="text-xs text-muted-foreground bg-mint-50 p-3 rounded-xl flex items-center gap-2">
+                  <span className="text-lg">💡</span>
+                  <span>Manage your personal emergency contacts from <strong>Profile Settings</strong></span>
                 </div>
               )}
 
               {/* Results Count */}
               {searchQuery && (
-                <div className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground text-center">
                   {filteredResources.reduce((total, category) => total + category.items.length, 0)} result(s) found
                 </div>
               )}
@@ -579,82 +592,86 @@ export default function Tips() {
             {/* Filtered Resources */}
             {filteredResources.length > 0 ? (
               filteredResources.map((category, categoryIndex) => (
-              <div key={categoryIndex}>
-                <div className="flex items-center space-x-2 mb-4">
-                  <category.icon className="h-5 w-5 text-primary" />
-                  <h2 className="text-xl font-semibold">{category.category}</h2>
-                </div>
-                <div className="space-y-3">
-                  {category.items.map((resource, index) => {
-                    const contactId = getContactId(category.category, resource.title);
-                    const isFavorite = favorites.has(contactId);
-                    
-                    return (
-                      <Card key={index} className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold">{resource.title}</h3>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => toggleFavorite(contactId, resource.title)}
-                                  className="h-6 w-6 p-0"
-                                  title={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                                >
-                                  <Star 
-                                    className={`h-4 w-4 ${isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground hover:text-yellow-400'}`} 
-                                  />
-                                </Button>
+                <div key={categoryIndex}>
+                  <div className="flex items-center space-x-2 mb-4 px-2">
+                    <div className="bg-white p-2 rounded-full shadow-sm">
+                      <category.icon className="h-5 w-5 text-mint-500" />
+                    </div>
+                    <h2 className="text-xl font-bold text-ui-charcoal">{category.category}</h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {category.items.map((resource, index) => {
+                      const contactId = getContactId(category.category, resource.title);
+                      const isFavorite = favorites.has(contactId);
+
+                      return (
+                        <Card key={index} className={`border-none shadow-soft rounded-[20px] hover:shadow-hover transition-all duration-300 ${category.color}`}>
+                          <CardContent className="p-5">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-bold text-lg text-ui-charcoal">{resource.title}</h3>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => toggleFavorite(contactId, resource.title)}
+                                    className="h-8 w-8 p-0 rounded-full hover:bg-yellow-50"
+                                    title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                                  >
+                                    <Star
+                                      className={`h-5 w-5 ${isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
+                                    />
+                                  </Button>
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1 font-medium">{resource.description}</p>
+                                <div className="mt-3">
+                                  <Badge variant="secondary" className="text-xs bg-mint-50 text-mint-700 border-none px-3 py-1 rounded-full">
+                                    {resource.contact}
+                                  </Badge>
+                                </div>
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1">{resource.description}</p>
-                              <div className="mt-2">
-                                <Badge variant="secondary" className="text-xs">
-                                  {resource.contact}
-                                </Badge>
-                              </div>
+
+                              {/* Action buttons for phone numbers */}
+                              {isPhoneNumber(resource.contact) && (
+                                <div className="ml-3 flex flex-col gap-2">
+                                  <Button
+                                    size="icon"
+                                    variant="default"
+                                    onClick={() => handleCall(resource.contact, resource.title)}
+                                    className="h-10 w-10 rounded-full shadow-md hover:scale-105 transition-transform"
+                                    title={`Call ${resource.title}`}
+                                  >
+                                    <Phone className="h-5 w-5" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() => handleText(resource.contact, resource.title)}
+                                    className="h-10 w-10 rounded-full border-2 hover:bg-mint-50"
+                                    title={`Text ${resource.title}`}
+                                  >
+                                    <MessageSquare className="h-5 w-5 text-mint-600" />
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                            
-                            {/* Action buttons for phone numbers */}
-                            {isPhoneNumber(resource.contact) && (
-                              <div className="ml-3 flex flex-col gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={() => handleCall(resource.contact, resource.title)}
-                                  className="h-8 w-8 p-0"
-                                  title={`Call ${resource.title}`}
-                                >
-                                  <Phone className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleText(resource.contact, resource.title)}
-                                  className="h-8 w-8 p-0"
-                                  title={`Text ${resource.title}`}
-                                >
-                                  <MessageSquare className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))
+              ))
             ) : (
-              <div className="text-center py-8">
-                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No results found</h3>
-                <p className="text-muted-foreground mb-4">
+              <div className="text-center py-12 bg-white rounded-[32px] shadow-soft">
+                <div className="bg-mint-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-10 w-10 text-mint-300" />
+                </div>
+                <h3 className="text-xl font-bold text-ui-charcoal mb-2">No results found</h3>
+                <p className="text-muted-foreground mb-6 max-w-xs mx-auto">
                   Try adjusting your search terms or clearing the filters
                 </p>
-                <Button variant="outline" onClick={clearFilters}>
+                <Button variant="outline" onClick={clearFilters} className="rounded-full">
                   Clear all filters
                 </Button>
               </div>

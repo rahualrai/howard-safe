@@ -77,7 +77,11 @@ export function AddFriendDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+        >
           <UserPlus className="h-4 w-4 mr-2" />
           Add Friend
         </Button>
@@ -139,7 +143,7 @@ export function AddFriendDialog({
                         size="sm"
                         onClick={() => !isFriend && !hasRequest && handleSendRequest(user.user_id)}
                         disabled={isFriend || hasRequest || isSending}
-                        className="h-8"
+                        className={isFriend || hasRequest ? "h-8" : "h-8 bg-blue-500 hover:bg-blue-600 text-white"}
                       >
                         {isSending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

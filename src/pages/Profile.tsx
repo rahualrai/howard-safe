@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { User } from "@supabase/supabase-js";
-import { Bell, User as UserIcon, LogOut, Shield, AlertTriangle, IdCard, Camera, Upload, X as XIcon } from "lucide-react";
+import { Bell, User as UserIcon, LogOut, Shield, IdCard, Camera, MapPin, Bug, MessageSquare, Sparkles, X, Settings, Download, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSecurityValidation } from "@/hooks/useSecurityValidation";
@@ -17,13 +16,11 @@ import { FriendRequests } from "@/components/FriendRequests";
 import { AddFriendDialog } from "@/components/AddFriendDialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { MapPin } from "lucide-react";
 import { EmergencyContactsManager } from "@/components/EmergencyContactsManager";
 import { useUserEmergencyContacts } from "@/hooks/useUserEmergencyContacts";
 import { BugReportDialog } from "@/components/BugReportDialog";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { ChangelogDialog } from "@/components/ChangelogDialog";
-import { Info, Bug, MessageSquare, Sparkles, X, Settings } from "lucide-react";
 import { useAppUpdates } from "@/hooks/useAppUpdates";
 import { useAdmin } from "@/hooks/useAdmin";
 import { ProfileSkeleton } from "@/components/ProfileSkeleton";
@@ -361,7 +358,7 @@ export default function Profile() {
       console.error('Error updating display name:', error);
       toast({
         title: 'Failed to update display name',
-        description: error.message || 'Please try again.',
+        description: (error as Error).message || 'Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -430,510 +427,510 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border px-4 py-6">
-        <div className="max-w-md mx-auto">
-          <h1 className="text-2xl font-bold text-foreground">Profile</h1>
+    <div className="min-h-screen bg-mint-50 pb-32">
+      {/* Curved Header Section */}
+      <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-10 overflow-hidden">
+        {/* Decorative Circles */}
+        <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-mint-400/30 blur-3xl" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 rounded-full bg-mint-300/20 blur-2xl" />
+
+        <div className="px-6 relative z-10 text-center">
+          <h1 className="text-3xl font-friendly font-bold text-white tracking-tight mb-1">
+            Profile
+          </h1>
+          <p className="text-mint-100 font-medium text-lg">Manage your account & settings</p>
         </div>
-      </header>
+      </div>
 
-      <main className="p-4 max-w-md mx-auto space-y-4 pb-24">
-        {/* Profile Info */}
-        <Card>
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-            <div className="flex items-center space-x-2">
-              <UserIcon className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Account Info</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Avatar */}
-            <div className="flex items-center gap-4 pb-3 border-b border-border">
-              <div className="relative">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage
-                    src={avatarPreview || avatarDisplayUrl || undefined}
-                    alt="Profile picture"
-                  />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                    {currentDisplayName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                {avatarUploading && (
-                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
-                  </div>
-                )}
+      <main className="px-6 -mt-8 relative z-10 w-full max-w-md md:max-w-5xl lg:max-w-7xl mx-auto space-y-6">
+        <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6">
+          {/* Profile Info */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-blue/20 md:col-span-2 lg:col-span-1">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-blue p-2 rounded-full">
+                  <UserIcon className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Account Info</CardTitle>
               </div>
-              <div className="flex-1">
-                <p className="font-semibold text-lg">{currentDisplayName}</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleAvatarSelect}
-                  disabled={avatarUploading}
-                  className="mt-1 h-8 text-xs"
-                >
-                  <Camera className="h-3 w-3 mr-1" />
-                  {avatarPreview ? 'Change' : 'Upload'} Photo
-                </Button>
-              </div>
-            </div>
-
-            {/* Display Name - Show user's name prominently */}
-            <div>
-              <p className="text-sm text-muted-foreground">Name</p>
-              <p className="font-semibold text-lg">{currentDisplayName}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium break-all">{user.email}</p>
-            </div>
-            {profile?.username && profile.username !== (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0]) && (
-              <div>
-                <p className="text-sm text-muted-foreground">Username</p>
-                <p className="font-medium">{String(profile.username)}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-sm text-muted-foreground">Member since</p>
-              <p className="font-medium">
-                {new Date(user.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            {lastLoginInfo && (
-              <div>
-                <p className="text-sm text-muted-foreground">Last sign in</p>
-                <p className="font-medium text-sm">
-                  {new Date(lastLoginInfo.created_at).toLocaleString()}
-                </p>
-              </div>
-            )}
-            {profile?.updated_at && (
-              <div>
-                <p className="text-sm text-muted-foreground">Last updated</p>
-                <p className="font-medium text-sm">
-                  {new Date(profile.updated_at).toLocaleString()}
-                </p>
-              </div>
-            )}
-
-            {/* Admin Status - Only visible to admins */}
-            {isAdmin && (
-              <>
-                <div className="pt-2 border-t border-border">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Account Type</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <p className="font-semibold">Admin</p>
-                        <Badge variant="secondary" className="text-xs">Admin</Badge>
-                      </div>
+            </CardHeader>
+            <CardContent className="space-y-4 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              {/* Avatar */}
+              <div className="flex items-center gap-4 pb-4 border-b border-gray-100">
+                <div className="relative">
+                  <Avatar className="h-20 w-20 border-4 border-mint-100 shadow-sm">
+                    <AvatarImage
+                      src={avatarPreview || avatarDisplayUrl || undefined}
+                      alt="Profile picture"
+                    />
+                    <AvatarFallback className="bg-mint-200 text-mint-700 text-2xl font-bold">
+                      {currentDisplayName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {avatarUploading && (
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent" />
                     </div>
+                  )}
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={handleAvatarSelect}
+                    disabled={avatarUploading}
+                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full shadow-md bg-white hover:bg-gray-50 border border-gray-200"
+                  >
+                    <Camera className="h-4 w-4 text-ui-charcoal" />
+                  </Button>
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-xl text-ui-charcoal">{currentDisplayName}</p>
+                  <p className="text-sm text-muted-foreground break-all">{user.email}</p>
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="secondary" className="bg-mint-50 text-mint-700 hover:bg-mint-100 border-none">
+                      Student
+                    </Badge>
+                    {isAdmin && (
+                      <Badge variant="secondary" className="bg-purple-50 text-purple-700 hover:bg-purple-100 border-none">
+                        Admin
+                      </Badge>
+                    )}
                   </div>
-                  <Button
-                    onClick={() => navigate('/admin')}
-                    className="w-full min-h-[44px]"
-                    size="default"
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Open Admin Panel
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Security Status */}
-        <Card>
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-success" />
-              <CardTitle className="text-lg">Security Status</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg">
-              <div>
-                <p className="font-medium text-sm text-success">Account Secure</p>
-                <p className="text-xs text-muted-foreground">Your account has secure authentication</p>
-              </div>
-              <Badge variant="secondary" className="bg-success/20 text-success">Active</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
-                <p className="font-medium text-sm">Email Verified</p>
-                <p className="text-xs text-muted-foreground">Your email has been confirmed</p>
-              </div>
-              <Badge variant="secondary">
-                {user.email_confirmed_at ? "Verified" : "Pending"}
-              </Badge>
-            </div>
-
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                For security, we monitor account activity and log access events.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-
-        {/* Profile Customization */}
-        <Card>
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-            <div className="flex items-center space-x-2">
-              <UserIcon className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Profile Settings</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Digital ID Management */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm flex items-center gap-2">
-                  <IdCard size={16} />
-                  Digital ID
-                </p>
-                {digitalID ? (
-                  <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {digitalID.full_name} • {digitalID.student_id}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Add your student ID information
-                  </p>
-                )}
-              </div>
-              <Button
-                size="touch"
-                onClick={() => setShowIDForm(true)}
-                className="w-full sm:w-[110px] flex-shrink-0"
-              >
-                {digitalID ? 'Edit' : 'Add'}
-              </Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">Display Name</p>
-                <p className="text-xs text-muted-foreground truncate">{currentDisplayName}</p>
-              </div>
-              <Button
-                size="touch"
-                className="w-full sm:w-[110px] flex-shrink-0"
-                onClick={() => {
-                  setDisplayName(currentDisplayName);
-                  setShowDisplayNameDialog(true);
-                }}
-              >
-                Edit
-              </Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">Emergency Contacts</p>
-                <p className="text-xs text-muted-foreground">
-                  {personalContactsCount > 0
-                    ? `${personalContactsCount} personal contact${personalContactsCount !== 1 ? 's' : ''}`
-                    : 'People to notify in emergencies'}
-                </p>
-              </div>
-              <Button
-                size="touch"
-                onClick={() => setShowEmergencyContacts(true)}
-                className="w-full sm:w-[110px] flex-shrink-0"
-              >
-                Manage
-              </Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">Preferred Language</p>
-                <p className="text-xs text-muted-foreground">English (US)</p>
-              </div>
-              <Button size="touch" className="w-full sm:w-[110px] flex-shrink-0">Change</Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Friends & Location Sharing */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="flex items-center space-x-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Friends & Location</CardTitle>
-            </div>
-            <AddFriendDialog
-              onSearch={searchUsers}
-              searchResults={searchResults}
-              onSendRequest={sendFriendRequest}
-              currentUserId={user?.id || ''}
-              existingFriendIds={friends.map((f) => f.friend_id)}
-              pendingRequests={friendRequests.filter((r) => r.status === 'pending')}
-            />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Location Sharing Toggle */}
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-primary" />
-                <div>
-                  <Label htmlFor="location-sharing" className="font-medium text-sm cursor-pointer">
-                    Share Location with Friends
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    {isSharing ? 'Your location is being shared' : 'Enable to share your location'}
-                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {isSharing ? (
-                  <Button
-                    size="default"
-                    onClick={stopSharingLocation}
-                    className="min-h-[44px] w-[110px]"
-                  >
-                    Stop
-                  </Button>
-                ) : (
-                  <Switch
-                    id="location-sharing"
-                    checked={sharingPreferences?.share_with_friends || false}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        startSharingLocation();
-                      } else {
-                        updateSharingPreferences({ share_with_friends: false });
-                      }
-                    }}
-                  />
-                )}
-              </div>
-            </div>
 
-            {/* Friend Requests */}
-            {friendRequests.filter((r) => r.status === 'pending').length > 0 && (
-              <FriendRequests
-                friendRequests={friendRequests}
-                currentUserId={user?.id || ''}
-                onAccept={acceptFriendRequest}
-                onReject={rejectFriendRequest}
-                onCancel={cancelFriendRequest}
-              />
-            )}
-
-            {/* Friends List */}
-            <FriendsList
-              friends={friends}
-              friendsLocations={friendsLocations}
-              onRemoveFriend={removeFriend}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Notifications */}
-        <Card>
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-            <div className="flex items-center space-x-2">
-              <Bell className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Notifications</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
-                <p className="font-medium text-sm">Emergency Alerts</p>
-                <p className="text-xs text-muted-foreground">Get notified of campus emergencies</p>
-              </div>
-              <Badge variant="secondary">Active</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
-                <p className="font-medium text-sm">Safety Updates</p>
-                <p className="text-xs text-muted-foreground">Campus safety news and tips</p>
-              </div>
-              <Badge variant="secondary">Active</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div>
-                <p className="font-medium text-sm">Incident Reports</p>
-                <p className="text-xs text-muted-foreground">Updates on your submitted reports</p>
-              </div>
-              <Badge variant="outline">Disabled</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Privacy & Security */}
-        <Card>
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-success" />
-              <CardTitle className="text-lg">Privacy & Security</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">Two-Factor Authentication</p>
-                <p className="text-xs text-muted-foreground">Add extra security to your account</p>
-              </div>
-              <Button size="touch" className="w-full sm:w-[110px] flex-shrink-0">Setup</Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">Privacy Settings</p>
-                <p className="text-xs text-muted-foreground">Control who can see your information</p>
-              </div>
-              <Button size="touch" className="w-full sm:w-[110px] flex-shrink-0">Manage</Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">Data Export</p>
-                <p className="text-xs text-muted-foreground">Download your account data</p>
-              </div>
-              <Button size="default" className="min-h-[44px] w-[110px] flex-shrink-0">Export</Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* App & Support */}
-        <Card>
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-            <div className="flex items-center space-x-2">
-              <Info className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">App & Support</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {/* Update Available Alert */}
-            {hasUpdate && (
-              <Alert className="border-primary bg-primary/5">
-                <Sparkles className="h-4 w-4" />
-                <AlertDescription className="flex items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">New Update Available!</p>
-                    <p className="text-xs text-muted-foreground">
-                      Version {latestVersion} is now available. Check out what's new!
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="bg-gray-50 p-3 rounded-2xl">
+                  <p className="text-xs text-muted-foreground mb-1">Member since</p>
+                  <p className="font-semibold text-sm text-ui-charcoal">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                {lastLoginInfo && (
+                  <div className="bg-gray-50 p-3 rounded-2xl">
+                    <p className="text-xs text-muted-foreground mb-1">Last sign in</p>
+                    <p className="font-semibold text-sm text-ui-charcoal">
+                      {new Date(lastLoginInfo.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button
-                      variant="default"
-                      size="default"
-                      onClick={() => {
-                        setShowChangelog(true);
-                        markAsSeen();
-                      }}
-                      className="min-h-[44px]"
-                    >
-                      View Updates
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="default"
-                      className="min-h-[44px] min-w-[44px] p-0 hover:bg-muted"
-                      onClick={() => {
-                        markAsSeen();
-                        toast({
-                          title: "Notification dismissed",
-                          description: "You can always check for updates in What's New.",
-                          duration: 2000,
-                        });
-                      }}
-                      aria-label="Dismiss update notification"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">App Version</p>
-                <p className="text-xs text-muted-foreground">Current version of the app</p>
-              </div>
-              <Badge variant="secondary">{appVersion}</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">What's New</p>
-                  <p className="text-xs text-muted-foreground">See recent updates and changes</p>
-                </div>
-                {hasUpdate && (
-                  <Badge variant="destructive" className="ml-2 flex-shrink-0">
-                    New
-                  </Badge>
                 )}
               </div>
-              <Button
-                size="default"
-                onClick={() => {
-                  setShowChangelog(true);
-                  markAsSeen();
-                }}
-                className="min-h-[44px] w-[110px] flex-shrink-0"
-              >
-                <Sparkles className="h-4 w-4 mr-1" />
-                View
-              </Button>
-            </div>
 
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">Report a Bug</p>
-                <p className="text-xs text-muted-foreground">Found an issue? Let us know</p>
+              {/* Admin Panel Button */}
+              {isAdmin && (
+                <Button
+                  onClick={() => navigate('/admin')}
+                  className="w-full rounded-xl bg-ui-charcoal text-white hover:bg-black shadow-md"
+                  size="default"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Open Admin Panel
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Security Status */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-green/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-green p-2 rounded-full">
+                  <Shield className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Security Status</CardTitle>
               </div>
-              <Button size="default" onClick={() => setShowBugReport(true)} className="min-h-[44px] w-[110px] flex-shrink-0">
-                <Bug className="h-4 w-4 mr-1" />
-                Report
-              </Button>
-            </div>
+            </CardHeader>
 
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">Send Feedback</p>
-                <p className="text-xs text-muted-foreground">Share your thoughts and suggestions</p>
+            <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-100">
+                <div>
+                  <p className="font-bold text-sm text-green-800">Account Secure</p>
+                  <p className="text-xs text-green-600/80">Your account has secure authentication</p>
+                </div>
+                <div className="bg-white p-1 rounded-full shadow-sm">
+                  <Shield className="h-4 w-4 text-green-500" />
+                </div>
               </div>
-              <Button size="default" onClick={() => setShowFeedback(true)} className="min-h-[44px] w-[110px] flex-shrink-0">
-                <MessageSquare className="h-4 w-4 mr-1" />
-                Feedback
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Sign Out */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">Email Verified</p>
+                  <p className="text-xs text-muted-foreground">Your email has been confirmed</p>
+                </div>
+                <Badge variant="secondary" className={user.email_confirmed_at ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}>
+                  {user.email_confirmed_at ? "Verified" : "Pending"}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Profile Customization */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-purple/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-purple p-2 rounded-full">
+                  <Settings className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Settings</CardTitle>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              {/* Digital ID Management */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm flex items-center gap-2 text-ui-charcoal">
+                    <IdCard size={16} className="text-mint-600" />
+                    Digital ID
+                  </p>
+                  {digitalID ? (
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                      {digitalID.full_name} • {digitalID.student_id}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Add your student ID information
+                    </p>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowIDForm(true)}
+                  className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                >
+                  {digitalID ? 'Edit' : 'Add'}
+                </Button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal">Display Name</p>
+                  <p className="text-xs text-muted-foreground truncate">{currentDisplayName}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                  onClick={() => {
+                    setDisplayName(currentDisplayName);
+                    setShowDisplayNameDialog(true);
+                  }}
+                >
+                  Edit
+                </Button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal">Emergency Contacts</p>
+                  <p className="text-xs text-muted-foreground">
+                    {personalContactsCount > 0
+                      ? `${personalContactsCount} personal contact${personalContactsCount !== 1 ? 's' : ''}`
+                      : 'People to notify in emergencies'}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowEmergencyContacts(true)}
+                  className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                >
+                  Manage
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Friends & Location Sharing */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-pink/20 md:col-span-2 lg:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-pink p-2 rounded-full">
+                  <MapPin className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Friends & Location</CardTitle>
+              </div>
+              <AddFriendDialog
+                onSearch={searchUsers}
+                searchResults={searchResults}
+                onSendRequest={sendFriendRequest}
+                currentUserId={user?.id || ''}
+                existingFriendIds={friends.map((f) => f.friend_id)}
+                pendingRequests={friendRequests.filter((r) => r.status === 'pending')}
+              />
+            </CardHeader>
+            <CardContent className="space-y-4 bg-white p-5">
+              {/* Location Sharing Toggle */}
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white p-2 rounded-full shadow-sm">
+                    <MapPin className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <Label htmlFor="location-sharing" className="font-bold text-sm cursor-pointer text-blue-900">
+                      Share Location
+                    </Label>
+                    <p className="text-xs text-blue-700/80">
+                      {isSharing ? 'Visible to friends' : 'Not sharing'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isSharing ? (
+                    <Button
+                      size="sm"
+                      onClick={stopSharingLocation}
+                      className="rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-md"
+                    >
+                      Stop
+                    </Button>
+                  ) : (
+                    <Switch
+                      id="location-sharing"
+                      checked={sharingPreferences?.share_with_friends || false}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          startSharingLocation();
+                        } else {
+                          updateSharingPreferences({ share_with_friends: false });
+                        }
+                      }}
+                      className="data-[state=checked]:bg-blue-600"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Friend Requests */}
+              {friendRequests.filter((r) => r.status === 'pending').length > 0 && (
+                <FriendRequests
+                  friendRequests={friendRequests}
+                  currentUserId={user?.id || ''}
+                  onAccept={acceptFriendRequest}
+                  onReject={rejectFriendRequest}
+                  onCancel={cancelFriendRequest}
+                />
+              )}
+
+              {/* Friends List */}
+              <FriendsList
+                friends={friends}
+                friendsLocations={friendsLocations}
+                onRemoveFriend={removeFriend}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Notifications */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-yellow/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-yellow p-2 rounded-full">
+                  <Bell className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Notifications</CardTitle>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">Emergency Alerts</p>
+                  <p className="text-xs text-muted-foreground">Get notified of campus emergencies</p>
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-200">Active</Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">Safety Updates</p>
+                  <p className="text-xs text-muted-foreground">Campus safety news and tips</p>
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-200">Active</Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">Incident Reports</p>
+                  <p className="text-xs text-muted-foreground">Updates on your submitted reports</p>
+                </div>
+                <Badge variant="outline" className="text-muted-foreground">Disabled</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Privacy & Security */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-sky/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-sky p-2 rounded-full">
+                  <Shield className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Privacy & Security</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal">Two-Factor Authentication</p>
+                  <p className="text-xs text-muted-foreground">Add extra security to your account</p>
+                </div>
+                <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">Setup</Button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal">Privacy Settings</p>
+                  <p className="text-xs text-muted-foreground">Control who can see your information</p>
+                </div>
+                <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">Manage</Button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal flex items-center gap-2">
+                    <Download size={16} className="text-teal-600" />
+                    Data Export
+                  </p>
+                  <p className="text-xs text-muted-foreground">Download your account data</p>
+                </div>
+                <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">Request</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Support & About */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-pink/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-pink p-2 rounded-full">
+                  <HelpCircle className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Support & About</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 bg-white p-5">
+              {hasUpdate && (
+                <Alert className="border-pink-200 bg-pink-50 rounded-2xl mb-2">
+                  <Sparkles className="h-4 w-4 text-pink-600" />
+                  <AlertDescription className="flex items-center justify-between w-full">
+                    <div className="flex-1 mr-2">
+                      <p className="font-bold text-pink-800">Update Available</p>
+                      <p className="text-xs text-pink-700/80">
+                        Version {latestVersion} is now available. Check out what's new!
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          setShowChangelog(true);
+                          markAsSeen();
+                        }}
+                        className="rounded-full bg-pink-600 hover:bg-pink-700 text-white border-none h-8"
+                      >
+                        View
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full hover:bg-pink-100 text-pink-600"
+                        onClick={() => {
+                          markAsSeen();
+                          toast({
+                            title: "Notification dismissed",
+                            description: "You can always check for updates in What's New.",
+                            duration: 2000,
+                          });
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">App Version</p>
+                  <p className="text-xs text-muted-foreground">Current version of the app</p>
+                </div>
+                <Badge variant="secondary" className="bg-gray-200 text-gray-700">{appVersion}</Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm text-ui-charcoal">What's New</p>
+                    {hasUpdate && (
+                      <Badge variant="destructive" className="h-5 px-1.5 text-[10px] bg-pink-500 hover:bg-pink-600">New</Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">See recent updates and changes</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setShowChangelog(true);
+                    markAsSeen();
+                  }}
+                  className="rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-ui-charcoal">Report a Bug</p>
+                  <p className="text-xs text-muted-foreground">Found an issue? Let us know</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setShowBugReport(true)} className="rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">
+                  <Bug className="h-3 w-3 mr-1" />
+                  Report
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-ui-charcoal">Send Feedback</p>
+                  <p className="text-xs text-muted-foreground">Share your thoughts and suggestions</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setShowFeedback(true)} className="rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">
+                  <MessageSquare className="h-3 w-3 mr-1" />
+                  Feedback
+                </Button>
+              </div>
+            </CardContent>
+          </Card >
+        </div>
+
+        {/* Sign Out Button */}
         <Button
+          variant="destructive"
+          className="w-full rounded-2xl h-14 shadow-lg shadow-red-200 hover:shadow-red-300 transition-all active:scale-95 text-lg font-bold"
           onClick={() => setShowSignOutDialog(true)}
-          variant="outline"
-          size="default"
-          className="w-full min-h-[44px] mb-4"
         >
-          <LogOut className="h-4 w-4 mr-2" />
+          <LogOut className="mr-2 h-5 w-5" />
           Sign Out
         </Button>
-      </main>
+
+        <div className="text-center pb-8">
+          <p className="text-xs text-muted-foreground">Howard Safe v{appVersion}</p>
+        </div>
+      </main >
 
       {/* Digital ID Form Dialog */}
-      <DigitalIDForm
+      < DigitalIDForm
         open={showIDForm}
         onOpenChange={setShowIDForm}
         existingData={digitalID}
-        onSuccess={() => user && fetchDigitalID(user.id)}
+        onSuccess={() => user && fetchDigitalID(user.id)
+        }
       />
 
       {/* Emergency Contacts Manager (Twilio Notifications) */}
@@ -964,7 +961,7 @@ export default function Profile() {
 
       {/* Sign Out Confirmation Dialog */}
       <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-[24px]">
           <AlertDialogHeader>
             <AlertDialogTitle>Sign Out</AlertDialogTitle>
             <AlertDialogDescription>
@@ -972,8 +969,8 @@ export default function Profile() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSignOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full">
               Sign Out
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -982,7 +979,7 @@ export default function Profile() {
 
       {/* Display Name Edit Dialog */}
       <Dialog open={showDisplayNameDialog} onOpenChange={setShowDisplayNameDialog}>
-        <DialogContent>
+        <DialogContent className="rounded-[24px]">
           <DialogHeader>
             <DialogTitle>Edit Display Name</DialogTitle>
             <DialogDescription>
@@ -997,7 +994,7 @@ export default function Profile() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Enter your display name"
-                className="mt-2"
+                className="mt-2 rounded-xl"
                 maxLength={50}
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -1010,18 +1007,20 @@ export default function Profile() {
               variant="outline"
               onClick={() => setShowDisplayNameDialog(false)}
               disabled={displayNameSaving}
+              className="rounded-full"
             >
               Cancel
             </Button>
             <Button
               onClick={handleDisplayNameUpdate}
               disabled={displayNameSaving || !displayName.trim() || displayName === currentDisplayName}
+              className="rounded-full"
             >
               {displayNameSaving ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 }
