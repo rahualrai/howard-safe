@@ -42,7 +42,7 @@ export function CalendarStrip() {
                                 className={cn(
                                     "flex flex-col items-center justify-center w-full h-24 rounded-[24px] transition-all duration-300 relative overflow-hidden group",
                                     isSelected
-                                        ? "bg-[#F4E6FF] text-ui-charcoal shadow-lg shadow-purple-200/50"
+                                        ? "bg-pastel-purple text-ui-charcoal shadow-lg shadow-purple-200/50"
                                         : "hover:bg-gray-50 text-gray-400"
                                 )}
                             >
