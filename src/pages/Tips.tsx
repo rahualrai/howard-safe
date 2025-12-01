@@ -39,7 +39,6 @@ export default function Tips() {
     groupedContacts,
     loading,
     error,
-    lastSyncTime,
     refetch,
     isOnline: hookIsOnline,
     isUserContact,
