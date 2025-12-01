@@ -176,7 +176,6 @@ export default function Tips() {
       '.org',
       '.edu',
       '.gov',
-      '.gov',
     ];
 
     if (excludePatterns.some(pattern => lowerContact.includes(pattern))) {
