@@ -345,7 +345,7 @@ export function DigitalIDForm({ open, onOpenChange, existingData, onSuccess }: D
               >
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1 bg-blue-500 hover:bg-blue-600" disabled={loading}>
+              <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90" disabled={loading}>
                 {loading ? "Saving..." : existingData ? "Update" : "Create"} ID
               </Button>
             </div>
