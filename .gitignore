@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 *.claude.env
+
+# Supabase temporary files
+supabase/.temp/
