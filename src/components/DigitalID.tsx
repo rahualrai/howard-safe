@@ -18,8 +18,18 @@ interface DigitalIDData {
   status: string;
 }
 
-export function DigitalID() {
-  const [open, setOpen] = useState(false);
+interface DigitalIDProps {
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function DigitalID({ trigger, open: controlledOpen, onOpenChange: setControlledOpen }: DigitalIDProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? setControlledOpen : setInternalOpen;
+
   const [digitalID, setDigitalID] = useState<DigitalIDData | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,7 +71,7 @@ export function DigitalID() {
 
   const fetchDigitalID = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -142,6 +152,79 @@ export function DigitalID() {
     document.addEventListener('visibilitychange', onVisibility, { once: true });
   };
 
+  const DialogContentBody = (
+    <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="text-center text-xl">Your Howard ID</DialogTitle>
+      </DialogHeader>
+
+      <div className="mt-4">
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Loading your ID...
+          </div>
+        ) : !digitalID ? (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              You haven't set up your digital ID yet. Please add your ID information in your Profile settings.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <div className="mx-auto max-w-lg">
+            <div className="rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-card to-primary/5 overflow-hidden shadow-2xl">
+              {/* Header */}
+              <div className="text-center py-4 bg-primary/10 border-b-2 border-primary/20">
+                <div className="text-sm font-semibold text-primary mb-1">HOWARD UNIVERSITY</div>
+                <div className="text-xs text-muted-foreground">Student Identification Card</div>
+              </div>
+
+              {/* Full Photo Display */}
+              <div className="relative bg-muted">
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt="Student photo ID"
+                    className="w-full h-auto object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-96 bg-muted flex items-center justify-center">
+                    <User className="w-32 h-32 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+
+              {/* Security Notice - Only at bottom */}
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                    For security purposes, do not share screenshots of this ID. Use official channels for identity verification.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" onClick={openAtrium}>Open Atrium App</Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </DialogContent>
+  );
+
+  if (trigger) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+        {DialogContentBody}
+      </Dialog>
+    );
+  }
+
   return (
     <Card className="shadow-primary/10 border-border/50">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -157,62 +240,7 @@ export function DigitalID() {
             </DialogTrigger>
             <Button size="sm" variant="ghost" onClick={openAtrium}>Open Atrium</Button>
           </div>
-
-          <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-center text-xl">Your Howard ID</DialogTitle>
-            </DialogHeader>
-
-            <div className="mt-4">
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Loading your ID...
-                </div>
-              ) : !digitalID ? (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    You haven't set up your digital ID yet. Please add your ID information in your Profile settings.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <div className="mx-auto max-w-lg">
-                  <div className="rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-card to-primary/5 overflow-hidden shadow-2xl">
-                    {/* Header */}
-                    <div className="text-center py-4 bg-primary/10 border-b-2 border-primary/20">
-                      <div className="text-sm font-semibold text-primary mb-1">HOWARD UNIVERSITY</div>
-                      <div className="text-xs text-muted-foreground">Student Identification Card</div>
-                    </div>
-                    
-                    {/* Full Photo Display */}
-                    <div className="relative bg-muted">
-                      {photoUrl ? (
-                        <img
-                          src={photoUrl}
-                          alt="Student photo ID"
-                          className="w-full h-auto object-contain"
-                        />
-                      ) : (
-                        <div className="w-full h-96 bg-muted flex items-center justify-center">
-                          <User className="w-32 h-32 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Security Notice - Only at bottom */}
-                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                          For security purposes, do not share screenshots of this ID. Use official channels for identity verification.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </DialogContent>
+          {DialogContentBody}
         </Dialog>
       </CardHeader>
       <CardContent className="pt-0 text-sm text-muted-foreground">

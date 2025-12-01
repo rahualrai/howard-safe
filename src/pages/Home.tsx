@@ -1,11 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Phone, AlertCircle, ChevronRight, Clock, Shield, MapIcon, Sun, IdCard, AlertTriangle, CalendarDays, Building2, Link as LinkIcon, MessageSquare, CalendarPlus } from "lucide-react";
+import { Phone, AlertCircle, Shield, MapIcon, Sun, IdCard, AlertTriangle, CalendarDays, Building2, Link as LinkIcon, MessageSquare, Bell, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { HomeLoadingScreen } from "@/components/LoadingStates";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { HapticFeedback } from "@/utils/haptics";
@@ -20,9 +19,10 @@ import { EventsCalendar } from "@/components/EventsCalendar";
 import { DiningServices } from "@/components/DiningServices";
 import { QuickLinksDashboard } from "@/components/QuickLinksDashboard";
 import { BisonChat } from "@/components/BisonChat";
-import { CalendarSync } from "@/components/CalendarSync";
 import { AppTile } from "@/components/AppTile";
 import { sendEmergencyAlert } from "@/utils/emergencyAlert";
+import { CalendarStrip } from "@/components/CalendarStrip";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const { toast } = useToast();
@@ -30,13 +30,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null);
       setLoading(false);
     });
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user || null);
@@ -45,30 +43,12 @@ export default function Home() {
 
     return () => subscription.unsubscribe();
   }, []);
-  
-  const emergencyAlerts = [
-    {
-      id: 1,
-      type: "Weather Alert",
-      message: "Severe thunderstorm warning in effect until 8:00 PM",
-      time: "2 hours ago",
-      priority: "medium"
-    },
-    {
-      id: 2,
-      type: "Safety Notice",
-      message: "Construction on Georgia Ave - use alternate routes",
-      time: "4 hours ago",
-      priority: "low"
-    }
-  ];
 
   const refreshAlerts = async () => {
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
     toast({
-      title: "Alerts updated",
-      description: "Latest campus alerts have been loaded."
+      title: "Refreshed",
+      description: "Dashboard updated."
     });
   };
 
@@ -80,14 +60,12 @@ export default function Home() {
   const handleQuickHelp = async () => {
     await HapticFeedback.impact(ImpactStyle.Heavy);
     await HapticFeedback.notification(NotificationType.Warning);
-    
-    // Show loading toast
+
     toast({
       title: "Sending emergency alert...",
       description: "Getting your location and notifying contacts.",
     });
 
-    // Send emergency alert to contacts via Twilio
     const result = await sendEmergencyAlert({
       alertType: 'quick_help',
       message: 'Quick Help button pressed - user may need assistance'
@@ -108,217 +86,193 @@ export default function Home() {
     }
   };
 
+  // Pastel card data mapping
+  const pastelCards = [
+    {
+      id: "quick-help",
+      title: "Quick Help",
+      subtitle: "Emergency Assistance",
+      icon: AlertTriangle, // Changed icon to be more generic, emoji will be added in render
+      color: "bg-red-100",
+      textColor: "text-red-900",
+      action: handleQuickHelp,
+      buttonText: "SOS",
+      fullWidth: true,
+      isEmergency: true,
+      emoji: "🚨" // Added emoji
+    },
+    {
+      id: "report",
+      title: "Report Incident",
+      subtitle: "Submit a tip or report",
+      icon: AlertTriangle,
+      color: "bg-pastel-yellow",
+      textColor: "text-yellow-900",
+      link: "/report",
+      buttonText: "Open"
+    },
+    {
+      id: "map",
+      title: "Campus Map",
+      subtitle: "Navigate safely",
+      icon: MapIcon,
+      color: "bg-pastel-sky",
+      textColor: "text-blue-900",
+      link: "/map",
+      buttonText: "View"
+    },
+    {
+      id: "digital-id",
+      title: "Digital ID",
+      subtitle: "Access campus services",
+      icon: IdCard,
+      color: "bg-mint-200",
+      textColor: "text-teal-900",
+      component: DigitalID, // Pass component class/function
+      buttonText: "Show"
+    },
+    {
+      id: "weather",
+      title: "Weather",
+      subtitle: "Current conditions",
+      icon: Sun,
+      color: "bg-pastel-purple",
+      textColor: "text-purple-900",
+      component: WeatherWidget, // Placeholder, might need modal
+      buttonText: "Check"
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-background" {...pullToRefreshProps}>
+    <div className="min-h-screen bg-mint-50 pb-32" {...pullToRefreshProps}>
       <PullToRefresh
         isRefreshing={isRefreshing}
         pullDistance={pullDistance}
         isTriggered={isTriggered}
         onRefresh={refreshAlerts}
       >
-        {/* Header */}
-        <motion.header 
-          className="bg-gradient-to-r from-card via-card to-card/95 shadow-primary/5 shadow-lg border-b border-border/30 backdrop-blur-sm"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="px-mobile-padding py-6">
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent text-center">Better Safe</h1>
-            <p className="text-sm text-muted-foreground text-center mt-2">Howard University Campus Safety</p>
-            {loading ? null : (
-              <div className="text-center mt-3">
-                {user ? (
-                  <Badge variant="secondary" className="bg-primary/10 text-primary">
-                    Welcome back!
-                  </Badge>
-                ) : (
-                  <Link to="/auth">
-                    <Button variant="outline" size="sm" className="text-primary border-primary hover:bg-primary/10">
-                      Sign In / Sign Up
-                    </Button>
-                  </Link>
-                )}
+        <div className="max-w-md mx-auto bg-white min-h-screen shadow-2xl overflow-hidden relative">
+          {/* Curved Header Section */}
+          <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-6 overflow-hidden">
+            {/* Decorative Circles */}
+            <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-mint-400/30 blur-3xl" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 rounded-full bg-mint-300/20 blur-2xl" />
+
+            <div className="px-6 relative z-10 flex justify-between items-start">
+              <div>
+                <h1 className="text-4xl font-friendly font-bold text-white tracking-tight mb-1">
+                  Hello, {user?.email?.split('@')[0] || 'Alex'}!
+                </h1>
+                <p className="text-mint-100 font-medium text-lg">How you feeling today?</p>
               </div>
-            )}
+              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                <img
+                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full"
+                />
+              </div>
+            </div>
           </div>
-        </motion.header>
 
-        {/* Main Content */}
-        <main className="px-mobile-padding pt-6 pb-24">
-          {/* Quick Help Button */}
-          <motion.div 
-            className="mb-8"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-          >
-            <Button 
-              onClick={handleQuickHelp}
-              className="w-full h-20 bg-gradient-emergency text-white text-xl font-semibold shadow-emergency hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 border-0"
-            >
-              <Phone className="mr-3" size={28} />
-              Quick Help
-            </Button>
-            <p className="text-sm text-muted-foreground text-center mt-2">
-              Emergency? Tap for immediate assistance
-            </p>
-          </motion.div>
+          {/* Main Content */}
+          <main className="px-6 -mt-8 relative z-10 space-y-6">
 
-          {/* Emergency Alerts Section */}
-          <motion.div 
-            className="mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Campus Alerts</h2>
-              <Badge variant="secondary" className="text-xs">
-                {emergencyAlerts.length} Active
-              </Badge>
+            {/* Calendar Strip */}
+            <div className="bg-white rounded-[32px] p-4 shadow-soft">
+              <CalendarStrip />
             </div>
 
-            <div className="space-y-3">
-              {emergencyAlerts.map((alert, index) => (
+            {/* Stacked Pastel Cards */}
+            <div className="space-y-4">
+              {pastelCards.map((card, index) => (
                 <motion.div
-                  key={alert.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
+                  key={card.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="shadow-primary/10 shadow-lg border-border/50 hover:shadow-primary/20 hover:shadow-xl transition-all duration-300 cursor-pointer backdrop-blur-sm bg-card/80">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <AlertCircle 
-                              size={16} 
-                              className={
-                                alert.priority === "high" 
-                                  ? "text-destructive"
-                                  : alert.priority === "medium"
-                                  ? "text-accent"
-                                  : "text-muted-foreground"
-                              }
-                            />
-                            <span className="text-sm font-medium text-foreground">
-                              {alert.type}
-                            </span>
-                            <div className="flex items-center text-xs text-muted-foreground ml-auto">
-                              <Clock size={12} className="mr-1" />
-                              {alert.time}
-                            </div>
-                          </div>
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {alert.message}
-                          </p>
-                        </div>
-                        <ChevronRight size={16} className="text-muted-foreground ml-2 flex-shrink-0" />
+                  {card.component ? (
+                    // If it has a component (like DigitalID), render it with the card as trigger
+                    <card.component trigger={
+                      <div className="cursor-pointer w-full">
+                        <PastelCard card={card} />
                       </div>
-                    </CardContent>
-                  </Card>
+                    } />
+                  ) : card.link ? (
+                    <Link to={card.link} className="block">
+                      <PastelCard card={card} />
+                    </Link>
+                  ) : (
+                    <div onClick={card.action} className={card.action ? "cursor-pointer" : ""}>
+                      <PastelCard card={card} />
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
-          </motion.div>
 
-          {/* Quick Actions (Navigation to dedicated pages) */}
-          <motion.div 
-            className="grid grid-cols-3 gap-3"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-          >
-            <Link to="/tips">
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.15 }}
-              >
-                <Card className="shadow-primary/10 border-border/50 cursor-pointer">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs text-center">Safety Tips</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0 pb-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                      <Shield className="text-primary" size={18} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Link>
+            {/* Other Services Grid (Mini) */}
+            <div className="grid grid-cols-2 gap-4 pt-4 pb-8">
+              <AppTile title="Title IX" icon={<Shield size={24} className="text-purple-500" />}>
+                <TitleIXHub />
+              </AppTile>
+              <AppTile title="Events" icon={<CalendarDays size={24} className="text-pink-500" />}>
+                <EventsCalendar />
+              </AppTile>
+              <AppTile title="Dining" icon={<Building2 size={24} className="text-green-500" />}>
+                <DiningServices />
+              </AppTile>
+              <AppTile title="BisonChat" icon={<MessageSquare size={24} className="text-teal-500" />}>
+                <BisonChat />
+              </AppTile>
+            </div>
 
-            <Link to="/map">
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.15 }}
-              >
-                <Card className="shadow-primary/10 border-border/50 cursor-pointer">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs text-center">Campus Map</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0 pb-3">
-                    <div className="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center mx-auto">
-                      <MapIcon className="text-success" size={18} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Link>
-
-            <Link to="/report">
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.15 }}
-              >
-                <Card className="shadow-primary/10 border-border/50 cursor-pointer">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-xs text-center">Report</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0 pb-3">
-                    <div className="w-10 h-10 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
-                      <AlertCircle className="text-destructive" size={18} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Link>
-          </motion.div>
-          
-          {/* Student Hub App Launcher */}
-          <div className="mt-8 grid grid-cols-3 gap-3 sm:grid-cols-4">
-            <AppTile title="Weather" icon={<Sun size={20} />}>
-              <WeatherWidget />
-            </AppTile>
-            <AppTile title="Digital ID" icon={<IdCard size={20} />}>
-              <DigitalID />
-            </AppTile>
-            <AppTile title="Title IX" icon={<AlertTriangle size={20} className="text-amber-600" />}>
-              <TitleIXHub />
-            </AppTile>
-            <AppTile title="Events" icon={<CalendarDays size={20} />}>
-              <EventsCalendar />
-            </AppTile>
-            <AppTile title="Dining & Services" icon={<Building2 size={20} />}>
-              <DiningServices />
-            </AppTile>
-            <AppTile title="Quick Links" icon={<LinkIcon size={20} />}>
-              <QuickLinksDashboard />
-            </AppTile>
-            <AppTile title="BisonChat" icon={<MessageSquare size={20} />}>
-              <BisonChat />
-            </AppTile>
-            <AppTile title="Calendar Sync" icon={<CalendarPlus size={20} />}>
-              <CalendarSync />
-            </AppTile>
-          </div>
-        </main>
-
+          </main>
+        </div>
       </PullToRefresh>
+    </div>
+  );
+}
+
+function PastelCard({ card }: { card: any }) {
+  return (
+    <div className={cn(
+      "relative p-5 rounded-[28px] flex items-center justify-between shadow-sm transition-transform active:scale-[0.98]",
+      card.color,
+      card.isEmergency && "shadow-md shadow-red-200 border-2 border-red-200 py-8" // Increased padding for emergency
+    )}>
+      <div className="flex items-center gap-4">
+        <div className={cn(
+          "w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm",
+          card.isEmergency ? "bg-red-500 text-white" : "bg-white/40"
+        )}>
+          {card.emoji ? (
+            <span className="text-2xl">{card.emoji}</span>
+          ) : (
+            <card.icon className={cn("w-6 h-6", card.isEmergency ? "text-white" : card.textColor)} />
+          )}
+        </div>
+        <div>
+          <h3 className={cn("font-bold text-lg leading-tight", card.textColor)}>{card.title}</h3>
+          <p className={cn("text-sm opacity-80 font-medium", card.textColor)}>{card.subtitle}</p>
+        </div>
+      </div>
+
+      {card.fullWidth ? (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <div className={cn(
+            "w-14 h-14 rounded-full flex items-center justify-center shadow-sm", // Slightly larger button
+            card.isEmergency ? "bg-red-600 text-white animate-pulse" : "bg-white"
+          )}>
+            <Phone className={cn("w-7 h-7", card.isEmergency ? "text-white" : "text-red-500")} />
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white/30 px-4 py-2 rounded-full text-sm font-bold backdrop-blur-sm text-ui-charcoal/80">
+          {card.buttonText}
+        </div>
+      )}
     </div>
   );
 }

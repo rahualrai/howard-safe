@@ -323,44 +323,50 @@ export default function ReportIncident() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <motion.header
-        className="bg-card shadow-soft border-b border-border"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="px-mobile-padding py-4">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <AlertTriangle className="text-destructive" size={24} />
-            <h1 className="text-2xl font-bold text-primary">Report Incident</h1>
-          </div>
-          <p className="text-sm text-muted-foreground text-center">Estimated response time: &lt; 5 mins</p>
-        </div>
-      </motion.header>
+    <div className="min-h-screen bg-mint-50 pb-32">
+      {/* Curved Header Section */}
+      <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-6 overflow-hidden">
+        {/* Decorative Circles */}
+        <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-mint-400/30 blur-3xl" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 rounded-full bg-mint-300/20 blur-2xl" />
 
-      <main className="px-mobile-padding pt-6 pb-24">
+        <div className="px-6 relative z-10 text-center">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm">
+              <AlertTriangle className="text-white h-6 w-6" />
+            </div>
+            <h1 className="text-3xl font-friendly font-bold text-white tracking-tight">
+              Report Incident
+            </h1>
+          </div>
+          <p className="text-mint-100 font-medium text-lg">Estimated response time: &lt; 5 mins</p>
+        </div>
+      </div>
+
+      <main className="px-6 -mt-8 relative z-10 max-w-md mx-auto space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <Card className="shadow-primary">
-            <CardHeader>
-              <CardTitle className="text-lg">Incident Details</CardTitle>
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-white">
+            <CardHeader className="bg-white border-b border-gray-50 pb-4">
+              <CardTitle className="text-xl font-bold text-ui-charcoal">Incident Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Emergency Disclaimer - Moved to Top */}
-              <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-800">
-                <Phone className="h-4 w-4" />
-                <AlertTitle>Emergency</AlertTitle>
-                <AlertDescription className="text-xs font-medium">
+            <CardContent className="space-y-6 p-5">
+              {/* Emergency Disclaimer */}
+              <Alert variant="destructive" className="bg-red-50 border-red-100 text-red-800 rounded-2xl shadow-sm">
+                <div className="bg-red-100 p-1 rounded-full mr-2">
+                  <Phone className="h-4 w-4 text-red-600" />
+                </div>
+                <AlertTitle className="text-red-900 font-bold">Emergency</AlertTitle>
+                <AlertDescription className="text-xs font-medium text-red-800/90 mt-1">
                   For immediate emergencies, call Campus Security at (202) 806-1100 or dial 911.
                 </AlertDescription>
               </Alert>
 
-              {/* Anonymous Checkbox - Moved to Top */}
-              <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+              {/* Anonymous Checkbox */}
+              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 transition-colors hover:bg-gray-100">
                 <Checkbox
                   id="anonymous"
                   checked={anonymous}
@@ -369,17 +375,19 @@ export default function ReportIncident() {
                       setAnonymous(checked);
                     }
                   }}
+                  className="h-5 w-5 border-2 border-gray-300 data-[state=checked]:bg-mint-500 data-[state=checked]:border-mint-500 rounded-md"
                 />
-                <Label htmlFor="anonymous" className="text-sm font-medium cursor-pointer flex-1">
+                <Label htmlFor="anonymous" className="text-sm font-bold cursor-pointer flex-1 text-ui-charcoal">
                   Report Anonymously
                   <span className="block text-xs text-muted-foreground font-normal mt-0.5">
                     Your identity will be hidden from the report
                   </span>
                 </Label>
               </div>
+
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Category of Incident *</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <Label className="text-base font-bold text-ui-charcoal">Category of Incident *</Label>
+                <div className="grid grid-cols-2 gap-3">
                   {[
                     { id: 'suspicious', label: 'Suspicious Activity' },
                     { id: 'safety_hazard', label: 'Safety Hazard' },
@@ -392,7 +400,10 @@ export default function ReportIncident() {
                       key={type.id}
                       type="button"
                       variant={category === type.id ? "default" : "outline"}
-                      className={`justify-start h-auto py-3 px-3 text-left text-sm whitespace-normal ${category === type.id ? 'border-primary ring-1 ring-primary' : ''}`}
+                      className={`justify-start h-auto py-3 px-4 text-left text-sm whitespace-normal rounded-xl transition-all ${category === type.id
+                          ? 'bg-mint-500 hover:bg-mint-600 text-white shadow-md border-transparent'
+                          : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-mint-600'
+                        }`}
                       onClick={() => {
                         setCategory(type.id);
                         if (type.id !== "other") {
@@ -406,28 +417,29 @@ export default function ReportIncident() {
                   ))}
                 </div>
                 {validationErrors.category && (
-                  <p className="text-sm text-destructive font-medium">{validationErrors.category}</p>
+                  <p className="text-sm text-red-500 font-medium px-1">{validationErrors.category}</p>
                 )}
               </div>
 
               {category === "other" && (
                 <div className="space-y-2">
-                  <Label htmlFor="custom-category">Describe the incident type *</Label>
+                  <Label htmlFor="custom-category" className="font-bold text-ui-charcoal">Describe the incident type *</Label>
                   <Input
                     id="custom-category"
                     placeholder="e.g., Noise complaint, Vandalism, etc."
                     value={customCategory}
                     onChange={(e) => setCustomCategory(e.target.value)}
                     maxLength={100}
+                    className="rounded-xl bg-gray-50 border-transparent focus:bg-white transition-all"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground px-1">
                     {customCategory.length}/100 characters
                   </p>
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="location">Location of Incident</Label>
+                <Label htmlFor="location" className="font-bold text-ui-charcoal">Location of Incident</Label>
                 <div className="space-y-2">
                   <Select
                     value={location}
@@ -451,22 +463,22 @@ export default function ReportIncident() {
                       }
                     }}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full rounded-xl bg-gray-50 border-transparent focus:bg-white h-12">
                       <SelectValue placeholder="Select a building or location" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-[200px]">
-                      <SelectItem value="current_location" className="text-primary font-medium">
+                    <SelectContent className="max-h-[250px] rounded-xl shadow-lg border-gray-100">
+                      <SelectItem value="current_location" className="text-mint-600 font-bold focus:bg-mint-50 focus:text-mint-700">
                         <div className="flex items-center">
                           <MapPin size={14} className="mr-2" />
                           Use Current Location
                         </div>
                       </SelectItem>
                       {HOWARD_BUILDINGS.map((building) => (
-                        <SelectItem key={building.id} value={building.name}>
+                        <SelectItem key={building.id} value={building.name} className="focus:bg-gray-50">
                           {building.name}
                         </SelectItem>
                       ))}
-                      <SelectItem value="other">Other / Not Listed</SelectItem>
+                      <SelectItem value="other" className="focus:bg-gray-50">Other / Not Listed</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -477,16 +489,16 @@ export default function ReportIncident() {
                       value={location === "other" ? "" : location}
                       onChange={(e) => setLocation(e.target.value)}
                       maxLength={200}
-                      className="mt-2"
+                      className="mt-2 rounded-xl bg-gray-50 border-transparent focus:bg-white"
                     />
                   )}
 
                   {validationErrors.location && (
-                    <p className="text-sm text-destructive">{validationErrors.location}</p>
+                    <p className="text-sm text-red-500 font-medium px-1">{validationErrors.location}</p>
                   )}
 
                   {isGettingLocation && (
-                    <div className="flex items-center text-xs text-muted-foreground animate-pulse">
+                    <div className="flex items-center text-xs text-mint-600 font-medium animate-pulse px-1">
                       <Loader size={12} className="mr-2 animate-spin" />
                       Getting precise location...
                     </div>
@@ -495,20 +507,21 @@ export default function ReportIncident() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="incident-time">When did this happen?</Label>
+                <Label htmlFor="incident-time" className="font-bold text-ui-charcoal">When did this happen?</Label>
                 <Input
                   id="incident-time"
                   type="datetime-local"
                   value={incidentTime}
                   onChange={(e) => setIncidentTime(e.target.value)}
+                  className="rounded-xl bg-gray-50 border-transparent focus:bg-white h-12"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground px-1">
                   Optional - leave blank for current time
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Detailed Description *</Label>
+                <Label htmlFor="description" className="font-bold text-ui-charcoal">Detailed Description *</Label>
                 <Textarea
                   id="description"
                   placeholder="Please provide as much detail as possible about what happened... (10-2000 characters)"
@@ -516,34 +529,35 @@ export default function ReportIncident() {
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                   maxLength={2000}
+                  className="rounded-xl bg-gray-50 border-transparent focus:bg-white resize-none p-4"
                 />
-                <div className="flex justify-between text-xs">
-                  <span>{validationErrors.description && <span className="text-destructive font-medium">{validationErrors.description}</span>}</span>
-                  <span className={`${description.length > 1800 ? 'text-destructive font-bold' : description.length > 1500 ? 'text-yellow-600 font-medium' : 'text-muted-foreground'}`}>
+                <div className="flex justify-between text-xs px-1">
+                  <span>{validationErrors.description && <span className="text-red-500 font-medium">{validationErrors.description}</span>}</span>
+                  <span className={`${description.length > 1800 ? 'text-red-500 font-bold' : description.length > 1500 ? 'text-yellow-600 font-medium' : 'text-muted-foreground'}`}>
                     {description.length}/2000 characters
                   </span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Camera size={16} />
+                <Label className="flex items-center gap-2 font-bold text-ui-charcoal">
+                  <Camera size={16} className="text-mint-600" />
                   Attach Photos/Videos
                 </Label>
-                <CameraCapture onPhotosChange={setPhotos} maxPhotos={3} />
+                <div className="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-200">
+                  <CameraCapture onPhotosChange={setPhotos} maxPhotos={3} />
+                </div>
               </div>
 
-              {/* Anonymous Checkbox moved to top */}
-
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="pt-2">
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting || !category || !description || description.length < 10}
-                  className="w-full h-12 bg-gradient-primary text-white text-lg font-semibold shadow-primary"
+                  className="w-full h-14 bg-mint-500 hover:bg-mint-600 text-white text-lg font-bold shadow-lg shadow-mint-200 rounded-full transition-all"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       Submitting...
                     </div>
                   ) : (
@@ -556,20 +570,17 @@ export default function ReportIncident() {
               </motion.div>
 
               {/* Security Notice */}
-              <Alert>
-                <Shield className="h-4 w-4" />
-                <AlertDescription className="text-xs">
+              <Alert className="bg-blue-50 border-blue-100 text-blue-800 rounded-2xl">
+                <Shield className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-xs ml-2">
                   All incident reports are logged for security purposes.
                   {user ? " Your identity is associated with this report." : " Anonymous reports are permitted but may limit follow-up."}
                 </AlertDescription>
               </Alert>
-
-              {/* Emergency disclaimer moved to top */}
             </CardContent>
           </Card>
         </motion.div>
       </main>
-
     </div>
   );
 }

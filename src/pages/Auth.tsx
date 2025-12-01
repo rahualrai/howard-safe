@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { User } from "@supabase/supabase-js";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Shield } from "lucide-react";
+import { AlertCircle, Shield, Lock, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 // Type definitions
@@ -22,6 +22,7 @@ interface PendingSession {
 }
 
 export default function Auth() {
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,13 +68,13 @@ export default function Auth() {
     console.debug('Security event:', eventType, details);
   };
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const sanitizedEmail = sanitizeInput(email).toLowerCase();
-      
+
       // Basic email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(sanitizedEmail)) {
@@ -86,101 +87,116 @@ export default function Auth() {
         return;
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: sanitizedEmail,
-        password,
-      });
-
-      if (error) {
-        // Log failed signin attempt
-        await logSecurityEvent('signin_failed', {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
           email: sanitizedEmail,
-          error: error.message,
-          timestamp: new Date().toISOString()
+          password,
         });
 
-        // Enhanced error messages
-        let userMessage = "Sign in failed. Please check your credentials.";
-        if (error.message.includes("Invalid login credentials")) {
-          userMessage = "Invalid email or password. Please try again.";
-        } else if (error.message.includes("Email not confirmed")) {
-          userMessage = "Please confirm your email address first.";
-        } else if (error.message.includes("Too many requests")) {
-          userMessage = "Too many attempts. Please try again in a few minutes.";
-        }
+        if (error) throw error;
 
         toast({
-          title: "Sign in failed",
-          description: userMessage,
-          variant: "destructive",
+          title: "Account created!",
+          description: "Please check your email to confirm your account.",
         });
-        setLoading(false);
-        return;
-      }
+        setIsSignUp(false);
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: sanitizedEmail,
+          password,
+        });
 
-      // Check if 2FA is enabled for this user (optional - only if table exists)
-      if (data.user) {
-        try {
-          const { data: twoFactorData } = await supabase
-            .from('user_2fa_secrets')
-            .select('is_enabled')
-            .eq('user_id', data.user.id)
-            .single();
+        if (error) {
+          // Log failed signin attempt
+          await logSecurityEvent('signin_failed', {
+            email: sanitizedEmail,
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
 
-          if ((twoFactorData as TwoFASecret)?.is_enabled) {
-            // Store session temporarily and show 2FA input
-            setPendingSession(data);
-            setShow2FA(true);
-            setLoading(false);
-            return;
+          // Enhanced error messages
+          let userMessage = "Sign in failed. Please check your credentials.";
+          if (error.message.includes("Invalid login credentials")) {
+            userMessage = "Invalid email or password. Please try again.";
+          } else if (error.message.includes("Email not confirmed")) {
+            userMessage = "Please confirm your email address first.";
+          } else if (error.message.includes("Too many requests")) {
+            userMessage = "Too many attempts. Please try again in a few minutes.";
           }
-        } catch (error: unknown) {
-          // 2FA table might not exist yet, continue without 2FA
-          console.debug('2FA check skipped:', error);
-        }
-      }
 
-      // Ensure profile exists for friend system
-      if (data.user) {
-        try {
-          await supabase.rpc('ensure_profile_exists', { user_uuid: data.user.id });
-        } catch (error) {
-          // If function doesn't exist yet, try to create profile directly
-          console.debug('Profile ensure function not available, creating profile directly:', error);
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert(
-              {
-                user_id: data.user.id,
-                username: data.user.user_metadata?.username || 
-                         data.user.user_metadata?.full_name || 
-                         data.user.user_metadata?.name || 
-                         data.user.email?.split('@')[0] || 
-                         'User',
-              },
-              { onConflict: 'user_id' }
-            );
-          if (profileError) {
-            console.warn('Could not ensure profile exists:', profileError);
+          toast({
+            title: "Sign in failed",
+            description: userMessage,
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Check if 2FA is enabled for this user (optional - only if table exists)
+        if (data.user) {
+          try {
+            const { data: twoFactorData } = await supabase
+              .from('user_2fa_secrets')
+              .select('is_enabled')
+              .eq('user_id', data.user.id)
+              .single();
+
+            if ((twoFactorData as TwoFASecret)?.is_enabled) {
+              // Store session temporarily and show 2FA input
+              setPendingSession(data);
+              setShow2FA(true);
+              setLoading(false);
+              return;
+            }
+          } catch (error: unknown) {
+            // 2FA table might not exist yet, continue without 2FA
+            console.debug('2FA check skipped:', error);
           }
         }
-      }
 
-      // Log successful signin
-      await logSecurityEvent('signin_success', {
-        email: sanitizedEmail,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error: unknown) {
+        // Ensure profile exists for friend system
+        if (data.user) {
+          try {
+            await supabase.rpc('ensure_profile_exists', { user_uuid: data.user.id });
+          } catch (error) {
+            // If function doesn't exist yet, try to create profile directly
+            console.debug('Profile ensure function not available, creating profile directly:', error);
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .upsert(
+                {
+                  user_id: data.user.id,
+                  username: data.user.user_metadata?.username ||
+                    data.user.user_metadata?.full_name ||
+                    data.user.user_metadata?.name ||
+                    data.user.email?.split('@')[0] ||
+                    'User',
+                },
+                { onConflict: 'user_id' }
+              );
+            if (profileError) {
+              console.warn('Could not ensure profile exists:', profileError);
+            }
+          }
+        }
+
+        // Log successful signin
+        await logSecurityEvent('signin_success', {
+          email: sanitizedEmail,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await logSecurityEvent('signin_error', {
+      await logSecurityEvent('auth_error', {
         error: errorMessage,
         timestamp: new Date().toISOString()
       });
 
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: isSignUp ? "Sign up failed" : "Sign in failed",
+        description: errorMessage || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -250,11 +266,11 @@ export default function Auth() {
     try {
       // Dynamic import to avoid SSR issues
       const { authenticator } = await import('otplib');
-      
+
       if (code.length !== 6 || !/^\d+$/.test(code)) {
         return false;
       }
-      
+
       // Verify the TOTP code
       return authenticator.verify({ token: code, secret });
     } catch (error) {
@@ -308,25 +324,25 @@ export default function Auth() {
   // Show 2FA input if needed
   if (show2FA) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-card border-border shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center text-foreground flex items-center justify-center gap-2">
+      <div className="min-h-screen bg-mint-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white border-none shadow-soft rounded-[32px] overflow-hidden">
+          <CardHeader className="bg-mint-500 text-white pb-8 pt-8">
+            <CardTitle className="text-2xl text-center font-friendly flex items-center justify-center gap-2">
               <Shield className="w-6 h-6" />
               Two-Factor Authentication
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handle2FAVerification} className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
+          <CardContent className="p-6 pt-8">
+            <form onSubmit={handle2FAVerification} className="space-y-6">
+              <Alert className="bg-blue-50 border-blue-100 text-blue-800 rounded-2xl">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="ml-2">
                   Please enter the 6-digit code from your authenticator app.
                 </AlertDescription>
               </Alert>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="2fa-code">Verification Code</Label>
+                <Label htmlFor="2fa-code" className="font-bold text-ui-charcoal">Verification Code</Label>
                 <Input
                   id="2fa-code"
                   type="text"
@@ -335,19 +351,19 @@ export default function Auth() {
                   required
                   placeholder="000000"
                   maxLength={6}
-                  className="text-center text-2xl tracking-widest"
+                  className="text-center text-3xl tracking-[0.5em] h-16 rounded-2xl bg-gray-50 border-transparent focus:bg-white font-bold text-mint-600"
                   autoFocus
                 />
               </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full" 
+
+              <Button
+                type="submit"
+                className="w-full h-12 rounded-full bg-mint-500 hover:bg-mint-600 text-white font-bold shadow-lg shadow-mint-200"
                 disabled={loading || twoFactorCode.length !== 6}
               >
                 {loading ? "Verifying..." : "Verify"}
               </Button>
-              
+
               <Button
                 type="button"
                 variant="ghost"
@@ -356,7 +372,7 @@ export default function Auth() {
                   setTwoFactorCode("");
                   setPendingSession(null);
                 }}
-                className="w-full"
+                className="w-full rounded-full hover:bg-gray-100"
               >
                 Cancel
               </Button>
@@ -368,19 +384,26 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-card border-border shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center text-foreground">
-            Welcome Back
+    <div className="min-h-screen bg-mint-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-white border-none shadow-soft rounded-[32px] overflow-hidden">
+        <CardHeader className="bg-mint-500 text-white pb-10 pt-10 relative overflow-hidden">
+          {/* Decorative circles */}
+          <div className="absolute top-[-20%] right-[-10%] w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-24 h-24 rounded-full bg-white/10 blur-xl" />
+
+          <CardTitle className="text-3xl text-center font-friendly font-bold relative z-10">
+            {isSignUp ? "Create Account" : "Welcome Back"}
           </CardTitle>
+          <p className="text-center text-mint-100 mt-2 relative z-10">
+            {isSignUp ? "Sign up to get started" : "Sign in to continue to Howard Safe"}
+          </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 pt-8 space-y-6">
           {/* Google OAuth Button */}
           <Button
             type="button"
             variant="outline"
-            className="w-full mb-4"
+            className="w-full h-12 rounded-full border-gray-200 hover:bg-gray-50 hover:text-ui-charcoal font-medium shadow-sm transition-all"
             onClick={handleGoogleSignIn}
             disabled={loading}
           >
@@ -407,48 +430,69 @@ export default function Auth() {
 
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-              <Separator />
+              <Separator className="bg-gray-100" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-white px-2 text-muted-foreground font-medium">Or continue with email</span>
             </div>
           </div>
 
-          <form onSubmit={handleSignIn} className="space-y-4">
+          <form onSubmit={handleAuth} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(sanitizeInput(e.target.value))}
-                required
-                placeholder="Enter your email"
-                maxLength={255}
-              />
+              <Label htmlFor="email" className="font-bold text-ui-charcoal">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(sanitizeInput(e.target.value))}
+                  required
+                  placeholder="Enter your email"
+                  maxLength={255}
+                  className="pl-10 h-12 rounded-xl bg-gray-50 border-transparent focus:bg-white transition-all"
+                />
+              </div>
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Enter your password"
-                maxLength={128}
-              />
+              <Label htmlFor="password" className="font-bold text-ui-charcoal">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder={isSignUp ? "Create a password" : "Enter your password"}
+                  maxLength={128}
+                  className="pl-10 h-12 rounded-xl bg-gray-50 border-transparent focus:bg-white transition-all"
+                />
+              </div>
             </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full" 
+
+            <Button
+              type="submit"
+              className="w-full h-12 rounded-full bg-mint-500 hover:bg-mint-600 text-white font-bold shadow-lg shadow-mint-200 mt-2 transition-all"
               disabled={loading}
             >
-              {loading ? "Loading..." : "Sign In"}
+              {loading ? "Loading..." : (isSignUp ? "Create Account" : "Sign In")}
             </Button>
           </form>
+
+          <div className="text-center mt-4">
+            <p className="text-sm text-muted-foreground">
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="ml-1 font-bold text-mint-600 hover:text-mint-700 hover:underline focus:outline-none"
+              >
+                {isSignUp ? "Sign In" : "Sign Up"}
+              </button>
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
