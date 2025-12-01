@@ -36,11 +36,7 @@ export default function Tips() {
   // Use the new emergency contacts hook with user ID
   const {
     contacts,
-    groupedContacts,
-    loading,
     error,
-    lastSyncTime,
-    refetch,
     isOnline: hookIsOnline,
     isUserContact,
   } = useEmergencyContacts(user?.id);
