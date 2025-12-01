@@ -98,7 +98,62 @@ For a detailed breakdown of the frameworks, libraries, and infrastructure used i
     *   **Profile:** User settings, Friend management
 *   **Navigation:** Bottom tab bar for primary navigation (Home, Map, Report, Tips, Profile).
 
-### 10. Testing Strategy
+
+#### I. Frontend (Mobile Web Client)
+This is the user-facing layer where students and faculty interact with the application on their mobile devices.
+*   **Authentication Interface:** Secure login and registration screens supporting email and Google OAuth.
+*   **Incident Reporting Portal:** A streamlined form for users to submit reports with real-time geolocation and photo evidence.
+*   **Interactive Map Interface:** A dynamic map displaying safe zones, friend locations, and recent incidents with filtering capabilities.
+*   **Safety Dashboard:** A central hub for quick access to emergency contacts, safety tips, and recent alerts.
+*   **Friend Management UI:** Interfaces for searching users, sending requests, and managing location sharing preferences.
+
+> **Image Description for Diagram 1 (Frontend Flow):**
+> A user flow diagram showing a student logging in on a mobile screen, navigating to the "Report" tab, filling out a form, and seeing a "Success" modal. Another branch shows the user opening the "Map" tab and seeing pins for friends and safe zones.
+
+#### II. Backend (Application Server & Services)
+This layer manages the core logic, data routing, and real-time communication between the frontend and the database.
+*   **Authentication Service (Supabase Auth):** Verifies user credentials, manages sessions, and handles OAuth callbacks.
+*   **Incident Management Service:** Validates incoming reports, processes geolocation data, and triggers notifications.
+*   **Real-time Location Engine:** Manages WebSocket connections to broadcast live location updates to authorized friends.
+*   **Friendship Service:** Handles the logic for sending, accepting, and declining friend requests and enforcing privacy rules.
+*   **RAG Service (Knowledge Base):** Processes natural language queries about safety policies and retrieves relevant answers using AI.
+
+> **Image Description for Diagram 2 (Backend Architecture):**
+> A block diagram showing the "Mobile App" connecting to "Supabase" via API. Inside Supabase, show blocks for "Auth", "Database", "Realtime", and "Storage". A separate arrow points from the Backend to the "RAG Server" (Python/Flask) for handling AI queries.
+
+#### III. AI/NLP Models (RAG Server)
+These components power the intelligent safety assistant and data processing.
+*   **Query Understanding:** Parses user questions about campus safety (e.g., "Where is the nearest blue light?") using LLMs.
+*   **Context Retrieval:** Searches the vector database for relevant safety documents and policies.
+*   **Response Generation:** Crafts accurate, human-like answers based on the retrieved context using Google Gemini.
+*   **Incident Classification (Planned):** Automatically categorizes incident reports based on text descriptions.
+
+> **Image Description for Diagram 3 (AI/RAG Flow):**
+> A sequence diagram. Step 1: User asks "What do I do in a fire?". Step 2: Query sent to RAG Server. Step 3: Server converts text to vector. Step 4: Server searches Vector DB. Step 5: Retrieved context + Query sent to Gemini LLM. Step 6: Answer returned to User.
+### 10. System Design & Architecture
+
+#### IV. Database and Storage
+Responsible for persistent data storage and content management.
+*   **User Profiles:** Stores identity information, avatars, and preferences.
+*   **Incident Logs:** Securely stores details of reported incidents, including timestamps, types, and locations.
+*   **Geospatial Data:** Stores coordinates for safe zones, buildings, and real-time user locations.
+*   **Social Graph:** Manages relationships (friendships) and sharing permissions between users.
+*   **Evidence Storage:** Encrypted object storage for photos uploaded with incident reports.
+
+> **Image Description for Diagram 4 (Data Model):**
+> An Entity-Relationship Diagram (ERD). Central node is "User". "User" connects to "Incidents" (One-to-Many), "Friendships" (Many-to-Many), and "Location" (One-to-One). "Incidents" has fields like lat/long, type, description.
+
+#### V. Cloud Infrastructure and Security
+This layer ensures the application is secure, scalable, and available.
+*   **Secure API Gateway:** Manages all incoming traffic and enforces rate limiting.
+*   **Row Level Security (RLS):** Database-level policies ensuring users can only access data they are authorized to see (e.g., their own friends' locations).
+*   **Encrypted Storage:** All sensitive data (passwords, locations) is encrypted at rest and in transit (HTTPS/TLS).
+*   **Containerized Deployment:** Docker containers ensure consistent environments across development and production.
+
+> **Image Description for Diagram 5 (Infrastructure):**
+> A cloud infrastructure diagram. A "Cloud/Server" box contains a "Docker Compose" group. Inside are containers for "Nginx" (Frontend), "Supabase" (Backend/DB), and "RAG Server". An "Internet" cloud connects to the Nginx container via HTTPS.
+
+### 11. Testing Strategy
 
 *   **Unit Testing:** Test utility functions and hooks (e.g., location formatting).
 *   **Integration Testing:** Verify Supabase interactions (Auth, DB queries).
