@@ -40,7 +40,6 @@ export default function Tips() {
     loading,
     error,
     lastSyncTime,
-    refetch,
     isOnline: hookIsOnline,
     isUserContact,
   } = useEmergencyContacts(user?.id);
