@@ -161,7 +161,7 @@ export default function Home() {
             <div className="px-6 relative z-10 flex justify-between items-start">
               <div>
                 <h1 className="text-4xl font-friendly font-bold text-white tracking-tight mb-1">
-                  Hello, {user?.email?.split('@')[0] || 'Alex'}!
+                  Hello, {user?.email?.split('@')[0] || 'Guest'}!
                 </h1>
                 <p className="text-mint-100 font-medium text-lg">How you feeling today?</p>
               </div>
