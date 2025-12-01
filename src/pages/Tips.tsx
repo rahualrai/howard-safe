@@ -432,7 +432,7 @@ export default function Tips() {
   return (
     <div className="min-h-screen bg-mint-50 pb-24">
       {/* Curved Header Section */}
-      <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-6 overflow-hidden">
+      <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-10 overflow-hidden">
         {/* Decorative Circles */}
         <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-mint-400/30 blur-3xl" />
         <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 rounded-full bg-mint-300/20 blur-2xl" />
@@ -445,13 +445,13 @@ export default function Tips() {
         </div>
       </div>
 
-      <div className="px-6 -mt-8 relative z-10 max-w-md mx-auto">
+      <div className="px-6 -mt-8 relative z-10 w-full max-w-md md:max-w-5xl lg:max-w-7xl mx-auto">
         {/* Tab Navigation */}
-        <div className="flex mb-6 bg-white rounded-full p-1 shadow-soft">
+        <div className="flex mb-6 bg-white rounded-full p-1 shadow-soft max-w-md mx-auto">
           <Button
             variant={activeTab === 'tips' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('tips')}
-            className={`flex-1 rounded-full transition-all duration-300 ${activeTab === 'tips' ? 'shadow-md' : ''}`}
+            className={`flex-1 rounded-full transition-all duration-300 ${activeTab === 'tips' ? 'shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <Shield className="h-4 w-4 mr-2" />
             Tips
@@ -459,7 +459,7 @@ export default function Tips() {
           <Button
             variant={activeTab === 'resources' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('resources')}
-            className={`flex-1 rounded-full transition-all duration-300 ${activeTab === 'resources' ? 'shadow-md' : ''}`}
+            className={`flex-1 rounded-full transition-all duration-300 ${activeTab === 'resources' ? 'shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
           >
             <Book className="h-4 w-4 mr-2" />
             Resources
@@ -467,7 +467,7 @@ export default function Tips() {
         </div>
 
         {activeTab === 'tips' ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {safetyTips.map((tip, index) => (
               <Card key={index} className={`border-none shadow-soft rounded-[32px] overflow-hidden hover:shadow-hover transition-all duration-300 ${tip.color}`}>
                 <CardHeader className="pb-2 border-none">
@@ -604,7 +604,7 @@ export default function Tips() {
                     </div>
                     <h2 className="text-xl font-bold text-ui-charcoal">{category.category}</h2>
                   </div>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {category.items.map((resource, index) => {
                       const contactId = getContactId(category.category, resource.title);
                       const isFavorite = favorites.has(contactId);

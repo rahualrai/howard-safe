@@ -325,7 +325,7 @@ export default function ReportIncident() {
   return (
     <div className="min-h-screen bg-mint-50 pb-32">
       {/* Curved Header Section */}
-      <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-6 overflow-hidden">
+      <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-10 overflow-hidden">
         {/* Decorative Circles */}
         <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-mint-400/30 blur-3xl" />
         <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 rounded-full bg-mint-300/20 blur-2xl" />
@@ -343,7 +343,7 @@ export default function ReportIncident() {
         </div>
       </div>
 
-      <main className="px-6 -mt-8 relative z-10 max-w-md mx-auto space-y-6">
+      <main className="px-6 -mt-8 relative z-10 w-full max-w-md md:max-w-5xl lg:max-w-7xl mx-auto space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -365,187 +365,212 @@ export default function ReportIncident() {
                 </AlertDescription>
               </Alert>
 
-              {/* Anonymous Checkbox */}
-              <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 transition-colors hover:bg-gray-100">
-                <Checkbox
-                  id="anonymous"
-                  checked={anonymous}
-                  onCheckedChange={(checked) => {
-                    if (typeof checked === 'boolean') {
-                      setAnonymous(checked);
-                    }
-                  }}
-                  className="h-5 w-5 border-2 border-gray-300 data-[state=checked]:bg-mint-500 data-[state=checked]:border-mint-500 rounded-md"
-                />
-                <Label htmlFor="anonymous" className="text-sm font-bold cursor-pointer flex-1 text-ui-charcoal">
-                  Report Anonymously
-                  <span className="block text-xs text-muted-foreground font-normal mt-0.5">
-                    Your identity will be hidden from the report
-                  </span>
-                </Label>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-base font-bold text-ui-charcoal">Category of Incident *</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { id: 'suspicious', label: 'Suspicious Activity' },
-                    { id: 'safety_hazard', label: 'Safety Hazard' },
-                    { id: 'medical', label: 'Medical Emergency' },
-                    { id: 'theft', label: 'Theft/Property' },
-                    { id: 'harassment', label: 'Harassment' },
-                    { id: 'other', label: 'Other' }
-                  ].map((type) => (
-                    <Button
-                      key={type.id}
-                      type="button"
-                      variant={category === type.id ? "default" : "outline"}
-                      className={`justify-start h-auto py-3 px-4 text-left text-sm whitespace-normal rounded-xl transition-all ${category === type.id
-                          ? 'bg-mint-500 hover:bg-mint-600 text-white shadow-md border-transparent'
-                          : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-mint-600'
-                        }`}
-                      onClick={() => {
-                        setCategory(type.id);
-                        if (type.id !== "other") {
-                          setCustomCategory("");
+              <div className="md:grid md:grid-cols-2 md:gap-8">
+                <div className="space-y-6">
+                  {/* Anonymous Checkbox */}
+                  <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 transition-colors hover:bg-gray-100">
+                    <Checkbox
+                      id="anonymous"
+                      checked={anonymous}
+                      onCheckedChange={(checked) => {
+                        if (typeof checked === 'boolean') {
+                          setAnonymous(checked);
                         }
                       }}
-                    >
-                      {category === type.id && <Check size={14} className="mr-2 shrink-0" />}
-                      {type.label}
-                    </Button>
-                  ))}
-                </div>
-                {validationErrors.category && (
-                  <p className="text-sm text-red-500 font-medium px-1">{validationErrors.category}</p>
-                )}
-              </div>
-
-              {category === "other" && (
-                <div className="space-y-2">
-                  <Label htmlFor="custom-category" className="font-bold text-ui-charcoal">Describe the incident type *</Label>
-                  <Input
-                    id="custom-category"
-                    placeholder="e.g., Noise complaint, Vandalism, etc."
-                    value={customCategory}
-                    onChange={(e) => setCustomCategory(e.target.value)}
-                    maxLength={100}
-                    className="rounded-xl bg-gray-50 border-transparent focus:bg-white transition-all"
-                  />
-                  <p className="text-xs text-muted-foreground px-1">
-                    {customCategory.length}/100 characters
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="location" className="font-bold text-ui-charcoal">Location of Incident</Label>
-                <div className="space-y-2">
-                  <Select
-                    value={location}
-                    onValueChange={(val) => {
-                      if (val === "current_location") {
-                        captureCurrentLocation();
-                      } else {
-                        setLocation(val);
-                        setUseCurrentLocation(false);
-
-                        // Look up building coordinates when a building is selected
-                        const selectedBuilding = HOWARD_BUILDINGS.find(b => b.name === val);
-                        if (selectedBuilding) {
-                          setCoordinates({
-                            latitude: selectedBuilding.latitude,
-                            longitude: selectedBuilding.longitude
-                          });
-                        } else {
-                          setCoordinates(null); // For "Other" option
-                        }
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="w-full rounded-xl bg-gray-50 border-transparent focus:bg-white h-12">
-                      <SelectValue placeholder="Select a building or location" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[250px] rounded-xl shadow-lg border-gray-100">
-                      <SelectItem value="current_location" className="text-mint-600 font-bold focus:bg-mint-50 focus:text-mint-700">
-                        <div className="flex items-center">
-                          <MapPin size={14} className="mr-2" />
-                          Use Current Location
-                        </div>
-                      </SelectItem>
-                      {HOWARD_BUILDINGS.map((building) => (
-                        <SelectItem key={building.id} value={building.name} className="focus:bg-gray-50">
-                          {building.name}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="other" className="focus:bg-gray-50">Other / Not Listed</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {/* Show text input if "Other" is selected or if we have a custom location that isn't in the list (legacy support) */}
-                  {(location === "other" || (location && location !== "current_location" && !HOWARD_BUILDINGS.find(b => b.name === location))) && (
-                    <Input
-                      placeholder="Enter specific location details..."
-                      value={location === "other" ? "" : location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      maxLength={200}
-                      className="mt-2 rounded-xl bg-gray-50 border-transparent focus:bg-white"
+                      className="h-5 w-5 border-2 border-gray-300 data-[state=checked]:bg-mint-500 data-[state=checked]:border-mint-500 rounded-md"
                     />
-                  )}
+                    <Label htmlFor="anonymous" className="text-sm font-bold cursor-pointer flex-1 text-ui-charcoal">
+                      Report Anonymously
+                      <span className="block text-xs text-muted-foreground font-normal mt-0.5">
+                        Your identity will be hidden from the report
+                      </span>
+                    </Label>
+                  </div>
 
-                  {validationErrors.location && (
-                    <p className="text-sm text-red-500 font-medium px-1">{validationErrors.location}</p>
-                  )}
+                  <div className="space-y-3">
+                    <Label className="text-base font-bold text-ui-charcoal">Category of Incident *</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { id: 'suspicious', label: 'Suspicious Activity' },
+                        { id: 'safety_hazard', label: 'Safety Hazard' },
+                        { id: 'medical', label: 'Medical Emergency' },
+                        { id: 'theft', label: 'Theft/Property' },
+                        { id: 'harassment', label: 'Harassment' },
+                        { id: 'other', label: 'Other' }
+                      ].map((type) => (
+                        <Button
+                          key={type.id}
+                          type="button"
+                          variant={category === type.id ? "default" : "outline"}
+                          className={`justify-start h-auto py-3 px-4 text-left text-sm whitespace-normal rounded-xl transition-all ${category === type.id
+                            ? 'bg-mint-500 hover:bg-mint-600 text-white shadow-md border-transparent'
+                            : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-mint-600'
+                            }`}
+                          onClick={() => {
+                            setCategory(type.id);
+                            if (type.id !== "other") {
+                              setCustomCategory("");
+                            }
+                          }}
+                        >
+                          {category === type.id && <Check size={14} className="mr-2 shrink-0" />}
+                          {type.label}
+                        </Button>
+                      ))}
+                    </div>
+                    {validationErrors.category && (
+                      <p className="text-sm text-red-500 font-medium px-1">{validationErrors.category}</p>
+                    )}
+                  </div>
 
-                  {isGettingLocation && (
-                    <div className="flex items-center text-xs text-mint-600 font-medium animate-pulse px-1">
-                      <Loader size={12} className="mr-2 animate-spin" />
-                      Getting precise location...
+                  {category === "other" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="custom-category" className="font-bold text-ui-charcoal">Describe the incident type *</Label>
+                      <Input
+                        id="custom-category"
+                        placeholder="e.g., Noise complaint, Vandalism, etc."
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        maxLength={100}
+                        className="rounded-xl bg-gray-50 border-transparent focus:bg-white transition-all"
+                      />
+                      <p className="text-xs text-muted-foreground px-1">
+                        {customCategory.length}/100 characters
+                      </p>
                     </div>
                   )}
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="incident-time" className="font-bold text-ui-charcoal">When did this happen?</Label>
-                <Input
-                  id="incident-time"
-                  type="datetime-local"
-                  value={incidentTime}
-                  onChange={(e) => setIncidentTime(e.target.value)}
-                  className="rounded-xl bg-gray-50 border-transparent focus:bg-white h-12"
-                />
-                <p className="text-xs text-muted-foreground px-1">
-                  Optional - leave blank for current time
-                </p>
-              </div>
+                <div className="space-y-6 mt-6 md:mt-0">
+                  <div className="space-y-2">
+                    <Label htmlFor="location" className="font-bold text-ui-charcoal">Location of Incident</Label>
+                    <div className="space-y-2">
+                      <Select
+                        value={location}
+                        onValueChange={(val) => {
+                          if (val === "current_location") {
+                            captureCurrentLocation();
+                          } else {
+                            setLocation(val);
+                            setUseCurrentLocation(false);
 
-              <div className="space-y-2">
-                <Label htmlFor="description" className="font-bold text-ui-charcoal">Detailed Description *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Please provide as much detail as possible about what happened... (10-2000 characters)"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  maxLength={2000}
-                  className="rounded-xl bg-gray-50 border-transparent focus:bg-white resize-none p-4"
-                />
-                <div className="flex justify-between text-xs px-1">
-                  <span>{validationErrors.description && <span className="text-red-500 font-medium">{validationErrors.description}</span>}</span>
-                  <span className={`${description.length > 1800 ? 'text-red-500 font-bold' : description.length > 1500 ? 'text-yellow-600 font-medium' : 'text-muted-foreground'}`}>
-                    {description.length}/2000 characters
-                  </span>
-                </div>
-              </div>
+                            // Look up building coordinates when a building is selected
+                            const selectedBuilding = HOWARD_BUILDINGS.find(b => b.name === val);
+                            if (selectedBuilding) {
+                              setCoordinates({
+                                latitude: selectedBuilding.latitude,
+                                longitude: selectedBuilding.longitude
+                              });
+                            } else {
+                              setCoordinates(null); // For "Other" option
+                            }
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full rounded-xl bg-gray-50 border-transparent focus:bg-white h-12">
+                          <SelectValue placeholder="Select a building or location" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[250px] rounded-xl shadow-lg border-gray-100">
+                          <SelectItem value="current_location" className="text-mint-600 font-bold focus:bg-mint-50 focus:text-mint-700">
+                            <div className="flex items-center">
+                              <MapPin size={14} className="mr-2" />
+                              Use Current Location
+                            </div>
+                          </SelectItem>
+                          {HOWARD_BUILDINGS.map((building) => (
+                            <SelectItem key={building.id} value={building.name} className="focus:bg-gray-50">
+                              {building.name}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="other" className="focus:bg-gray-50">Other / Not Listed</SelectItem>
+                        </SelectContent>
+                      </Select>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2 font-bold text-ui-charcoal">
-                  <Camera size={16} className="text-mint-600" />
-                  Attach Photos/Videos
-                </Label>
-                <div className="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-200">
-                  <CameraCapture onPhotosChange={setPhotos} maxPhotos={3} />
+                      {/* Show text input if "Other" is selected or if we have a custom location that isn't in the list (legacy support) */}
+                      {(location === "other" || (location && location !== "current_location" && !HOWARD_BUILDINGS.find(b => b.name === location))) && (
+                        <Input
+                          placeholder="Enter specific location details..."
+                          value={location === "other" ? "" : location}
+                          onChange={(e) => setLocation(e.target.value)}
+                          maxLength={200}
+                          className="mt-2 rounded-xl bg-gray-50 border-transparent focus:bg-white"
+                        />
+                      )}
+
+                      {validationErrors.location && (
+                        <p className="text-sm text-red-500 font-medium px-1">{validationErrors.location}</p>
+                      )}
+
+                      {isGettingLocation && (
+                        <div className="flex items-center text-xs text-mint-600 font-medium animate-pulse px-1">
+                          <Loader size={12} className="mr-2 animate-spin" />
+                          Getting precise location...
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="incident-time" className="font-bold text-ui-charcoal">When did this happen?</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="incident-time"
+                        type="datetime-local"
+                        value={incidentTime}
+                        onChange={(e) => setIncidentTime(e.target.value)}
+                        className="rounded-xl bg-gray-50 border-transparent focus:bg-white h-12 text-black placeholder:text-gray-500 flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const now = new Date();
+                          const nyTime = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+                          const year = nyTime.getFullYear();
+                          const month = String(nyTime.getMonth() + 1).padStart(2, '0');
+                          const day = String(nyTime.getDate()).padStart(2, '0');
+                          const hours = String(nyTime.getHours()).padStart(2, '0');
+                          const minutes = String(nyTime.getMinutes()).padStart(2, '0');
+                          setIncidentTime(`${year}-${month}-${day}T${hours}:${minutes}`);
+                        }}
+                        className="h-12 px-4 rounded-xl border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-medium"
+                      >
+                        Now
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground px-1">
+                      Defaults to current time. Tap to change.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description" className="font-bold text-ui-charcoal">Detailed Description *</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Please provide as much detail as possible about what happened... (10-2000 characters)"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
+                      maxLength={2000}
+                      className="rounded-xl bg-gray-50 border-transparent focus:bg-white resize-none p-4 text-black placeholder:text-gray-500"
+                    />
+                    <div className="flex justify-between text-xs px-1">
+                      <span>{validationErrors.description && <span className="text-red-500 font-medium">{validationErrors.description}</span>}</span>
+                      <span className={`${description.length > 1800 ? 'text-red-500 font-bold' : description.length > 1500 ? 'text-yellow-600 font-medium' : 'text-muted-foreground'}`}>
+                        {description.length}/2000 characters
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 font-bold text-ui-charcoal">
+                      <Camera size={16} className="text-mint-600" />
+                      Attach Photos/Videos
+                    </Label>
+                    <div className="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-200">
+                      <CameraCapture onPhotosChange={setPhotos} maxPhotos={3} />
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -103,11 +103,12 @@ All colors MUST be HSL for consistency and theming.
     /* mint-50 */
 
     /* Card & Surface Colors */
-    --card: 176 40% 15%;
-    --card-foreground: 160 100% 98%;
+    /* Card & Surface Colors - FORCED LIGHT IN DARK MODE */
+    --card: 0 0% 100%;
+    --card-foreground: 176 48% 11%;
 
-    --popover: 176 40% 15%;
-    --popover-foreground: 160 100% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 176 48% 11%;
 
     /* Primary - mint-400 #7DD9C5 */
     --primary: 167 54% 67%;
@@ -161,6 +162,12 @@ All colors MUST be HSL for consistency and theming.
 @layer base {
   * {
     @apply border-border;
+  }
+
+  /* Force input text to be visible */
+  input,
+  textarea {
+    @apply text-gray-900 dark:text-gray-100;
   }
 
   body {

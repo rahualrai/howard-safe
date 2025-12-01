@@ -79,7 +79,7 @@ export function FriendsList({ friends, friendsLocations, onRemoveFriend }: Frien
             return (
               <div
                 key={friend.id}
-                className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                className="flex items-center justify-between p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <Avatar className="h-10 w-10">
@@ -93,7 +93,7 @@ export function FriendsList({ friends, friendsLocations, onRemoveFriend }: Frien
                     <div className="flex items-center gap-2 mt-1">
                       {hasLocation ? (
                         <>
-                          <MapPin className="h-3 w-3 text-green-500" />
+                          <span className="text-sm">👤</span>
                           <span className="text-xs text-muted-foreground">
                             {locationAge !== null
                               ? locationAge < 1

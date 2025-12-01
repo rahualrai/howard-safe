@@ -151,9 +151,9 @@ export default function Home() {
         isTriggered={isTriggered}
         onRefresh={refreshAlerts}
       >
-        <div className="max-w-md mx-auto bg-white min-h-screen shadow-2xl overflow-hidden relative">
+        <div className="w-full max-w-md md:max-w-5xl lg:max-w-7xl mx-auto bg-white min-h-screen shadow-2xl overflow-hidden relative transition-all duration-300">
           {/* Curved Header Section */}
-          <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-6 overflow-hidden">
+          <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-10 overflow-hidden">
             {/* Decorative Circles */}
             <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-mint-400/30 blur-3xl" />
             <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 rounded-full bg-mint-300/20 blur-2xl" />
@@ -179,32 +179,33 @@ export default function Home() {
           <main className="px-6 -mt-8 relative z-10 space-y-6">
 
             {/* Calendar Strip */}
-            <div className="bg-white rounded-[32px] p-4 shadow-soft">
+            <div className="bg-white dark:bg-card rounded-[32px] p-4 shadow-soft">
               <CalendarStrip />
             </div>
 
-            {/* Stacked Pastel Cards */}
-            <div className="space-y-4">
+            {/* Stacked Pastel Cards - Responsive Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {pastelCards.map((card, index) => (
                 <motion.div
                   key={card.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
+                  className={cn(card.fullWidth ? "md:col-span-2 lg:col-span-3" : "")}
                 >
                   {card.component ? (
                     // If it has a component (like DigitalID), render it with the card as trigger
                     <card.component trigger={
-                      <div className="cursor-pointer w-full">
+                      <div className="cursor-pointer w-full h-full">
                         <PastelCard card={card} />
                       </div>
                     } />
                   ) : card.link ? (
-                    <Link to={card.link} className="block">
+                    <Link to={card.link} className="block h-full">
                       <PastelCard card={card} />
                     </Link>
                   ) : (
-                    <div onClick={card.action} className={card.action ? "cursor-pointer" : ""}>
+                    <div onClick={card.action} className={cn("h-full", card.action ? "cursor-pointer" : "")}>
                       <PastelCard card={card} />
                     </div>
                   )}
@@ -213,7 +214,7 @@ export default function Home() {
             </div>
 
             {/* Other Services Grid (Mini) */}
-            <div className="grid grid-cols-2 gap-4 pt-4 pb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 pb-8">
               <AppTile title="Title IX" icon={<Shield size={24} className="text-purple-500" />}>
                 <TitleIXHub />
               </AppTile>

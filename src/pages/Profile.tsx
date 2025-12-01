@@ -422,7 +422,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-mint-50 pb-32">
       {/* Curved Header Section */}
-      <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-6 overflow-hidden">
+      <div className="relative bg-mint-500 pt-12 pb-16 rounded-b-[40px] shadow-lg mb-10 overflow-hidden">
         {/* Decorative Circles */}
         <div className="absolute top-[-20%] right-[-10%] w-64 h-64 rounded-full bg-mint-400/30 blur-3xl" />
         <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 rounded-full bg-mint-300/20 blur-2xl" />
@@ -435,470 +435,472 @@ export default function Profile() {
         </div>
       </div>
 
-      <main className="px-6 -mt-8 relative z-10 max-w-md mx-auto space-y-6">
-        {/* Profile Info */}
-        <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-blue/20">
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
-            <div className="flex items-center space-x-2">
-              <div className="bg-pastel-blue p-2 rounded-full">
-                <UserIcon className="h-5 w-5 text-ui-charcoal" />
+      <main className="px-6 -mt-8 relative z-10 w-full max-w-md md:max-w-5xl lg:max-w-7xl mx-auto space-y-6">
+        <div className="space-y-6 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6">
+          {/* Profile Info */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-blue/20 md:col-span-2 lg:col-span-1">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-blue p-2 rounded-full">
+                  <UserIcon className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Account Info</CardTitle>
               </div>
-              <CardTitle className="text-lg font-bold text-ui-charcoal">Account Info</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
-            {/* Avatar */}
-            <div className="flex items-center gap-4 pb-4 border-b border-gray-100">
-              <div className="relative">
-                <Avatar className="h-20 w-20 border-4 border-mint-100 shadow-sm">
-                  <AvatarImage
-                    src={avatarPreview || avatarDisplayUrl || undefined}
-                    alt="Profile picture"
-                  />
-                  <AvatarFallback className="bg-mint-200 text-mint-700 text-2xl font-bold">
-                    {currentDisplayName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                {avatarUploading && (
-                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent" />
-                  </div>
-                )}
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  onClick={handleAvatarSelect}
-                  disabled={avatarUploading}
-                  className="absolute bottom-0 right-0 h-8 w-8 rounded-full shadow-md bg-white hover:bg-gray-50 border border-gray-200"
-                >
-                  <Camera className="h-4 w-4 text-ui-charcoal" />
-                </Button>
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-xl text-ui-charcoal">{currentDisplayName}</p>
-                <p className="text-sm text-muted-foreground break-all">{user.email}</p>
-                <div className="flex gap-2 mt-2">
-                  <Badge variant="secondary" className="bg-mint-50 text-mint-700 hover:bg-mint-100 border-none">
-                    Student
-                  </Badge>
-                  {isAdmin && (
-                    <Badge variant="secondary" className="bg-purple-50 text-purple-700 hover:bg-purple-100 border-none">
-                      Admin
-                    </Badge>
+            </CardHeader>
+            <CardContent className="space-y-4 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              {/* Avatar */}
+              <div className="flex items-center gap-4 pb-4 border-b border-gray-100">
+                <div className="relative">
+                  <Avatar className="h-20 w-20 border-4 border-mint-100 shadow-sm">
+                    <AvatarImage
+                      src={avatarPreview || avatarDisplayUrl || undefined}
+                      alt="Profile picture"
+                    />
+                    <AvatarFallback className="bg-mint-200 text-mint-700 text-2xl font-bold">
+                      {currentDisplayName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {avatarUploading && (
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent" />
+                    </div>
                   )}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="bg-gray-50 p-3 rounded-2xl">
-                <p className="text-xs text-muted-foreground mb-1">Member since</p>
-                <p className="font-semibold text-sm text-ui-charcoal">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              {lastLoginInfo && (
-                <div className="bg-gray-50 p-3 rounded-2xl">
-                  <p className="text-xs text-muted-foreground mb-1">Last sign in</p>
-                  <p className="font-semibold text-sm text-ui-charcoal">
-                    {new Date(lastLoginInfo.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Admin Panel Button */}
-            {isAdmin && (
-              <Button
-                onClick={() => navigate('/admin')}
-                className="w-full rounded-xl bg-ui-charcoal text-white hover:bg-black shadow-md"
-                size="default"
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Open Admin Panel
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Security Status */}
-        <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-green/20">
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
-            <div className="flex items-center space-x-2">
-              <div className="bg-pastel-green p-2 rounded-full">
-                <Shield className="h-5 w-5 text-ui-charcoal" />
-              </div>
-              <CardTitle className="text-lg font-bold text-ui-charcoal">Security Status</CardTitle>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-100">
-              <div>
-                <p className="font-bold text-sm text-green-800">Account Secure</p>
-                <p className="text-xs text-green-600/80">Your account has secure authentication</p>
-              </div>
-              <div className="bg-white p-1 rounded-full shadow-sm">
-                <Shield className="h-4 w-4 text-green-500" />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <div>
-                <p className="font-medium text-sm text-ui-charcoal">Email Verified</p>
-                <p className="text-xs text-muted-foreground">Your email has been confirmed</p>
-              </div>
-              <Badge variant="secondary" className={user.email_confirmed_at ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}>
-                {user.email_confirmed_at ? "Verified" : "Pending"}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Profile Customization */}
-        <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-purple/20">
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
-            <div className="flex items-center space-x-2">
-              <div className="bg-pastel-purple p-2 rounded-full">
-                <Settings className="h-5 w-5 text-ui-charcoal" />
-              </div>
-              <CardTitle className="text-lg font-bold text-ui-charcoal">Settings</CardTitle>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
-            {/* Digital ID Management */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm flex items-center gap-2 text-ui-charcoal">
-                  <IdCard size={16} className="text-mint-600" />
-                  Digital ID
-                </p>
-                {digitalID ? (
-                  <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {digitalID.full_name} • {digitalID.student_id}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Add your student ID information
-                  </p>
-                )}
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowIDForm(true)}
-                className="w-full sm:w-auto rounded-full border-gray-200 hover:bg-white hover:text-mint-600"
-              >
-                {digitalID ? 'Edit' : 'Add'}
-              </Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-ui-charcoal">Display Name</p>
-                <p className="text-xs text-muted-foreground truncate">{currentDisplayName}</p>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full sm:w-auto rounded-full border-gray-200 hover:bg-white hover:text-mint-600"
-                onClick={() => {
-                  setDisplayName(currentDisplayName);
-                  setShowDisplayNameDialog(true);
-                }}
-              >
-                Edit
-              </Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-ui-charcoal">Emergency Contacts</p>
-                <p className="text-xs text-muted-foreground">
-                  {personalContactsCount > 0
-                    ? `${personalContactsCount} personal contact${personalContactsCount !== 1 ? 's' : ''}`
-                    : 'People to notify in emergencies'}
-                </p>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowEmergencyContacts(true)}
-                className="w-full sm:w-auto rounded-full border-gray-200 hover:bg-white hover:text-mint-600"
-              >
-                Manage
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Friends & Location Sharing */}
-        <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-pink/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-transparent">
-            <div className="flex items-center space-x-2">
-              <div className="bg-pastel-pink p-2 rounded-full">
-                <MapPin className="h-5 w-5 text-ui-charcoal" />
-              </div>
-              <CardTitle className="text-lg font-bold text-ui-charcoal">Friends & Location</CardTitle>
-            </div>
-            <AddFriendDialog
-              onSearch={searchUsers}
-              searchResults={searchResults}
-              onSendRequest={sendFriendRequest}
-              currentUserId={user?.id || ''}
-              existingFriendIds={friends.map((f) => f.friend_id)}
-              pendingRequests={friendRequests.filter((r) => r.status === 'pending')}
-            />
-          </CardHeader>
-          <CardContent className="space-y-4 bg-white p-5">
-            {/* Location Sharing Toggle */}
-            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-2xl border border-purple-100">
-              <div className="flex items-center gap-3">
-                <div className="bg-white p-2 rounded-full shadow-sm">
-                  <MapPin className="h-4 w-4 text-purple-500" />
-                </div>
-                <div>
-                  <Label htmlFor="location-sharing" className="font-bold text-sm cursor-pointer text-purple-900">
-                    Share Location
-                  </Label>
-                  <p className="text-xs text-purple-700/80">
-                    {isSharing ? 'Visible to friends' : 'Not sharing'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {isSharing ? (
                   <Button
-                    size="sm"
-                    onClick={stopSharingLocation}
-                    className="rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-md"
+                    size="icon"
+                    variant="secondary"
+                    onClick={handleAvatarSelect}
+                    disabled={avatarUploading}
+                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full shadow-md bg-white hover:bg-gray-50 border border-gray-200"
                   >
-                    Stop
+                    <Camera className="h-4 w-4 text-ui-charcoal" />
                   </Button>
-                ) : (
-                  <Switch
-                    id="location-sharing"
-                    checked={sharingPreferences?.share_with_friends || false}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        startSharingLocation();
-                      } else {
-                        updateSharingPreferences({ share_with_friends: false });
-                      }
-                    }}
-                    className="data-[state=checked]:bg-purple-600"
-                  />
-                )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-xl text-ui-charcoal">{currentDisplayName}</p>
+                  <p className="text-sm text-muted-foreground break-all">{user.email}</p>
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="secondary" className="bg-mint-50 text-mint-700 hover:bg-mint-100 border-none">
+                      Student
+                    </Badge>
+                    {isAdmin && (
+                      <Badge variant="secondary" className="bg-purple-50 text-purple-700 hover:bg-purple-100 border-none">
+                        Admin
+                      </Badge>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Friend Requests */}
-            {friendRequests.filter((r) => r.status === 'pending').length > 0 && (
-              <FriendRequests
-                friendRequests={friendRequests}
-                currentUserId={user?.id || ''}
-                onAccept={acceptFriendRequest}
-                onReject={rejectFriendRequest}
-                onCancel={cancelFriendRequest}
-              />
-            )}
-
-            {/* Friends List */}
-            <FriendsList
-              friends={friends}
-              friendsLocations={friendsLocations}
-              onRemoveFriend={removeFriend}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Notifications */}
-        <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-yellow/20">
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
-            <div className="flex items-center space-x-2">
-              <div className="bg-pastel-yellow p-2 rounded-full">
-                <Bell className="h-5 w-5 text-ui-charcoal" />
-              </div>
-              <CardTitle className="text-lg font-bold text-ui-charcoal">Notifications</CardTitle>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <div>
-                <p className="font-medium text-sm text-ui-charcoal">Emergency Alerts</p>
-                <p className="text-xs text-muted-foreground">Get notified of campus emergencies</p>
-              </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-200">Active</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <div>
-                <p className="font-medium text-sm text-ui-charcoal">Safety Updates</p>
-                <p className="text-xs text-muted-foreground">Campus safety news and tips</p>
-              </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-200">Active</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <div>
-                <p className="font-medium text-sm text-ui-charcoal">Incident Reports</p>
-                <p className="text-xs text-muted-foreground">Updates on your submitted reports</p>
-              </div>
-              <Badge variant="outline" className="text-muted-foreground">Disabled</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Privacy & Security */}
-        <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-sky/20">
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
-            <div className="flex items-center space-x-2">
-              <div className="bg-pastel-sky p-2 rounded-full">
-                <Shield className="h-5 w-5 text-ui-charcoal" />
-              </div>
-              <CardTitle className="text-lg font-bold text-ui-charcoal">Privacy & Security</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-ui-charcoal">Two-Factor Authentication</p>
-                <p className="text-xs text-muted-foreground">Add extra security to your account</p>
-              </div>
-              <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-full border-gray-200 hover:bg-white hover:text-mint-600">Setup</Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-ui-charcoal">Privacy Settings</p>
-                <p className="text-xs text-muted-foreground">Control who can see your information</p>
-              </div>
-              <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-full border-gray-200 hover:bg-white hover:text-mint-600">Manage</Button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-ui-charcoal flex items-center gap-2">
-                  <Download size={16} className="text-teal-600" />
-                  Data Export
-                </p>
-                <p className="text-xs text-muted-foreground">Download your account data</p>
-              </div>
-              <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-full border-gray-200 hover:bg-white hover:text-mint-600">Request</Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Support & About */}
-        <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-pink/20">
-          <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
-            <div className="flex items-center space-x-2">
-              <div className="bg-pastel-pink p-2 rounded-full">
-                <HelpCircle className="h-5 w-5 text-ui-charcoal" />
-              </div>
-              <CardTitle className="text-lg font-bold text-ui-charcoal">Support & About</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 bg-white p-5">
-            {hasUpdate && (
-              <Alert className="border-pink-200 bg-pink-50 rounded-2xl mb-2">
-                <Sparkles className="h-4 w-4 text-pink-600" />
-                <AlertDescription className="flex items-center justify-between w-full">
-                  <div className="flex-1 mr-2">
-                    <p className="font-bold text-pink-800">Update Available</p>
-                    <p className="text-xs text-pink-700/80">
-                      Version {latestVersion} is now available. Check out what's new!
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="bg-gray-50 p-3 rounded-2xl">
+                  <p className="text-xs text-muted-foreground mb-1">Member since</p>
+                  <p className="font-semibold text-sm text-ui-charcoal">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                {lastLoginInfo && (
+                  <div className="bg-gray-50 p-3 rounded-2xl">
+                    <p className="text-xs text-muted-foreground mb-1">Last sign in</p>
+                    <p className="font-semibold text-sm text-ui-charcoal">
+                      {new Date(lastLoginInfo.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => {
-                        setShowChangelog(true);
-                        markAsSeen();
-                      }}
-                      className="rounded-full bg-pink-600 hover:bg-pink-700 text-white border-none h-8"
-                    >
-                      View
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 rounded-full hover:bg-pink-100 text-pink-600"
-                      onClick={() => {
-                        markAsSeen();
-                        toast({
-                          title: "Notification dismissed",
-                          description: "You can always check for updates in What's New.",
-                          duration: 2000,
-                        });
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <div>
-                <p className="font-medium text-sm text-ui-charcoal">App Version</p>
-                <p className="text-xs text-muted-foreground">Current version of the app</p>
+                )}
               </div>
-              <Badge variant="secondary" className="bg-gray-200 text-gray-700">{appVersion}</Badge>
-            </div>
 
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium text-sm text-ui-charcoal">What's New</p>
-                  {hasUpdate && (
-                    <Badge variant="destructive" className="h-5 px-1.5 text-[10px] bg-pink-500 hover:bg-pink-600">New</Badge>
+              {/* Admin Panel Button */}
+              {isAdmin && (
+                <Button
+                  onClick={() => navigate('/admin')}
+                  className="w-full rounded-xl bg-ui-charcoal text-white hover:bg-black shadow-md"
+                  size="default"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Open Admin Panel
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Security Status */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-green/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-green p-2 rounded-full">
+                  <Shield className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Security Status</CardTitle>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-100">
+                <div>
+                  <p className="font-bold text-sm text-green-800">Account Secure</p>
+                  <p className="text-xs text-green-600/80">Your account has secure authentication</p>
+                </div>
+                <div className="bg-white p-1 rounded-full shadow-sm">
+                  <Shield className="h-4 w-4 text-green-500" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">Email Verified</p>
+                  <p className="text-xs text-muted-foreground">Your email has been confirmed</p>
+                </div>
+                <Badge variant="secondary" className={user.email_confirmed_at ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}>
+                  {user.email_confirmed_at ? "Verified" : "Pending"}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Profile Customization */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-purple/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-purple p-2 rounded-full">
+                  <Settings className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Settings</CardTitle>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              {/* Digital ID Management */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm flex items-center gap-2 text-ui-charcoal">
+                    <IdCard size={16} className="text-mint-600" />
+                    Digital ID
+                  </p>
+                  {digitalID ? (
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
+                      {digitalID.full_name} • {digitalID.student_id}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Add your student ID information
+                    </p>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">See recent updates and changes</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowIDForm(true)}
+                  className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                >
+                  {digitalID ? 'Edit' : 'Add'}
+                </Button>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setShowChangelog(true);
-                  markAsSeen();
-                }}
-                className="rounded-full border-gray-200 hover:bg-white hover:text-pink-600"
-              >
-                <Sparkles className="h-3 w-3 mr-1" />
-                View
-              </Button>
-            </div>
 
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-ui-charcoal">Report a Bug</p>
-                <p className="text-xs text-muted-foreground">Found an issue? Let us know</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal">Display Name</p>
+                  <p className="text-xs text-muted-foreground truncate">{currentDisplayName}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                  onClick={() => {
+                    setDisplayName(currentDisplayName);
+                    setShowDisplayNameDialog(true);
+                  }}
+                >
+                  Edit
+                </Button>
               </div>
-              <Button size="sm" variant="outline" onClick={() => setShowBugReport(true)} className="rounded-full border-gray-200 hover:bg-white hover:text-pink-600">
-                <Bug className="h-3 w-3 mr-1" />
-                Report
-              </Button>
-            </div>
 
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-ui-charcoal">Send Feedback</p>
-                <p className="text-xs text-muted-foreground">Share your thoughts and suggestions</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal">Emergency Contacts</p>
+                  <p className="text-xs text-muted-foreground">
+                    {personalContactsCount > 0
+                      ? `${personalContactsCount} personal contact${personalContactsCount !== 1 ? 's' : ''}`
+                      : 'People to notify in emergencies'}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowEmergencyContacts(true)}
+                  className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                >
+                  Manage
+                </Button>
               </div>
-              <Button size="sm" variant="outline" onClick={() => setShowFeedback(true)} className="rounded-full border-gray-200 hover:bg-white hover:text-pink-600">
-                <MessageSquare className="h-3 w-3 mr-1" />
-                Feedback
-              </Button>
-            </div>
-          </CardContent>
-        </Card >
+            </CardContent>
+          </Card>
+
+          {/* Friends & Location Sharing */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-pink/20 md:col-span-2 lg:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-pink p-2 rounded-full">
+                  <MapPin className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Friends & Location</CardTitle>
+              </div>
+              <AddFriendDialog
+                onSearch={searchUsers}
+                searchResults={searchResults}
+                onSendRequest={sendFriendRequest}
+                currentUserId={user?.id || ''}
+                existingFriendIds={friends.map((f) => f.friend_id)}
+                pendingRequests={friendRequests.filter((r) => r.status === 'pending')}
+              />
+            </CardHeader>
+            <CardContent className="space-y-4 bg-white p-5">
+              {/* Location Sharing Toggle */}
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white p-2 rounded-full shadow-sm">
+                    <MapPin className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <Label htmlFor="location-sharing" className="font-bold text-sm cursor-pointer text-blue-900">
+                      Share Location
+                    </Label>
+                    <p className="text-xs text-blue-700/80">
+                      {isSharing ? 'Visible to friends' : 'Not sharing'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isSharing ? (
+                    <Button
+                      size="sm"
+                      onClick={stopSharingLocation}
+                      className="rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-md"
+                    >
+                      Stop
+                    </Button>
+                  ) : (
+                    <Switch
+                      id="location-sharing"
+                      checked={sharingPreferences?.share_with_friends || false}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          startSharingLocation();
+                        } else {
+                          updateSharingPreferences({ share_with_friends: false });
+                        }
+                      }}
+                      className="data-[state=checked]:bg-blue-600"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Friend Requests */}
+              {friendRequests.filter((r) => r.status === 'pending').length > 0 && (
+                <FriendRequests
+                  friendRequests={friendRequests}
+                  currentUserId={user?.id || ''}
+                  onAccept={acceptFriendRequest}
+                  onReject={rejectFriendRequest}
+                  onCancel={cancelFriendRequest}
+                />
+              )}
+
+              {/* Friends List */}
+              <FriendsList
+                friends={friends}
+                friendsLocations={friendsLocations}
+                onRemoveFriend={removeFriend}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Notifications */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-yellow/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-yellow p-2 rounded-full">
+                  <Bell className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Notifications</CardTitle>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">Emergency Alerts</p>
+                  <p className="text-xs text-muted-foreground">Get notified of campus emergencies</p>
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-200">Active</Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">Safety Updates</p>
+                  <p className="text-xs text-muted-foreground">Campus safety news and tips</p>
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-200">Active</Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">Incident Reports</p>
+                  <p className="text-xs text-muted-foreground">Updates on your submitted reports</p>
+                </div>
+                <Badge variant="outline" className="text-muted-foreground">Disabled</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Privacy & Security */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-sky/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-sky p-2 rounded-full">
+                  <Shield className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Privacy & Security</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 bg-white/60 backdrop-blur-sm p-5 m-1 rounded-[20px]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal">Two-Factor Authentication</p>
+                  <p className="text-xs text-muted-foreground">Add extra security to your account</p>
+                </div>
+                <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">Setup</Button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal">Privacy Settings</p>
+                  <p className="text-xs text-muted-foreground">Control who can see your information</p>
+                </div>
+                <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">Manage</Button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-2xl gap-3 transition-colors hover:bg-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-ui-charcoal flex items-center gap-2">
+                    <Download size={16} className="text-teal-600" />
+                    Data Export
+                  </p>
+                  <p className="text-xs text-muted-foreground">Download your account data</p>
+                </div>
+                <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">Request</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Support & About */}
+          <Card className="border-none shadow-soft rounded-[24px] overflow-hidden bg-pastel-pink/20">
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2 bg-transparent">
+              <div className="flex items-center space-x-2">
+                <div className="bg-pastel-pink p-2 rounded-full">
+                  <HelpCircle className="h-5 w-5 text-ui-charcoal" />
+                </div>
+                <CardTitle className="text-lg font-bold text-ui-charcoal">Support & About</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 bg-white p-5">
+              {hasUpdate && (
+                <Alert className="border-pink-200 bg-pink-50 rounded-2xl mb-2">
+                  <Sparkles className="h-4 w-4 text-pink-600" />
+                  <AlertDescription className="flex items-center justify-between w-full">
+                    <div className="flex-1 mr-2">
+                      <p className="font-bold text-pink-800">Update Available</p>
+                      <p className="text-xs text-pink-700/80">
+                        Version {latestVersion} is now available. Check out what's new!
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          setShowChangelog(true);
+                          markAsSeen();
+                        }}
+                        className="rounded-full bg-pink-600 hover:bg-pink-700 text-white border-none h-8"
+                      >
+                        View
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full hover:bg-pink-100 text-pink-600"
+                        onClick={() => {
+                          markAsSeen();
+                          toast({
+                            title: "Notification dismissed",
+                            description: "You can always check for updates in What's New.",
+                            duration: 2000,
+                          });
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div>
+                  <p className="font-medium text-sm text-ui-charcoal">App Version</p>
+                  <p className="text-xs text-muted-foreground">Current version of the app</p>
+                </div>
+                <Badge variant="secondary" className="bg-gray-200 text-gray-700">{appVersion}</Badge>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm text-ui-charcoal">What's New</p>
+                    {hasUpdate && (
+                      <Badge variant="destructive" className="h-5 px-1.5 text-[10px] bg-pink-500 hover:bg-pink-600">New</Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">See recent updates and changes</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setShowChangelog(true);
+                    markAsSeen();
+                  }}
+                  className="rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                >
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-ui-charcoal">Report a Bug</p>
+                  <p className="text-xs text-muted-foreground">Found an issue? Let us know</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setShowBugReport(true)} className="rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">
+                  <Bug className="h-3 w-3 mr-1" />
+                  Report
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-ui-charcoal">Send Feedback</p>
+                  <p className="text-xs text-muted-foreground">Share your thoughts and suggestions</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setShowFeedback(true)} className="rounded-full border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700">
+                  <MessageSquare className="h-3 w-3 mr-1" />
+                  Feedback
+                </Button>
+              </div>
+            </CardContent>
+          </Card >
+        </div>
 
         {/* Sign Out Button */}
         <Button
@@ -916,11 +918,12 @@ export default function Profile() {
       </main >
 
       {/* Digital ID Form Dialog */}
-      <DigitalIDForm
+      < DigitalIDForm
         open={showIDForm}
         onOpenChange={setShowIDForm}
         existingData={digitalID}
-        onSuccess={() => user && fetchDigitalID(user.id)}
+        onSuccess={() => user && fetchDigitalID(user.id)
+        }
       />
 
       {/* Emergency Contacts Manager (Twilio Notifications) */}
@@ -1011,6 +1014,6 @@ export default function Profile() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 }

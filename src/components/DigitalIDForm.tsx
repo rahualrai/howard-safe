@@ -141,7 +141,7 @@ export function DigitalIDForm({ open, onOpenChange, existingData, onSuccess }: D
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.full_name || !formData.student_id || !formData.program || !formData.class_year) {
       toast({
         title: "Missing information",
@@ -165,7 +165,7 @@ export function DigitalIDForm({ open, onOpenChange, existingData, onSuccess }: D
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         throw new Error("Not authenticated");
       }
@@ -224,132 +224,131 @@ export function DigitalIDForm({ open, onOpenChange, existingData, onSuccess }: D
 
         <div className="overflow-y-auto flex-1 -mx-6 px-6">
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {/* Photo Upload with Drag & Drop */}
-          <div className="space-y-2">
-            <Label>ID Photo *</Label>
-            <div 
-              className={`border-2 border-dashed rounded-lg p-4 transition-colors ${
-                isDragging 
-                  ? 'border-primary bg-primary/10' 
-                  : photoPreview 
-                    ? 'border-border' 
-                    : 'border-destructive'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="flex items-center gap-4">
-                {photoPreview ? (
-                  <img
-                    src={photoPreview}
-                    alt="ID preview"
-                    className="w-24 h-24 rounded-md object-cover border"
-                  />
-                ) : (
-                  <div className="w-24 h-24 rounded-md border-2 border-dashed flex items-center justify-center">
-                    <Camera className="text-muted-foreground" />
+            {/* Photo Upload with Drag & Drop */}
+            <div className="space-y-2">
+              <Label>ID Photo *</Label>
+              <div
+                className={`border-2 border-dashed rounded-lg p-4 transition-colors ${isDragging
+                    ? 'border-primary bg-primary/10'
+                    : photoPreview
+                      ? 'border-border'
+                      : 'border-destructive'
+                  }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
+                <div className="flex items-center gap-4">
+                  {photoPreview ? (
+                    <img
+                      src={photoPreview}
+                      alt="ID preview"
+                      className="w-24 h-24 rounded-md object-cover border"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-md border-2 border-dashed flex items-center justify-center">
+                      <Camera className="text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {photoPreview ? "Change Photo" : "Upload Photo"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Required • Max 5MB (JPG, PNG)
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isDragging ? '📂 Drop image here!' : '💡 Or drag and drop your photo here'}
+                    </p>
                   </div>
-                )}
-                <div className="flex-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {photoPreview ? "Change Photo" : "Upload Photo"}
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Required • Max 5MB (JPG, PNG)
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {isDragging ? '📂 Drop image here!' : '💡 Or drag and drop your photo here'}
-                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                  />
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                />
               </div>
             </div>
-          </div>
 
-          {/* Full Name */}
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Full Name *</Label>
-            <Input
-              id="full_name"
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              placeholder="Enter your full name"
-              required
-            />
-          </div>
+            {/* Full Name */}
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Full Name *</Label>
+              <Input
+                id="full_name"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
 
-          {/* Student ID */}
-          <div className="space-y-2">
-            <Label htmlFor="student_id">Student ID *</Label>
-            <Input
-              id="student_id"
-              value={formData.student_id}
-              onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-              placeholder="e.g., @12345678"
-              required
-            />
-          </div>
+            {/* Student ID */}
+            <div className="space-y-2">
+              <Label htmlFor="student_id">Student ID *</Label>
+              <Input
+                id="student_id"
+                value={formData.student_id}
+                onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
+                placeholder="e.g., @12345678"
+                required
+              />
+            </div>
 
-          {/* Program */}
-          <div className="space-y-2">
-            <Label htmlFor="program">Program/Major *</Label>
-            <Input
-              id="program"
-              value={formData.program}
-              onChange={(e) => setFormData({ ...formData, program: e.target.value })}
-              placeholder="e.g., Computer Science"
-              required
-            />
-          </div>
+            {/* Program */}
+            <div className="space-y-2">
+              <Label htmlFor="program">Program/Major *</Label>
+              <Input
+                id="program"
+                value={formData.program}
+                onChange={(e) => setFormData({ ...formData, program: e.target.value })}
+                placeholder="e.g., Computer Science"
+                required
+              />
+            </div>
 
-          {/* Class Year */}
-          <div className="space-y-2">
-            <Label htmlFor="class_year">Class Year *</Label>
-            <Select
-              value={formData.class_year}
-              onValueChange={(value) => setFormData({ ...formData, class_year: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your class year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Freshman">Freshman</SelectItem>
-                <SelectItem value="Sophomore">Sophomore</SelectItem>
-                <SelectItem value="Junior">Junior</SelectItem>
-                <SelectItem value="Senior">Senior</SelectItem>
-                <SelectItem value="Graduate">Graduate</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Class Year */}
+            <div className="space-y-2">
+              <Label htmlFor="class_year">Class Year *</Label>
+              <Select
+                value={formData.class_year}
+                onValueChange={(value) => setFormData({ ...formData, class_year: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your class year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Freshman">Freshman</SelectItem>
+                  <SelectItem value="Sophomore">Sophomore</SelectItem>
+                  <SelectItem value="Junior">Junior</SelectItem>
+                  <SelectItem value="Senior">Senior</SelectItem>
+                  <SelectItem value="Graduate">Graduate</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Submit Buttons */}
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? "Saving..." : existingData ? "Update" : "Create"} ID
-            </Button>
-          </div>
+            {/* Submit Buttons */}
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="flex-1"
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1 bg-blue-500 hover:bg-blue-600" disabled={loading}>
+                {loading ? "Saving..." : existingData ? "Update" : "Create"} ID
+              </Button>
+            </div>
           </form>
         </div>
       </DialogContent>

@@ -24,42 +24,50 @@ export function CalendarStrip() {
     });
 
     return (
-        <div className="w-full mb-6">
-            <div className="flex justify-between items-center px-2 mb-4">
-                <h3 className="text-ui-charcoal font-bold text-lg">{formattedToday}</h3>
+        <div className="w-full mb-6 relative">
+            <div className="flex justify-between items-center px-4 mb-4">
+                <h3 className="text-ui-charcoal font-bold text-xl tracking-tight">{formattedToday}</h3>
             </div>
 
-            <div className="flex justify-between items-center gap-2 overflow-x-auto pb-2 px-1 no-scrollbar">
-                {days.map((item, index) => {
-                    const isSelected = item.day === selectedDate;
+            <div className="bg-white/80 backdrop-blur-xl rounded-[32px] p-2 shadow-sm border border-white/50">
+                <div className="grid grid-cols-7 gap-1 md:gap-3 items-center">
+                    {days.map((item, index) => {
+                        const isSelected = item.day === selectedDate;
 
-                    return (
-                        <motion.button
-                            key={index}
-                            onClick={() => setSelectedDate(item.day)}
-                            whileTap={{ scale: 0.9 }}
-                            className={cn(
-                                "flex flex-col items-center justify-center min-w-[3.5rem] h-20 rounded-[24px] transition-all duration-300",
-                                isSelected
-                                    ? "bg-ui-charcoal text-white shadow-lg shadow-ui-charcoal/20"
-                                    : "bg-white text-ui-charcoal/60 hover:bg-mint-50"
-                            )}
-                        >
-                            <span className={cn(
-                                "text-xs font-bold mb-1",
-                                isSelected ? "text-white/80" : "text-ui-charcoal/40"
-                            )}>
-                                {item.weekday}
-                            </span>
-                            <span className={cn(
-                                "text-xl font-bold",
-                                isSelected ? "text-white" : "text-ui-charcoal"
-                            )}>
-                                {item.day}
-                            </span>
-                        </motion.button>
-                    );
-                })}
+                        return (
+                            <motion.button
+                                key={index}
+                                onClick={() => setSelectedDate(item.day)}
+                                whileTap={{ scale: 0.95 }}
+                                className={cn(
+                                    "flex flex-col items-center justify-center w-full h-24 rounded-[24px] transition-all duration-300 relative overflow-hidden group",
+                                    isSelected
+                                        ? "bg-[#F4E6FF] text-ui-charcoal shadow-lg shadow-purple-200/50"
+                                        : "hover:bg-gray-50 text-gray-400"
+                                )}
+                            >
+                                <span className={cn(
+                                    "text-[10px] font-bold uppercase tracking-wider mb-1 transition-colors",
+                                    isSelected ? "text-ui-charcoal/60" : "text-gray-400 group-hover:text-gray-600"
+                                )}>
+                                    {item.weekday}
+                                </span>
+                                <span className={cn(
+                                    "text-2xl font-bold transition-colors",
+                                    isSelected ? "text-ui-charcoal" : "text-gray-600 group-hover:text-gray-900"
+                                )}>
+                                    {item.day}
+                                </span>
+                                {isSelected && (
+                                    <motion.div
+                                        layoutId="activeIndicator"
+                                        className="absolute bottom-2 w-1 h-1 rounded-full bg-ui-charcoal/20"
+                                    />
+                                )}
+                            </motion.button>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );
