@@ -18,14 +18,16 @@ export interface LocationSharingPreferences {
   share_with_all: boolean;
 }
 
+const UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
+
 export function useLocationSharing(userId: string | undefined) {
   const [friendsLocations, setFriendsLocations] = useState<FriendLocation[]>([]);
   const [sharingPreferences, setSharingPreferences] = useState<LocationSharingPreferences | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const locationWatchIdRef = useRef<number | null>(null);
+  const locationIntervalIdRef = useRef<number | null>(null);
   const { toast } = useToast();
-  const { permission, watchLocation, clearWatch, getCurrentLocation } = useLocationPermission();
+  const { permission, getCurrentLocation } = useLocationPermission();
 
   // Fetch friends' locations
   const fetchFriendsLocations = useCallback(async () => {
@@ -41,14 +43,17 @@ export function useLocationSharing(userId: string | undefined) {
       setFriendsLocations(data || []);
     } catch (error) {
       console.error('Error fetching friends locations:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load friends locations',
-        variant: 'destructive',
-      });
+      // Only show toast on initial load or manual refresh, not on background polling to avoid spam
+      if (loading) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load friends locations',
+          variant: 'destructive',
+        });
+      }
       setFriendsLocations([]);
     }
-  }, [userId]);
+  }, [userId, loading, toast]);
 
   // Fetch location sharing preferences
   const fetchSharingPreferences = useCallback(async () => {
@@ -114,7 +119,7 @@ export function useLocationSharing(userId: string | undefined) {
       console.error('Error updating sharing preferences:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update preferences',
+        description: (error as any).message || 'Failed to update preferences',
         variant: 'destructive',
       });
       return false;
@@ -172,29 +177,34 @@ export function useLocationSharing(userId: string | undefined) {
       await updateLocation(position);
     }
 
-    // Start watching location
-    const watchId = watchLocation((position) => {
-      updateLocation(position);
-    });
-
-    if (watchId !== null) {
-      locationWatchIdRef.current = watchId;
-      setIsSharing(true);
-      toast({
-        title: 'Location sharing started',
-        description: 'Your friends can now see your location',
-      });
-      return true;
+    // Start polling location
+    // Clear any existing interval first
+    if (locationIntervalIdRef.current !== null) {
+      window.clearInterval(locationIntervalIdRef.current);
     }
 
-    return false;
-  }, [userId, permission, toast, updateSharingPreferences, getCurrentLocation, watchLocation, updateLocation]);
+    const intervalId = window.setInterval(async () => {
+      const pos = await getCurrentLocation();
+      if (pos) {
+        updateLocation(pos);
+      }
+    }, UPDATE_INTERVAL);
+
+    locationIntervalIdRef.current = intervalId;
+    setIsSharing(true);
+    toast({
+      title: 'Location sharing started',
+      description: 'Your location will be updated every hour',
+    });
+    return true;
+
+  }, [userId, permission, toast, updateSharingPreferences, getCurrentLocation, updateLocation]);
 
   // Stop sharing location
   const stopSharingLocation = useCallback(async () => {
-    if (locationWatchIdRef.current !== null) {
-      clearWatch(locationWatchIdRef.current);
-      locationWatchIdRef.current = null;
+    if (locationIntervalIdRef.current !== null) {
+      window.clearInterval(locationIntervalIdRef.current);
+      locationIntervalIdRef.current = null;
     }
 
     // Deactivate all locations
@@ -210,7 +220,7 @@ export function useLocationSharing(userId: string | undefined) {
       title: 'Location sharing stopped',
       description: 'Your location is no longer being shared',
     });
-  }, [userId, clearWatch, toast]);
+  }, [userId, toast]);
 
   // Load data on mount
   useEffect(() => {
@@ -229,39 +239,29 @@ export function useLocationSharing(userId: string | undefined) {
     }
   }, [loading, sharingPreferences, isSharing, permission, startSharingLocation]);
 
-  // Set up real-time subscription for friends' locations
+  // Set up polling for friends' locations
   useEffect(() => {
     if (!userId) return;
 
-    const channel = supabase
-      .channel('friends-locations')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_locations',
-        },
-        () => {
-          // Refresh friends locations when any location changes
-          fetchFriendsLocations();
-        }
-      )
-      .subscribe();
+    // Initial fetch is handled by the "Load data on mount" effect
+
+    const intervalId = setInterval(() => {
+      fetchFriendsLocations();
+    }, UPDATE_INTERVAL);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(intervalId);
     };
   }, [userId, fetchFriendsLocations]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (locationWatchIdRef.current !== null) {
-        clearWatch(locationWatchIdRef.current);
+      if (locationIntervalIdRef.current !== null) {
+        window.clearInterval(locationIntervalIdRef.current);
       }
     };
-  }, [clearWatch]);
+  }, []);
 
   return {
     friendsLocations,
@@ -274,4 +274,3 @@ export function useLocationSharing(userId: string | undefined) {
     stopSharingLocation,
   };
 }
-
